@@ -1,0 +1,34 @@
+{
+  "name": "nest-rest",
+  "version": "0.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TheNightmareX/nest-rest.git"
+  },
+  "keywords": [
+    "backend",
+    "web",
+    "nestjs",
+    "nest",
+    "crud",
+    "rest",
+    "restful",
+    "api",
+    "typescript",
+    "typeorm"
+  ],
+  "author": {
+    "name": "Char2s",
+    "email": "Char2s@outlook.com"
+  },
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/TheNightmareX/nest-rest/issues"
+  },
+  "homepage": "https://github.com/TheNightmareX/nest-rest#readme"
+}

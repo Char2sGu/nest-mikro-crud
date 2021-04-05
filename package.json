@@ -1,5 +1,5 @@
 {
-  "name": "nest-rest",
+  "name": "nest-restful",
   "version": "0.0.0",
   "description": "",
   "main": "dist/index.js",
@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/TheNightmareX/nest-rest.git"
+    "url": "git+https://github.com/TheNightmareX/nest-restful.git"
   },
   "keywords": [
     "backend",
@@ -31,9 +31,9 @@
   },
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/TheNightmareX/nest-rest/issues"
+    "url": "https://github.com/TheNightmareX/nest-restful/issues"
   },
-  "homepage": "https://github.com/TheNightmareX/nest-rest#readme",
+  "homepage": "https://github.com/TheNightmareX/nest-restful#readme",
   "dependencies": {},
   "devDependencies": {
     "rimraf": "^3.0.2",

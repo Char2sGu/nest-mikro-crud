@@ -1,4 +1,3 @@
-import { Repository } from "typeorm";
 import { LookupFields } from "./lookup-fields.type";
 
 export interface RestService<

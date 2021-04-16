@@ -1,4 +1,4 @@
-import { ClassConstructor } from "class-transformer";
+import { RestServiceOptions } from "src/services/rest-service-options.interface";
 import { Repository } from "typeorm";
 import { LookupFields } from "./lookup-fields.type";
 import { RestService } from "./rest-service.interface";
@@ -12,14 +12,12 @@ export class RestServiceFactory<
   readonly service;
 
   constructor(
-    readonly options: {
-      entityClass: ClassConstructor<Entity>;
-      dtoClasses: {
-        create: ClassConstructor<CreateDto>;
-        update: ClassConstructor<UpdateDto>;
-      };
-      lookupField: LookupField;
-    }
+    readonly options: RestServiceOptions<
+      Entity,
+      CreateDto,
+      UpdateDto,
+      LookupField
+    >
   ) {
     // store data outside the service class to avoid namespace pollutions
     let repo: Repository<Entity>;

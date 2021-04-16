@@ -1,3 +1,4 @@
+import { REST_SERVICE_OPTIONS_METADATA_KEY } from "src/constants";
 import { RestServiceOptions } from "src/services/rest-service-options.interface";
 import { Repository } from "typeorm";
 import { LookupFields } from "./lookup-fields.type";
@@ -60,5 +61,11 @@ export class RestServiceFactory<
         return await repo.count();
       }
     };
+
+    Reflect.defineMetadata(
+      REST_SERVICE_OPTIONS_METADATA_KEY,
+      options,
+      this.service
+    );
   }
 }

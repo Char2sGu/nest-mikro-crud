@@ -6,8 +6,10 @@ import {
   Param,
   Patch,
   Post,
+  UseFilters,
 } from "@nestjs/common";
 import { ClassConstructor } from "class-transformer";
+import { EntityNotFoundErrorFilter } from "src/entity-not-found-error.filter";
 import { LookupFields } from "src/services/lookup-fields.type";
 import { RestService } from "src/services/rest-service.interface";
 import { RestController } from "./rest-controller.interface";
@@ -61,6 +63,7 @@ export class RestControllerFactory<
       }
     };
 
+    UseFilters(EntityNotFoundErrorFilter)(this.controller);
     this.applyDecorators("destroy", HttpCode(204));
   }
 

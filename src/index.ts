@@ -4,3 +4,4 @@ export * from "./controllers/route-names.types";
 export * from "./services/lookup-fields.type";
 export * from "./services/rest-service.factory";
 export * from "./services/rest-service.interface";
+export * from "./entity-not-found-error.filter";

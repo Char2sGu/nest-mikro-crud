@@ -36,6 +36,7 @@
   "homepage": "https://github.com/TheNightmareX/nest-restful#readme",
   "dependencies": {
     "@nestjs/common": "^7.6.15",
+    "@nestjs/core": "^7.6.15",
     "class-transformer": "^0.4.0",
     "deepmerge": "^4.2.2",
     "reflect-metadata": "^0.1.13",
@@ -43,7 +44,6 @@
     "typeorm": "^0.2.32"
   },
   "devDependencies": {
-    "@nestjs/core": "^7.6.15",
     "@nestjs/platform-express": "^7.6.15",
     "@nestjs/testing": "^7.6.15",
     "@nestjs/typeorm": "^7.1.5",

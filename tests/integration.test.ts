@@ -90,6 +90,10 @@ describe("Integration", () => {
           expect(body).toEqual({ id: 1 });
         });
     });
+
+    it("should return a 404 when not found", async () => {
+      await requester.get("/notexists/").expect(404);
+    });
   });
 
   describe("/:id/ (PATCH)", () => {
@@ -103,6 +107,10 @@ describe("Integration", () => {
           expect(body).toEqual({ id: 2 });
         });
     });
+
+    it("should return a 404 when not found", async () => {
+      await requester.patch("/notexists/").expect(404);
+    });
   });
 
   describe("/:id/ (DELETE)", () => {
@@ -110,6 +118,10 @@ describe("Integration", () => {
       await repository.save({ id: 1 });
       await requester.delete("/1/").expect(204).expect("");
       expect(await repository.findOne(1)).toBeUndefined();
+    });
+
+    it("should return a 404 when not found", async () => {
+      await requester.delete("/notexists/").expect(404);
     });
   });
 });

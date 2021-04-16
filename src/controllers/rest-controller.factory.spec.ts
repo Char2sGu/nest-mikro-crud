@@ -1,13 +1,16 @@
-import { Body, HttpCode, Post } from "@nestjs/common";
+import { Body, Post } from "@nestjs/common";
 import { ClassConstructor } from "class-transformer";
 import { RestService } from "src/services/rest-service.interface";
 import { RestControllerFactory } from "./rest-controller.factory";
 import { RestController } from "./rest-controller.interface";
 
-jest.mock("@nestjs/common");
+jest.mock("@nestjs/common", () => ({
+  ...jest.requireActual("@nestjs/common"),
+  Post: jest.fn(),
+  Body: jest.fn(),
+}));
 const MockPost = Post as jest.MockedFunction<typeof Post>;
 const MockBody = Body as jest.MockedFunction<typeof Body>;
-const MockHttpCode = HttpCode as jest.MockedFunction<typeof HttpCode>;
 
 describe("RestControllerFactory", () => {
   let factory: RestControllerFactory;
@@ -28,7 +31,6 @@ describe("RestControllerFactory", () => {
   const MockTestService = TestService as jest.MockedClass<typeof TestService>;
 
   beforeEach(() => {
-    MockHttpCode.mockReturnValueOnce(() => {});
     factory = new RestControllerFactory({ restServiceClass: TestService });
   });
 

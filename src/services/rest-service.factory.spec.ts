@@ -1,4 +1,5 @@
 import { plainToClass } from "class-transformer";
+import { REST_SERVICE_OPTIONS_METADATA_KEY } from "src/constants";
 import { Resolved } from "src/utils/resolved.type";
 import { Repository } from "typeorm";
 import { RestServiceFactory } from "./rest-service.factory";
@@ -35,6 +36,15 @@ describe("RestServiceFactory", () => {
       TestService = class TestService extends factory.service {};
       repository = new Repository();
       service = new TestService(repository);
+    });
+
+    it("should have the metadata of the options passed", () => {
+      const metadata = Reflect.getMetadata(
+        REST_SERVICE_OPTIONS_METADATA_KEY,
+        TestService
+      );
+      expect(metadata).toBeDefined();
+      expect(metadata).toBeInstanceOf(Object);
     });
 
     describe(".list()", () => {

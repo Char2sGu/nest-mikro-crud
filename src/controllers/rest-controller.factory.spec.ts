@@ -1,6 +1,4 @@
 import { Body, Post } from "@nestjs/common";
-import { ClassConstructor } from "class-transformer";
-import { RestService } from "src/services/rest-service.interface";
 import { RestControllerFactory } from "./rest-controller.factory";
 import { RestController } from "./rest-controller.interface";
 
@@ -24,11 +22,7 @@ describe("RestControllerFactory", () => {
     count: jest.fn(),
   };
 
-  const TestService = jest.fn(
-    () => TestServiceProto
-  ) as ClassConstructor<RestService>;
-
-  const MockTestService = TestService as jest.MockedClass<typeof TestService>;
+  const TestService = jest.fn(() => TestServiceProto);
 
   beforeEach(() => {
     factory = new RestControllerFactory({ restServiceClass: TestService });

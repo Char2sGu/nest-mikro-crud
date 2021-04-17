@@ -114,6 +114,29 @@ describe("RestServiceFactory", () => {
       });
     });
 
+    describe(".replace()", () => {
+      let entity: TestEntity;
+
+      beforeEach(() => {
+        entity = { id: 1 };
+      });
+
+      it("should create and return an entity when not found", async () => {
+        const spy = jest.spyOn(service, "create").mockResolvedValueOnce(entity);
+        const ret = await service.replace(1, entity);
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(ret).toEqual(entity);
+      });
+
+      it("should update and return an entity when found", async () => {
+        MockRepository.prototype.findOne.mockResolvedValueOnce(entity);
+        const spy = jest.spyOn(service, "update").mockResolvedValueOnce(entity);
+        const ret = await service.replace(1, entity);
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(ret).toEqual(entity);
+      });
+    });
+
     describe(".update()", () => {
       it("should return the updated entity when found the entity", async () => {
         MockRepository.prototype.findOneOrFail.mockResolvedValueOnce(

@@ -36,6 +36,7 @@ describe("RestControllerFactory", () => {
     list: jest.fn(),
     create: jest.fn(),
     retrieve: jest.fn(),
+    replace: jest.fn(),
     update: jest.fn(),
     destroy: jest.fn(),
     count: jest.fn(),
@@ -58,13 +59,16 @@ describe("RestControllerFactory", () => {
     expect(factory).toBeDefined();
   });
 
-  it.each([
-    ["list", []],
-    ["create", [TestEntity]],
-    ["retrieve", [Number]],
-    ["update", [Number, TestEntity]],
-    ["destroy", [Number]],
-  ] as [RouteNames, any[]][])(
+  it.each(
+    Object.entries({
+      list: [],
+      create: [TestEntity],
+      retrieve: [Number],
+      update: [Number, TestEntity],
+      replace: [Number, TestEntity],
+      destroy: [Number],
+    } as Record<RouteNames, any[]>)
+  )(
     "should emit correct parameter types metadata to `.%s()`",
     (name, types) => {
       const metadata = Reflect.getMetadata(
@@ -158,6 +162,14 @@ describe("RestControllerFactory", () => {
       it("should serialize and return what the service returns", async () => {
         TestServiceProto.retrieve.mockResolvedValueOnce(entity);
         const ret = await controller.retrieve(1);
+        expect(ret).toEqual(serializedEntity);
+      });
+    });
+
+    describe(".replace()", () => {
+      it("should serialize and return what the service returns", async () => {
+        TestServiceProto.replace.mockResolvedValueOnce(entity);
+        const ret = await controller.replace(1, {});
         expect(ret).toEqual(serializedEntity);
       });
     });

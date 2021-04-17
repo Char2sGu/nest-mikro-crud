@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   UseFilters,
 } from "@nestjs/common";
 import {
@@ -79,6 +80,10 @@ export class RestControllerFactory<
         return serialize(await restService.retrieve(lookup));
       }
 
+      async replace(lookup: Entity[LookupField], dto: CreateDto) {
+        return serialize(await restService.replace(lookup, dto));
+      }
+
       async update(lookup: Entity[LookupField], dto: UpdateDto) {
         return serialize(await restService.update(lookup, dto));
       }
@@ -112,13 +117,14 @@ export class RestControllerFactory<
       lookupField
     );
 
-    for (const [name, types] of [
-      ["list", []],
-      ["create", [createDto]],
-      ["retrieve", [lookupType]],
-      ["update", [lookupType, updateDto]],
-      ["destroy", [lookupType]],
-    ] as [RouteNames, any[]][])
+    for (const [name, types] of Object.entries({
+      list: [],
+      create: [createDto],
+      retrieve: [lookupType],
+      replace: [lookupType, createDto],
+      update: [lookupType, updateDto],
+      destroy: [lookupType],
+    } as Record<RouteNames, any[]>))
       Reflect.defineMetadata(
         TS_PARAM_TYPES_METADATA_KEY,
         types,
@@ -143,6 +149,7 @@ export class RestControllerFactory<
       list: [Get(), []],
       create: [Post(), [Body()]],
       retrieve: [Get(path), [Param(lookupParam)]],
+      replace: [Put(path), [Param(lookupParam), Body()]],
       update: [Patch(path), [Param(lookupParam), Body()]],
       destroy: [Delete(path), [Param(lookupParam)]],
     };

@@ -42,7 +42,13 @@ export class RestServiceFactory<
         return await repo.findOneOrFail({ [options.lookupField]: lookup });
       }
 
-      async update(lookup: Entity[LookupField], dto: UpdateDto) {
+      async replace(lookup: Entity[LookupField], dto: CreateDto) {
+        const entity = await repo.findOne(lookup);
+        if (entity) return await this.update(lookup, dto);
+        return await this.create(dto);
+      }
+
+      async update(lookup: Entity[LookupField], dto: CreateDto | UpdateDto) {
         const entity = await repo.findOneOrFail({
           [options.lookupField]: lookup,
         });

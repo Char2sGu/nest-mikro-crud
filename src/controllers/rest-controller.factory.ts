@@ -94,7 +94,7 @@ export class RestControllerFactory<
   }
 
   /**
-   * Emit param types metadata to design:paramtypes" manually.
+   * Emit param types metadata to "design:paramtypes" manually.
    */
   protected emitParamTypesMetadata() {
     const TS_PARAM_TYPES_METADATA_KEY = "design:paramtypes";

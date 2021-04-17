@@ -8,7 +8,7 @@ import {
   Post,
   UseFilters,
 } from "@nestjs/common";
-import { ClassConstructor } from "class-transformer";
+import { ClassConstructor, plainToClass } from "class-transformer";
 import { REST_SERVICE_OPTIONS_METADATA_KEY } from "src/constants";
 import { EntityNotFoundErrorFilter } from "src/entity-not-found-error.filter";
 import { LookupFields } from "src/services/lookup-fields.type";
@@ -30,12 +30,19 @@ export class RestControllerFactory<
   > = RestService<Entity, CreateDto, UpdateDto, LookupField>
 > {
   readonly controller;
+  readonly serviceOptions;
 
   constructor(
     readonly options: {
       restServiceClass: ClassConstructor<Service>;
     }
   ) {
+    this.serviceOptions = Reflect.getMetadata(
+      REST_SERVICE_OPTIONS_METADATA_KEY,
+      this.options.restServiceClass
+    ) as RestServiceOptions<Entity, CreateDto, UpdateDto, LookupField>;
+    const { entityClass } = this.serviceOptions;
+
     let restService: Service;
 
     type Interface = RestController<Entity, CreateDto, UpdateDto, LookupField>;
@@ -45,19 +52,19 @@ export class RestControllerFactory<
       }
 
       async list() {
-        return await restService.list();
+        return plainToClass(entityClass, await restService.list());
       }
 
       async create(dto: CreateDto) {
-        return await restService.create(dto);
+        return plainToClass(entityClass, await restService.create(dto));
       }
 
       async retrieve(lookup: Entity[LookupField]) {
-        return await restService.retrieve(lookup);
+        return plainToClass(entityClass, await restService.retrieve(lookup));
       }
 
       async update(lookup: Entity[LookupField], dto: UpdateDto) {
-        return await restService.update(lookup, dto);
+        return plainToClass(entityClass, await restService.update(lookup, dto));
       }
 
       async destroy(lookup: Entity[LookupField]) {
@@ -77,21 +84,11 @@ export class RestControllerFactory<
     const TS_PARAM_TYPES_METADATA_KEY = "design:paramtypes";
     const TS_TYPE_METADATA_KEY = "design:type";
 
-    const serviceOptions: RestServiceOptions<
-      Entity,
-      CreateDto,
-      UpdateDto,
-      LookupField
-    > = Reflect.getMetadata(
-      REST_SERVICE_OPTIONS_METADATA_KEY,
-      this.options.restServiceClass
-    );
-
     const {
       dtoClasses: { create: createDto, update: updateDto },
       entityClass,
       lookupField,
-    } = serviceOptions;
+    } = this.serviceOptions;
 
     const lookupType = Reflect.getMetadata(
       TS_TYPE_METADATA_KEY,

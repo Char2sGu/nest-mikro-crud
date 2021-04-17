@@ -8,6 +8,7 @@ import { NestApplication } from "@nestjs/core";
 import { PartialType } from "@nestjs/mapped-types";
 import { Test } from "@nestjs/testing";
 import { getRepositoryToken, InjectRepository } from "@nestjs/typeorm";
+import { Exclude } from "class-transformer";
 import { IsString } from "class-validator";
 import { RestControllerFactory } from "src/controllers/rest-controller.factory";
 import { RestServiceFactory } from "src/services/rest-service.factory";
@@ -20,6 +21,7 @@ describe("Integration", () => {
 
   @Entity()
   class TestEntity {
+    @Exclude()
     @PrimaryGeneratedColumn()
     id!: number;
 
@@ -67,6 +69,8 @@ describe("Integration", () => {
   let app: NestApplication;
   let requester: ReturnType<typeof getRequester>;
   let repository: Repository<TestEntity>;
+  let entity: TestEntity;
+  let serializedEntity: Partial<TestEntity>;
 
   beforeEach(async () => {
     const module = await Test.createTestingModule({
@@ -80,27 +84,35 @@ describe("Integration", () => {
 
     requester = getRequester(app);
     repository = app.get(getRepositoryToken(TestEntity));
+
+    entity = { id: 1, field: "str" };
+    serializedEntity = { field: "str" };
+
+    await repository.save(entity);
   });
 
   describe("/ (GET)", () => {
-    it("should return an array", async () => {
+    it("should return an array of serialized entities", async () => {
       await requester
         .get("")
         .expect(200)
         .expect(({ body }) => {
           expect(body).toBeInstanceOf(Array);
+          expect(body[0]).toEqual(serializedEntity);
         });
     });
   });
 
   describe("/ (POST)", () => {
-    it("should return an entity", async () => {
+    it("should return a serialized entity", async () => {
+      const entity: TestCreateDto = { field: "created" };
+      const serializedEntity: Partial<TestEntity> = { field: "created" };
       await requester
         .post("/")
-        .send({ field: "string" })
+        .send(entity)
         .expect(201)
         .expect(({ body }) => {
-          expect(body).toEqual({ id: 1, field: "string" });
+          expect(body).toEqual(serializedEntity);
         });
     });
 
@@ -110,14 +122,12 @@ describe("Integration", () => {
   });
 
   describe("/:id/ (GET)", () => {
-    it("should return the target entity", async () => {
-      const entity: TestEntity = { id: 1, field: "string" };
-      await repository.save(entity);
+    it("should return the serialized target entity", async () => {
       await requester
         .get("/1/")
         .expect(200)
         .expect(({ body }) => {
-          expect(body).toEqual(entity);
+          expect(body).toEqual(serializedEntity);
         });
     });
 
@@ -127,15 +137,13 @@ describe("Integration", () => {
   });
 
   describe("/:id/ (PATCH)", () => {
-    it("should call the pipe and return the updated entity", async () => {
-      const entity: TestEntity = { id: 1, field: "string" };
-      await repository.save(entity);
+    it("should call the pipe and return the updated serialized entity", async () => {
       await requester
         .patch("/1/")
         .send({ field: "updated" })
         .expect(200)
         .expect(({ body }) => {
-          expect(body).toEqual({ ...entity, field: "updated" });
+          expect(body).toEqual({ ...serializedEntity, field: "updated" });
         });
       expect(testPipe).toHaveBeenCalledTimes(2);
     });
@@ -151,7 +159,6 @@ describe("Integration", () => {
 
   describe("/:id/ (DELETE)", () => {
     it("should delete the entity and return a 204", async () => {
-      await repository.save({ id: 1 });
       await requester.delete("/1/").expect(204).expect("");
       expect(await repository.findOne(1)).toBeUndefined();
     });

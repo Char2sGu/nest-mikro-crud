@@ -1,7 +1,8 @@
 import { Body, Post } from "@nestjs/common";
+import { Exclude } from "class-transformer";
 import { REST_SERVICE_OPTIONS_METADATA_KEY } from "src/constants";
 import { RestServiceOptions } from "src/services/rest-service-options.interface";
-import { Column, Entity } from "typeorm";
+import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 import { RestControllerFactory } from "./rest-controller.factory";
 import { RestController } from "./rest-controller.interface";
 import { RouteNames } from "./route-names.types";
@@ -17,6 +18,10 @@ const MockBody = Body as jest.MockedFunction<typeof Body>;
 describe("RestControllerFactory", () => {
   @Entity()
   class TestEntity {
+    @PrimaryGeneratedColumn()
+    id!: number;
+
+    @Exclude()
     @Column()
     field!: number;
   }
@@ -123,47 +128,51 @@ describe("RestControllerFactory", () => {
   describe(".controller", () => {
     let TestController: typeof factory.controller;
     let controller: RestController;
+    let entity: TestEntity;
+    let serializedEntity: Partial<TestEntity>;
 
     beforeEach(() => {
       TestController = factory.controller;
       controller = new TestController(new TestService());
+      entity = { id: 1, field: 2 };
+      serializedEntity = { id: 1 };
     });
 
     describe(".list()", () => {
-      it("should return what the service returns", async () => {
-        TestServiceProto.list.mockResolvedValueOnce(1);
+      it("should serialize and return what the service returns", async () => {
+        TestServiceProto.list.mockResolvedValueOnce([entity]);
         const ret = await controller.list();
-        expect(ret).toBe(1);
+        expect(ret[0]).toEqual(serializedEntity);
       });
     });
 
     describe(".create()", () => {
-      it("should return what the service returns", async () => {
-        TestServiceProto.create.mockResolvedValueOnce(1);
+      it("should serialize and return what the service returns", async () => {
+        TestServiceProto.create.mockResolvedValueOnce(entity);
         const ret = await controller.create({});
-        expect(ret).toBe(1);
+        expect(ret).toEqual(serializedEntity);
       });
     });
 
     describe(".retrieve()", () => {
-      it("should return what the service returns", async () => {
-        TestServiceProto.retrieve.mockResolvedValueOnce(1);
+      it("should serialize and return what the service returns", async () => {
+        TestServiceProto.retrieve.mockResolvedValueOnce(entity);
         const ret = await controller.retrieve(1);
-        expect(ret).toBe(1);
+        expect(ret).toEqual(serializedEntity);
       });
     });
 
     describe(".update()", () => {
-      it("should return what the service returns", async () => {
-        TestServiceProto.update.mockResolvedValueOnce(1);
+      it("should serialize and return what the service returns", async () => {
+        TestServiceProto.update.mockResolvedValueOnce(entity);
         const ret = await controller.update(1, {});
-        expect(ret).toBe(1);
+        expect(ret).toEqual(serializedEntity);
       });
     });
 
     describe(".destroy()", () => {
       it("should call the service and return nothing", async () => {
-        TestServiceProto.destroy.mockResolvedValueOnce(1);
+        TestServiceProto.destroy.mockResolvedValueOnce(entity);
         const ret = await controller.destroy(1);
         expect(TestServiceProto.destroy).toHaveBeenCalledTimes(1);
         expect(ret).toBeUndefined();

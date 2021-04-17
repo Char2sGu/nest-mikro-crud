@@ -9,8 +9,10 @@ import {
   UseFilters,
 } from "@nestjs/common";
 import { ClassConstructor } from "class-transformer";
+import { REST_SERVICE_OPTIONS_METADATA_KEY } from "src/constants";
 import { EntityNotFoundErrorFilter } from "src/entity-not-found-error.filter";
 import { LookupFields } from "src/services/lookup-fields.type";
+import { RestServiceOptions } from "src/services/rest-service-options.interface";
 import { RestService } from "src/services/rest-service.interface";
 import { RestController } from "./rest-controller.interface";
 import { RouteNames } from "./route-names.types";
@@ -63,8 +65,53 @@ export class RestControllerFactory<
       }
     };
 
+    this.emitParamTypesMetadata();
     UseFilters(EntityNotFoundErrorFilter)(this.controller);
     this.applyDecorators("destroy", HttpCode(204));
+  }
+
+  /**
+   * Emit param types metadata to design:paramtypes" manually.
+   */
+  protected emitParamTypesMetadata() {
+    const TS_PARAM_TYPES_METADATA_KEY = "design:paramtypes";
+    const TS_TYPE_METADATA_KEY = "design:type";
+
+    const serviceOptions: RestServiceOptions<
+      Entity,
+      CreateDto,
+      UpdateDto,
+      LookupField
+    > = Reflect.getMetadata(
+      REST_SERVICE_OPTIONS_METADATA_KEY,
+      this.options.restServiceClass
+    );
+
+    const {
+      dtoClasses: { create: createDto, update: updateDto },
+      entityClass,
+      lookupField,
+    } = serviceOptions;
+
+    const lookupType = Reflect.getMetadata(
+      TS_TYPE_METADATA_KEY,
+      entityClass.prototype,
+      lookupField
+    );
+
+    for (const [name, types] of [
+      ["list", []],
+      ["create", [createDto]],
+      ["retrieve", [lookupType]],
+      ["update", [lookupType, updateDto]],
+      ["destroy", [lookupType]],
+    ] as [RouteNames, any[]][])
+      Reflect.defineMetadata(
+        TS_PARAM_TYPES_METADATA_KEY,
+        types,
+        this.controller.prototype,
+        name
+      );
   }
 
   enableRoutes({

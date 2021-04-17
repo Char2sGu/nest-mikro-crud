@@ -1,10 +1,17 @@
-import { Controller, Injectable } from "@nestjs/common";
+import {
+  Controller,
+  Injectable,
+  UsePipes,
+  ValidationPipe,
+} from "@nestjs/common";
 import { NestApplication } from "@nestjs/core";
+import { PartialType } from "@nestjs/mapped-types";
 import { Test } from "@nestjs/testing";
 import { getRepositoryToken, InjectRepository } from "@nestjs/typeorm";
+import { IsString } from "class-validator";
 import { RestControllerFactory } from "src/controllers/rest-controller.factory";
 import { RestServiceFactory } from "src/services/rest-service.factory";
-import { Entity, PrimaryGeneratedColumn, Repository } from "typeorm";
+import { Column, Entity, PrimaryGeneratedColumn, Repository } from "typeorm";
 import { getRequester } from "./get-requester";
 import { getTypeOrmModules } from "./get-typeorm-modules";
 
@@ -13,12 +20,22 @@ describe("Integration", () => {
   class TestEntity {
     @PrimaryGeneratedColumn()
     id!: number;
+
+    @Column()
+    field!: string;
   }
+
+  class TestCreateDto {
+    @IsString()
+    field!: string;
+  }
+
+  class TestUpdateDto extends PartialType(TestCreateDto) {}
 
   @Injectable()
   class TestService extends new RestServiceFactory({
     entityClass: TestEntity,
-    dtoClasses: { create: TestEntity, update: TestEntity },
+    dtoClasses: { create: TestCreateDto, update: TestUpdateDto },
     lookupField: "id",
   }).service {
     constructor(
@@ -28,6 +45,7 @@ describe("Integration", () => {
     }
   }
 
+  @UsePipes(ValidationPipe)
   @Controller()
   class TestController extends new RestControllerFactory({
     restServiceClass: TestService,
@@ -72,22 +90,27 @@ describe("Integration", () => {
     it("should return an entity", async () => {
       await requester
         .post("/")
-        .send({})
+        .send({ field: "string" })
         .expect(201)
         .expect(({ body }) => {
-          expect(body).toEqual({ id: 1 });
+          expect(body).toEqual({ id: 1, field: "string" });
         });
+    });
+
+    it("should return a 400 when passed illegal data", async () => {
+      await requester.post("/").send({}).expect(400);
     });
   });
 
   describe("/:id/ (GET)", () => {
     it("should return the target entity", async () => {
-      await repository.save({ id: 1 });
+      const entity: TestEntity = { id: 1, field: "string" };
+      await repository.save(entity);
       await requester
         .get("/1/")
         .expect(200)
         .expect(({ body }) => {
-          expect(body).toEqual({ id: 1 });
+          expect(body).toEqual(entity);
         });
     });
 
@@ -98,18 +121,23 @@ describe("Integration", () => {
 
   describe("/:id/ (PATCH)", () => {
     it("should return the updated entity", async () => {
-      await repository.save({ id: 1 });
+      const entity: TestEntity = { id: 1, field: "string" };
+      await repository.save(entity);
       await requester
         .patch("/1/")
-        .send({ id: 2 })
+        .send({ field: "updated" })
         .expect(200)
         .expect(({ body }) => {
-          expect(body).toEqual({ id: 2 });
+          expect(body).toEqual({ ...entity, field: "updated" });
         });
     });
 
     it("should return a 404 when not found", async () => {
       await requester.patch("/notexists/").expect(404);
+    });
+
+    it("should return a 400 when passed illegal data", async () => {
+      await requester.patch("/1/").send({ field: 0 }).expect(400);
     });
   });
 

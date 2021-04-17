@@ -1,6 +1,10 @@
 import { Body, Post } from "@nestjs/common";
+import { REST_SERVICE_OPTIONS_METADATA_KEY } from "src/constants";
+import { RestServiceOptions } from "src/services/rest-service-options.interface";
+import { Column, Entity } from "typeorm";
 import { RestControllerFactory } from "./rest-controller.factory";
 import { RestController } from "./rest-controller.interface";
+import { RouteNames } from "./route-names.types";
 
 jest.mock("@nestjs/common", () => ({
   ...jest.requireActual("@nestjs/common"),
@@ -11,7 +15,17 @@ const MockPost = Post as jest.MockedFunction<typeof Post>;
 const MockBody = Body as jest.MockedFunction<typeof Body>;
 
 describe("RestControllerFactory", () => {
-  let factory: RestControllerFactory;
+  @Entity()
+  class TestEntity {
+    @Column()
+    field!: number;
+  }
+
+  const testServiceOptions: RestServiceOptions<TestEntity> = {
+    entityClass: TestEntity,
+    dtoClasses: { create: TestEntity, update: TestEntity },
+    lookupField: "field",
+  };
 
   const TestServiceProto = {
     list: jest.fn(),
@@ -23,6 +37,13 @@ describe("RestControllerFactory", () => {
   };
 
   const TestService = jest.fn(() => TestServiceProto);
+  Reflect.defineMetadata(
+    REST_SERVICE_OPTIONS_METADATA_KEY,
+    testServiceOptions,
+    TestService
+  );
+
+  let factory: RestControllerFactory;
 
   beforeEach(() => {
     factory = new RestControllerFactory({ restServiceClass: TestService });
@@ -31,6 +52,24 @@ describe("RestControllerFactory", () => {
   it("should be defined", () => {
     expect(factory).toBeDefined();
   });
+
+  it.each([
+    ["list", []],
+    ["create", [TestEntity]],
+    ["retrieve", [Number]],
+    ["update", [Number, TestEntity]],
+    ["destroy", [Number]],
+  ] as [RouteNames, any[]][])(
+    "should emit correct parameter types metadata to `.%s()`",
+    (name, types) => {
+      const metadata = Reflect.getMetadata(
+        "design:paramtypes",
+        factory.controller.prototype,
+        name
+      );
+      expect(metadata).toEqual(types);
+    }
+  );
 
   describe(".enableRoutes()", () => {
     const doSpy = () => jest.spyOn(factory, "applyDecorators");

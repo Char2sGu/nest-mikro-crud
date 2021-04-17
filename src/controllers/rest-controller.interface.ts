@@ -1,5 +1,4 @@
 import { LookupFields } from "src/services/lookup-fields.type";
-import { RestService } from "src/services/rest-service.interface";
 
 export interface RestController<
   Entity = any,

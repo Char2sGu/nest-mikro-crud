@@ -8,7 +8,11 @@ import {
   Post,
   UseFilters,
 } from "@nestjs/common";
-import { ClassConstructor, plainToClass } from "class-transformer";
+import {
+  ClassConstructor,
+  ClassTransformOptions,
+  plainToClass,
+} from "class-transformer";
 import { REST_SERVICE_OPTIONS_METADATA_KEY } from "src/constants";
 import { EntityNotFoundErrorFilter } from "src/entity-not-found-error.filter";
 import { LookupFields } from "src/services/lookup-fields.type";
@@ -35,12 +39,24 @@ export class RestControllerFactory<
   constructor(
     readonly options: {
       restServiceClass: ClassConstructor<Service>;
+      serializationOptions?: ClassTransformOptions;
     }
   ) {
     this.serviceOptions = Reflect.getMetadata(
       REST_SERVICE_OPTIONS_METADATA_KEY,
       this.options.restServiceClass
     ) as RestServiceOptions<Entity, CreateDto, UpdateDto, LookupField>;
+
+    function serialize(plain: Entity[]): Entity[];
+    function serialize(plain: Entity): Entity;
+    function serialize(plain: Entity | Entity[]) {
+      return plainToClass(
+        entityClass,
+        plain,
+        options.serializationOptions ?? {}
+      ) as Entity | Entity[];
+    }
+
     const { entityClass } = this.serviceOptions;
 
     let restService: Service;
@@ -52,19 +68,19 @@ export class RestControllerFactory<
       }
 
       async list() {
-        return plainToClass(entityClass, await restService.list());
+        return serialize(await restService.list());
       }
 
       async create(dto: CreateDto) {
-        return plainToClass(entityClass, await restService.create(dto));
+        return serialize(await restService.create(dto));
       }
 
       async retrieve(lookup: Entity[LookupField]) {
-        return plainToClass(entityClass, await restService.retrieve(lookup));
+        return serialize(await restService.retrieve(lookup));
       }
 
       async update(lookup: Entity[LookupField], dto: UpdateDto) {
-        return plainToClass(entityClass, await restService.update(lookup, dto));
+        return serialize(await restService.update(lookup, dto));
       }
 
       async destroy(lookup: Entity[LookupField]) {

@@ -49,17 +49,13 @@ export class RestServiceFactory<
       }
 
       async update(lookup: Entity[LookupField], dto: CreateDto | UpdateDto) {
-        const entity = await repo.findOneOrFail({
-          [options.lookupField]: lookup,
-        });
+        const entity = await this.retrieve(lookup);
         Object.assign(entity, dto);
         return await repo.save(entity);
       }
 
       async destroy(lookup: Entity[LookupField]) {
-        const entity = await repo.findOneOrFail({
-          [options.lookupField]: lookup,
-        });
+        const entity = await this.retrieve(lookup);
         return await repo.remove(entity);
       }
 

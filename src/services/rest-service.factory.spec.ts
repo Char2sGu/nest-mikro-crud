@@ -31,11 +31,13 @@ describe("RestServiceFactory", () => {
     let TestService: typeof factory.service;
     let repository: Repository<TestEntity>;
     let service: RestService<TestEntity>;
+    let entity: TestEntity;
 
     beforeEach(() => {
       TestService = class TestService extends factory.service {};
       repository = new Repository();
       service = new TestService(repository);
+      entity = { id: 1 };
     });
 
     it("should have the metadata of the options passed", () => {
@@ -115,12 +117,6 @@ describe("RestServiceFactory", () => {
     });
 
     describe(".replace()", () => {
-      let entity: TestEntity;
-
-      beforeEach(() => {
-        entity = { id: 1 };
-      });
-
       it("should create and return an entity when not found", async () => {
         const spy = jest.spyOn(service, "create").mockResolvedValueOnce(entity);
         const ret = await service.replace(1, entity);
@@ -138,31 +134,34 @@ describe("RestServiceFactory", () => {
     });
 
     describe(".update()", () => {
-      it("should return the updated entity when found the entity", async () => {
-        MockRepository.prototype.findOneOrFail.mockResolvedValueOnce(
-          plainToClass(TestEntity, { id: 2 })
-        );
+      it("should return the updated entity", async () => {
+        const updated: TestEntity = { id: 2 };
+        const spy = jest
+          .spyOn(service, "retrieve")
+          .mockResolvedValueOnce(entity);
         MockRepository.prototype.save.mockImplementationOnce(async (v) => v);
-        const ret = (await service.update(1, { id: 2 }))!;
-        expect(ret).toBeDefined();
-        expect(ret).toBeInstanceOf(TestEntity);
-        expect(ret.id).toBe(2);
+        const ret = await service.update(1, updated);
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(ret).toEqual(updated);
       });
     });
 
     describe(".destroy()", () => {
-      it("should call `repo.remove()` when found the entity", async () => {
-        MockRepository.prototype.findOneOrFail.mockResolvedValueOnce(true);
+      it("should call `.retrieve()` and `repo.remove()`", async () => {
+        const spy = jest
+          .spyOn(service, "retrieve")
+          .mockResolvedValueOnce(entity);
         await service.destroy(1);
+        expect(spy).toHaveBeenCalledTimes(1);
         expect(MockRepository.prototype.remove).toHaveBeenCalledTimes(1);
+        expect(MockRepository.prototype.remove).toHaveBeenCalledWith(entity);
       });
     });
 
     describe(".count()", () => {
-      it("should return what `repo.count()` returns", async () => {
-        MockRepository.prototype.count.mockResolvedValueOnce(1);
-        const ret = await service.count();
-        expect(ret).toBe(1);
+      it("should call `repo.count()`", async () => {
+        await service.count();
+        expect(MockRepository.prototype.count).toHaveBeenCalledTimes(1);
       });
     });
   });

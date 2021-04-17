@@ -16,6 +16,8 @@ import { getRequester } from "./get-requester";
 import { getTypeOrmModules } from "./get-typeorm-modules";
 
 describe("Integration", () => {
+  const testPipe = jest.fn((v) => v);
+
   @Entity()
   class TestEntity {
     @PrimaryGeneratedColumn()
@@ -49,9 +51,14 @@ describe("Integration", () => {
   @Controller()
   class TestController extends new RestControllerFactory({
     restServiceClass: TestService,
-  }).enableRoutes({
-    routeNames: ["list", "create", "retrieve", "update", "destroy"],
-  }).controller {
+  })
+    .enableRoutes({
+      routeNames: ["list", "create", "retrieve", "update", "destroy"],
+    })
+    .applyDecorators(
+      "update",
+      UsePipes(jest.fn(() => ({ transform: testPipe })))
+    ).controller {
     constructor(service: TestService) {
       super(service);
     }
@@ -120,7 +127,7 @@ describe("Integration", () => {
   });
 
   describe("/:id/ (PATCH)", () => {
-    it("should return the updated entity", async () => {
+    it("should call the pipe and return the updated entity", async () => {
       const entity: TestEntity = { id: 1, field: "string" };
       await repository.save(entity);
       await requester
@@ -130,6 +137,7 @@ describe("Integration", () => {
         .expect(({ body }) => {
           expect(body).toEqual({ ...entity, field: "updated" });
         });
+      expect(testPipe).toHaveBeenCalledTimes(2);
     });
 
     it("should return a 404 when not found", async () => {

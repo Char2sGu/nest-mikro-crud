@@ -1,6 +1,8 @@
 import {
   Controller,
   Injectable,
+  Param,
+  Post,
   UsePipes,
   ValidationPipe,
 } from "@nestjs/common";
@@ -63,6 +65,12 @@ describe("Integration", () => {
     ).controller {
     constructor(service: TestService) {
       super(service);
+    }
+
+    @Post()
+    create(dto: TestCreateDto, @Param() params: any) {
+      params; // do something with params
+      return super.create(dto);
     }
   }
 

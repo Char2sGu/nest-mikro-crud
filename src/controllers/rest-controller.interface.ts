@@ -1,3 +1,4 @@
+import { ListQueryDto } from "src/dtos/list-query.dto";
 import { LookupFields } from "src/services/lookup-fields.type";
 
 /**
@@ -23,7 +24,7 @@ export interface RestController<
   UpdateDto = CreateDto,
   LookupField extends LookupFields<Entity> = LookupFields<Entity>
 > {
-  list(...args: any[]): Promise<Entity[]>;
+  list(query: ListQueryDto, ...args: any[]): Promise<Entity[]>;
 
   create(dto: CreateDto, ...args: any[]): Promise<Entity>;
 

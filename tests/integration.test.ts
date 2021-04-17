@@ -13,6 +13,7 @@ import { getRepositoryToken, InjectRepository } from "@nestjs/typeorm";
 import { Exclude } from "class-transformer";
 import { IsString } from "class-validator";
 import { RestControllerFactory } from "src/controllers/rest-controller.factory";
+import { ListQueryDto } from "src/dtos/list-query.dto";
 import { RestServiceFactory } from "src/services/rest-service.factory";
 import { Column, Entity, PrimaryGeneratedColumn, Repository } from "typeorm";
 import { getRequester } from "./get-requester";
@@ -100,15 +101,26 @@ describe("Integration", () => {
   });
 
   describe("/ (GET)", () => {
-    it("should return an array of serialized entities", async () => {
-      await requester
-        .get("")
-        .expect(200)
-        .expect(({ body }) => {
-          expect(body).toBeInstanceOf(Array);
-          expect(body[0]).toEqual(serializedEntity);
-        });
-    });
+    it.each([
+      [2, {}],
+      [1, { limit: 1 }],
+      [1, { offset: 1 }],
+    ])(
+      "should return %i serialized entities when query is %o",
+      async (length, query: ListQueryDto) => {
+        const anotherEntity: TestEntity = { id: 2, field: "str" };
+        await repository.save(anotherEntity);
+        await requester
+          .get("/")
+          .query(query)
+          .expect(200)
+          .expect(({ body }) => {
+            expect(body).toBeInstanceOf(Array);
+            expect(body[0]).toEqual(serializedEntity);
+            expect(body).toHaveLength(length);
+          });
+      }
+    );
   });
 
   describe("/ (POST)", () => {

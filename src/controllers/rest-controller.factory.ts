@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
   Put,
+  Query,
   UseFilters,
 } from "@nestjs/common";
 import {
@@ -15,6 +16,7 @@ import {
   plainToClass,
 } from "class-transformer";
 import { REST_SERVICE_OPTIONS_METADATA_KEY } from "src/constants";
+import { ListQueryDto } from "src/dtos/list-query.dto";
 import { EntityNotFoundErrorFilter } from "src/entity-not-found-error.filter";
 import { LookupFields } from "src/services/lookup-fields.type";
 import { RestServiceOptions } from "src/services/rest-service-options.interface";
@@ -68,8 +70,9 @@ export class RestControllerFactory<
         restService = service;
       }
 
-      async list(...[]: Parameters<Interface["list"]>) {
-        return serialize(await restService.list());
+      async list(...[query]: Parameters<Interface["list"]>) {
+        query = plainToClass(ListQueryDto, query); // parse number strings to numbers
+        return serialize(await restService.list(query));
       }
 
       async create(...[dto]: Parameters<Interface["create"]>) {
@@ -118,7 +121,7 @@ export class RestControllerFactory<
     );
 
     for (const [name, types] of Object.entries({
-      list: [],
+      list: [ListQueryDto],
       create: [createDto],
       retrieve: [lookupType],
       replace: [lookupType, createDto],
@@ -146,7 +149,7 @@ export class RestControllerFactory<
       RouteNames,
       [MethodDecorator, ParameterDecorator[]]
     > = {
-      list: [Get(), []],
+      list: [Get(), [Query()]],
       create: [Post(), [Body()]],
       retrieve: [Get(path), [Param(lookupParam)]],
       replace: [Put(path), [Param(lookupParam), Body()]],

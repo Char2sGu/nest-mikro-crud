@@ -29,8 +29,12 @@ export class RestServiceFactory<
         repo = repository;
       }
 
-      async list(...[]: Parameters<Interface["list"]>) {
-        return await repo.find();
+      async list(...[options]: Parameters<Interface["list"]>) {
+        return await repo.find({
+          where: {}, // let Typeorm know these are options, not conditions
+          take: options?.limit,
+          skip: options?.offset,
+        });
       }
 
       async create(...[dto]: Parameters<Interface["create"]>) {

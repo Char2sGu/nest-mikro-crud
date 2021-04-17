@@ -6,7 +6,7 @@ export interface RestService<
   UpdateDto = CreateDto,
   LookupField extends LookupFields<Entity> = LookupFields<Entity>
 > {
-  list(): Promise<Entity[]>;
+  list(options?: { limit?: number; offset?: number }): Promise<Entity[]>;
 
   create(dto: CreateDto): Promise<Entity>;
 

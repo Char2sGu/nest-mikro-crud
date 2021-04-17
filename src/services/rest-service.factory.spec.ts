@@ -64,9 +64,8 @@ describe("RestServiceFactory", () => {
         expect(ret[0]).toBeInstanceOf(TestEntity);
       });
 
-      it("should call `repo.find()` once with no args", async () => {
+      it("should call `repo.find()`", async () => {
         expect(MockRepository.prototype.find).toHaveBeenCalledTimes(1);
-        expect(MockRepository.prototype.find).toHaveBeenCalledWith();
       });
     });
 

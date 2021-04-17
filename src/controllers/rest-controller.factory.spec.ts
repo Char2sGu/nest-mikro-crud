@@ -1,6 +1,7 @@
 import { Body, Post } from "@nestjs/common";
 import { Exclude } from "class-transformer";
 import { REST_SERVICE_OPTIONS_METADATA_KEY } from "src/constants";
+import { ListQueryDto } from "src/dtos/list-query.dto";
 import { RestServiceOptions } from "src/services/rest-service-options.interface";
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 import { RestControllerFactory } from "./rest-controller.factory";
@@ -61,7 +62,7 @@ describe("RestControllerFactory", () => {
 
   it.each(
     Object.entries({
-      list: [],
+      list: [ListQueryDto],
       create: [TestEntity],
       retrieve: [Number],
       update: [Number, TestEntity],
@@ -90,7 +91,6 @@ describe("RestControllerFactory", () => {
       MockPost.mockReturnValueOnce(() => {});
       MockBody.mockReturnValueOnce(() => {});
       ret = factory.enableRoutes({
-        lookupParam: "param",
         routeNames: ["create"],
       });
     });
@@ -99,13 +99,15 @@ describe("RestControllerFactory", () => {
       expect(ret).toBe(factory);
     });
 
-    it("should call `.applyDecorators()`", () => {
-      expect(spy).toHaveBeenCalledTimes(2);
-    });
-
     it("should call the decorator builders", () => {
       expect(MockPost).toHaveBeenCalled();
       expect(MockBody).toHaveBeenCalled();
+    });
+
+    it("should call `.applyDecorators()` on each decorator", () => {
+      expect(spy).toHaveBeenCalledTimes(2);
+      expect(spy.mock.calls[0][0]).toBe("create");
+      expect(spy.mock.calls[1][0]).toBe("create:0");
     });
   });
 
@@ -145,8 +147,16 @@ describe("RestControllerFactory", () => {
     describe(".list()", () => {
       it("should serialize and return what the service returns", async () => {
         TestServiceProto.list.mockResolvedValueOnce([entity]);
-        const ret = await controller.list();
+        const ret = await controller.list({ limit: 1, offset: 1 });
         expect(ret[0]).toEqual(serializedEntity);
+      });
+
+      it("should parse numbers in query params", async () => {
+        await controller.list({ limit: "1", offset: "1" } as any);
+        expect(TestServiceProto.list.mock.calls[0][0]).toEqual({
+          limit: 1,
+          offset: 1,
+        });
       });
     });
 

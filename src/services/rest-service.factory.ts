@@ -29,37 +29,37 @@ export class RestServiceFactory<
         repo = repository;
       }
 
-      async list() {
+      async list(...[]: Parameters<Interface["list"]>) {
         return await repo.find();
       }
 
-      async create(dto: CreateDto) {
+      async create(...[dto]: Parameters<Interface["create"]>) {
         const entity = repo.create(dto);
         return await repo.save(entity);
       }
 
-      async retrieve(lookup: Entity[LookupField]) {
+      async retrieve(...[lookup]: Parameters<Interface["retrieve"]>) {
         return await repo.findOneOrFail({ [options.lookupField]: lookup });
       }
 
-      async replace(lookup: Entity[LookupField], dto: CreateDto) {
+      async replace(...[lookup, dto]: Parameters<Interface["replace"]>) {
         const entity = await repo.findOne(lookup);
         if (entity) return await this.update(lookup, dto);
         return await this.create(dto);
       }
 
-      async update(lookup: Entity[LookupField], dto: CreateDto | UpdateDto) {
+      async update(...[lookup, dto]: Parameters<Interface["update"]>) {
         const entity = await this.retrieve(lookup);
         Object.assign(entity, dto);
         return await repo.save(entity);
       }
 
-      async destroy(lookup: Entity[LookupField]) {
+      async destroy(...[lookup]: Parameters<Interface["destroy"]>) {
         const entity = await this.retrieve(lookup);
         return await repo.remove(entity);
       }
 
-      async count() {
+      async count(...[]: Parameters<Interface["count"]>) {
         return await repo.count();
       }
     };

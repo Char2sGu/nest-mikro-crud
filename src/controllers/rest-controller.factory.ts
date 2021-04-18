@@ -171,14 +171,11 @@ export class RestControllerFactory<
     return this;
   }
 
-  applyDecorators(
-    target: RouteNames,
-    ...decorators: MethodDecorator[]
-  ): RestControllerFactory<Entity, CreateDto, UpdateDto, LookupField, Service>;
+  applyDecorators(target: RouteNames, ...decorators: MethodDecorator[]): this;
   applyDecorators(
     target: `${RouteNames}:${number}`,
     ...decorators: ParameterDecorator[]
-  ): RestControllerFactory<Entity, CreateDto, UpdateDto, LookupField, Service>;
+  ): this;
   applyDecorators(
     target: RouteNames | `${RouteNames}:${number}`,
     ...decorators: MethodDecorator[] | ParameterDecorator[]

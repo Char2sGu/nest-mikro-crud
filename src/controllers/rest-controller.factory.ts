@@ -71,7 +71,9 @@ export class RestControllerFactory<
       }
 
       async list(...[query]: Parameters<Interface["list"]>) {
-        query = plainToClass(ListQueryDto, query); // parse number strings to numbers
+        query = plainToClass(ListQueryDto, query, {
+          excludeExtraneousValues: true,
+        }); // parse number strings to numbers
         return serialize(await restService.list(query));
       }
 

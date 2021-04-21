@@ -149,46 +149,79 @@ export class RestControllerFactory<
 
     const routesMapping: Record<
       RouteNames,
-      [MethodDecorator, ParameterDecorator[]]
+      [MethodDecorator, ParameterDecorator[][]]
     > = {
-      list: [Get(), [Query()]],
-      create: [Post(), [Body()]],
-      retrieve: [Get(path), [Param(lookupParam)]],
-      replace: [Put(path), [Param(lookupParam), Body()]],
-      update: [Patch(path), [Param(lookupParam), Body()]],
-      destroy: [Delete(path), [Param(lookupParam)]],
+      list: [Get(), [[Query()]]],
+      create: [Post(), [[Body()]]],
+      retrieve: [Get(path), [[Param(lookupParam)]]],
+      replace: [Put(path), [[Param(lookupParam)], [Body()]]],
+      update: [Patch(path), [[Param(lookupParam)], [Body()]]],
+      destroy: [Delete(path), [[Param(lookupParam)]]],
     };
 
     routeNames.forEach((routeName) => {
       const [routeDecorator, paramDecorators] = routesMapping[routeName];
       this.applyDecorators(routeName, routeDecorator);
-      paramDecorators.forEach((decorator, index) => {
-        const target = `${routeName}:${index}` as `${RouteNames}:${number}`;
-        this.applyDecorators(target, decorator);
-      });
+      this.applyDecorators(routeName, ...paramDecorators);
     });
 
     return this;
   }
 
+  /**
+   * Apply multiple route-level decorators on a routing method
+   * @param target
+   * @param decorators
+   */
   applyDecorators(target: RouteNames, ...decorators: MethodDecorator[]): this;
+  /**
+   * Apply multiple param-level decorators on a method param
+   * @param target
+   * @param decorators
+   */
   applyDecorators(
     target: `${RouteNames}:${number}`,
     ...decorators: ParameterDecorator[]
   ): this;
+  /**
+   * Apply a list of parameter-level decorators to each parameter in order on a routing method
+   * @param target
+   * @param decoratorSet
+   */
+  applyDecorators(
+    target: RouteNames,
+    ...decoratorSet: ParameterDecorator[][]
+  ): this;
   applyDecorators(
     target: RouteNames | `${RouteNames}:${number}`,
-    ...decorators: MethodDecorator[] | ParameterDecorator[]
+    ...decorators:
+      | MethodDecorator[]
+      | ParameterDecorator[]
+      | ParameterDecorator[][]
   ) {
-    function isParamMode(v: typeof decorators): v is ParameterDecorator[] {
-      return target.includes(":");
-    }
+    if (!decorators.length) return this;
+
+    const isParamDecorators = (
+      v: typeof decorators
+    ): v is ParameterDecorator[] => target.includes(":");
+
+    const isParamDecoratorSets = (
+      v: typeof decorators
+    ): v is ParameterDecorator[][] => decorators[0] instanceof Array;
 
     const proto = this.controller.prototype;
 
-    if (isParamMode(decorators)) {
+    if (isParamDecorators(decorators)) {
       const [name, index] = target.split(":");
       decorators.forEach((d) => d(proto, name, +index));
+    } else if (isParamDecoratorSets(decorators)) {
+      const name = target;
+      decorators.forEach((decorators, index) =>
+        this.applyDecorators(
+          `${name}:${index}` as `${RouteNames}:${number}`,
+          ...decorators
+        )
+      );
     } else {
       const name = target;
       decorators.forEach((d) =>

@@ -105,9 +105,12 @@ describe("RestControllerFactory", () => {
     });
 
     it("should call `.applyDecorators()` on each decorator", () => {
-      expect(spy).toHaveBeenCalledTimes(2);
+      spy.mockImplementation();
+      expect(spy).toHaveBeenCalled();
       expect(spy.mock.calls[0][0]).toBe("create");
-      expect(spy.mock.calls[1][0]).toBe("create:0");
+      expect(spy.mock.calls[0][1]).toBeInstanceOf(Function);
+      expect(spy.mock.calls[1][0]).toBe("create");
+      expect(spy.mock.calls[1][1]).toBeInstanceOf(Array);
     });
   });
 

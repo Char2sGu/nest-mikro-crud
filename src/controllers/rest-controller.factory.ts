@@ -15,7 +15,10 @@ import {
   ClassTransformOptions,
   plainToClass,
 } from "class-transformer";
-import { REST_SERVICE_OPTIONS_METADATA_KEY } from "src/constants";
+import {
+  REST_SERVICE_OPTIONS_METADATA_KEY,
+  REST_SERVICE_SYMBOL,
+} from "src/constants";
 import { ListQueryDto } from "src/dtos/list-query.dto";
 import { EntityNotFoundErrorFilter } from "src/entity-not-found-error.filter";
 import { LookupFields } from "src/services/lookup-fields.type";
@@ -62,39 +65,39 @@ export class RestControllerFactory<
 
     const { entityClass } = this.serviceOptions;
 
-    let restService: Service;
-
     type Interface = RestController<Entity, CreateDto, UpdateDto, LookupField>;
     this.controller = class RestController implements Interface {
+      readonly [REST_SERVICE_SYMBOL]: Service;
+
       constructor(service: Service) {
-        restService = service;
+        this[REST_SERVICE_SYMBOL] = service;
       }
 
       async list(...[query]: Parameters<Interface["list"]>) {
         query = plainToClass(ListQueryDto, query, {
           excludeExtraneousValues: true,
         }); // parse number strings to numbers
-        return serialize(await restService.list(query));
+        return serialize(await this[REST_SERVICE_SYMBOL].list(query));
       }
 
       async create(...[dto]: Parameters<Interface["create"]>) {
-        return serialize(await restService.create(dto));
+        return serialize(await this[REST_SERVICE_SYMBOL].create(dto));
       }
 
       async retrieve(...[lookup]: Parameters<Interface["retrieve"]>) {
-        return serialize(await restService.retrieve(lookup));
+        return serialize(await this[REST_SERVICE_SYMBOL].retrieve(lookup));
       }
 
       async replace(...[lookup, dto]: Parameters<Interface["replace"]>) {
-        return serialize(await restService.replace(lookup, dto));
+        return serialize(await this[REST_SERVICE_SYMBOL].replace(lookup, dto));
       }
 
       async update(...[lookup, dto]: Parameters<Interface["update"]>) {
-        return serialize(await restService.update(lookup, dto));
+        return serialize(await this[REST_SERVICE_SYMBOL].update(lookup, dto));
       }
 
       async destroy(...[lookup]: Parameters<Interface["destroy"]>) {
-        await restService.destroy(lookup);
+        await this[REST_SERVICE_SYMBOL].destroy(lookup);
       }
     };
 

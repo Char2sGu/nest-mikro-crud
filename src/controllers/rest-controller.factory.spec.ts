@@ -81,6 +81,25 @@ describe("RestControllerFactory", () => {
     }
   );
 
+  describe(".emitParamTypesMetadata()", () => {
+    it.each([
+      [ListQueryDto, ListQueryDto],
+      ["lookup", Number],
+      ["dto:create", TestEntity],
+    ])(
+      "should define the proper metadata to the param when param `type` is %s",
+      (type: any, expected) => {
+        factory.emitParamTypesMetadata("list", [type]);
+        const metadata = Reflect.getMetadata(
+          "design:paramtypes",
+          factory.controller.prototype,
+          "list"
+        );
+        expect(metadata[0]).toBe(expected);
+      }
+    );
+  });
+
   describe(".enableRoutes()", () => {
     const doSpy = () => jest.spyOn(factory, "applyDecorators");
     let spy: ReturnType<typeof doSpy>;

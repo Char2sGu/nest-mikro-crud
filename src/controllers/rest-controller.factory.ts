@@ -101,7 +101,13 @@ export class RestControllerFactory<
       }
     };
 
-    this.emitParamTypesMetadata();
+    this.emitParamTypesMetadata("list", [ListQueryDto]);
+    this.emitParamTypesMetadata("create", ["dto:create"]);
+    this.emitParamTypesMetadata("retrieve", ["lookup"]);
+    this.emitParamTypesMetadata("replace", ["lookup", "dto:create"]);
+    this.emitParamTypesMetadata("update", ["lookup", "dto:update"]);
+    this.emitParamTypesMetadata("destroy", ["lookup"]);
+
     UseFilters(EntityNotFoundErrorFilter)(this.controller);
     this.applyDecorators("destroy", HttpCode(204));
   }
@@ -109,7 +115,14 @@ export class RestControllerFactory<
   /**
    * Emit param types metadata to "design:paramtypes" manually.
    */
-  protected emitParamTypesMetadata() {
+  emitParamTypesMetadata(
+    name: RouteNames,
+    types: (
+      | ClassConstructor<unknown>
+      | "lookup"
+      | `dto:${"create" | "update"}`
+    )[]
+  ) {
     const TS_PARAM_TYPES_METADATA_KEY = "design:paramtypes";
     const TS_TYPE_METADATA_KEY = "design:type";
 
@@ -125,20 +138,25 @@ export class RestControllerFactory<
       lookupField
     );
 
-    for (const [name, types] of Object.entries({
-      list: [ListQueryDto],
-      create: [createDto],
-      retrieve: [lookupType],
-      replace: [lookupType, createDto],
-      update: [lookupType, updateDto],
-      destroy: [lookupType],
-    } as Record<RouteNames, any[]>))
-      Reflect.defineMetadata(
-        TS_PARAM_TYPES_METADATA_KEY,
-        types,
-        this.controller.prototype,
-        name
-      );
+    const shortcutMap: Record<
+      Extract<typeof types[0], string>,
+      ClassConstructor<unknown>
+    > = {
+      lookup: lookupType,
+      "dto:create": createDto,
+      "dto:update": updateDto,
+    };
+
+    types = types.map((type) =>
+      typeof type == "string" ? shortcutMap[type] : type
+    );
+
+    Reflect.defineMetadata(
+      TS_PARAM_TYPES_METADATA_KEY,
+      types,
+      this.controller.prototype,
+      name
+    );
   }
 
   enableRoutes({

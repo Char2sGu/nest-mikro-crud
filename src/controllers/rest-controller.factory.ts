@@ -178,16 +178,20 @@ export class RestControllerFactory<
   }) {
     const path = `:${lookupParam}`;
 
+    const LookupParam = Param(lookupParam);
+    const AllParams = Query();
+    const Dto = Body();
+
     const routesMapping: Record<
       RouteNames,
       [MethodDecorator, ParameterDecorator[][]]
     > = {
-      list: [Get(), [[Query()]]],
-      create: [Post(), [[Body()]]],
-      retrieve: [Get(path), [[Param(lookupParam)]]],
-      replace: [Put(path), [[Param(lookupParam)], [Body()]]],
-      update: [Patch(path), [[Param(lookupParam)], [Body()]]],
-      destroy: [Delete(path), [[Param(lookupParam)]]],
+      list: [Get(), [[AllParams]]],
+      create: [Post(), [[Dto]]],
+      retrieve: [Get(path), [[LookupParam]]],
+      replace: [Put(path), [[LookupParam], [Dto]]],
+      update: [Patch(path), [[LookupParam], [Dto]]],
+      destroy: [Delete(path), [[LookupParam]]],
     };
 
     routeNames.forEach((routeName) => {

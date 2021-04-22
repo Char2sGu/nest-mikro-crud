@@ -53,17 +53,15 @@ export class RestControllerFactory<
       this.options.restServiceClass
     ) as RestServiceOptions<Entity, CreateDto, UpdateDto, LookupField>;
 
-    function serialize(plain: Entity[]): Entity[];
-    function serialize(plain: Entity): Entity;
-    function serialize(plain: Entity | Entity[]) {
-      return plainToClass(
-        entityClass,
+    const serialize: {
+      (plain: Entity): Entity;
+      (plain: Entity[]): Entity[];
+    } = (plain: Entity | Entity[]) =>
+      plainToClass(
+        this.serviceOptions.entityClass,
         plain,
         options.serializationOptions ?? {}
-      ) as Entity | Entity[];
-    }
-
-    const { entityClass } = this.serviceOptions;
+      ) as any;
 
     type Interface = RestController<Entity, CreateDto, UpdateDto, LookupField>;
     this.controller = class RestController implements Interface {

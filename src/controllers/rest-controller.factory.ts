@@ -155,6 +155,8 @@ export class RestControllerFactory<
       this.controller.prototype,
       name
     );
+
+    return this;
   }
 
   enableRoutes({

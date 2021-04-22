@@ -87,9 +87,11 @@ describe("RestControllerFactory", () => {
       ["lookup", Number],
       ["dto:create", TestEntity],
     ])(
-      "should define the proper metadata to the param when param `type` is %s",
+      "should define the proper metadata to the param and return `this` when param `type` is %s",
       (type: any, expected) => {
-        factory.emitParamTypesMetadata("list", [type]);
+        const ret = factory.emitParamTypesMetadata("list", [type]);
+        expect(ret).toBe(factory);
+
         const metadata = Reflect.getMetadata(
           "design:paramtypes",
           factory.controller.prototype,

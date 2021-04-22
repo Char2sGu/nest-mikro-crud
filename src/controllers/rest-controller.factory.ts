@@ -53,6 +53,17 @@ export class RestControllerFactory<
       this.options.restServiceClass
     ) as RestServiceOptions<Entity, CreateDto, UpdateDto, LookupField>;
 
+    this.controller = this.createRawClass();
+    this.emitRoutesParamsMetadata();
+
+    UseFilters(EntityNotFoundErrorFilter)(this.controller);
+    this.applyDecorators("destroy", HttpCode(204));
+  }
+
+  /**
+   * Create a no-metadata controller class
+   */
+  protected createRawClass() {
     const serialize: {
       (plain: Entity): Entity;
       (plain: Entity[]): Entity[];
@@ -60,11 +71,11 @@ export class RestControllerFactory<
       plainToClass(
         this.serviceOptions.entityClass,
         plain,
-        options.serializationOptions ?? {}
+        this.options.serializationOptions ?? {}
       ) as any;
 
     type Interface = RestController<Entity, CreateDto, UpdateDto, LookupField>;
-    this.controller = class RestController implements Interface {
+    return class RestController implements Interface {
       readonly [REST_SERVICE_SYMBOL]: Service;
 
       constructor(service: Service) {
@@ -98,16 +109,15 @@ export class RestControllerFactory<
         await this[REST_SERVICE_SYMBOL].destroy(lookup);
       }
     };
+  }
 
-    this.emitParamTypesMetadata("list", [ListQueryDto]);
-    this.emitParamTypesMetadata("create", ["dto:create"]);
-    this.emitParamTypesMetadata("retrieve", ["lookup"]);
-    this.emitParamTypesMetadata("replace", ["lookup", "dto:create"]);
-    this.emitParamTypesMetadata("update", ["lookup", "dto:update"]);
-    this.emitParamTypesMetadata("destroy", ["lookup"]);
-
-    UseFilters(EntityNotFoundErrorFilter)(this.controller);
-    this.applyDecorators("destroy", HttpCode(204));
+  protected emitRoutesParamsMetadata() {
+    this.emitParamTypesMetadata("list", [ListQueryDto])
+      .emitParamTypesMetadata("create", ["dto:create"])
+      .emitParamTypesMetadata("retrieve", ["lookup"])
+      .emitParamTypesMetadata("replace", ["lookup", "dto:create"])
+      .emitParamTypesMetadata("update", ["lookup", "dto:update"])
+      .emitParamTypesMetadata("destroy", ["lookup"]);
   }
 
   /**

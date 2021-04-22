@@ -23,8 +23,19 @@ export class RestServiceFactory<
       LookupField
     >
   ) {
+    this.service = this.createRawClass();
+    Reflect.defineMetadata(
+      REST_SERVICE_OPTIONS_METADATA_KEY,
+      options,
+      this.service
+    );
+  }
+
+  protected createRawClass() {
+    const options = this.options;
+
     type Interface = RestService<Entity, CreateDto, UpdateDto, LookupField>;
-    this.service = class RestService implements Interface {
+    return class RestService implements Interface {
       readonly [REST_REPOSITORY_SYMBOL]: Repository<Entity>;
 
       constructor(repository: Repository<Entity>) {
@@ -71,11 +82,5 @@ export class RestServiceFactory<
         return await this[REST_REPOSITORY_SYMBOL].count();
       }
     };
-
-    Reflect.defineMetadata(
-      REST_SERVICE_OPTIONS_METADATA_KEY,
-      options,
-      this.service
-    );
   }
 }

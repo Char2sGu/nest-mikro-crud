@@ -41,9 +41,7 @@ export class RestControllerFactory<
   readonly serviceOptions;
 
   constructor(options: RestControllerOptions<Service>) {
-    options.lookupParam = options.lookupParam ?? "lookup";
-    options.serializationOptions = options.serializationOptions ?? {};
-    this.options = options as Required<typeof options>;
+    this.options = this.processOptions(options);
 
     this.serviceOptions = Reflect.getMetadata(
       REST_SERVICE_OPTIONS_METADATA_KEY,
@@ -53,9 +51,14 @@ export class RestControllerFactory<
     this.controller = this.createRawClass();
     this.emitRoutesParamsMetadata();
     this.emitRoutesMethodsMetadata();
-
     UseFilters(EntityNotFoundErrorFilter)(this.controller);
     this.applyDecorators("destroy", HttpCode(204));
+  }
+
+  protected processOptions(options: RestControllerOptions<Service>) {
+    options.lookupParam = options.lookupParam ?? "lookup";
+    options.serializationOptions = options.serializationOptions ?? {};
+    return options as Required<typeof options>;
   }
 
   /**

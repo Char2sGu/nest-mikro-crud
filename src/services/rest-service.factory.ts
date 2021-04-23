@@ -1,5 +1,5 @@
 import {
-  REST_REPOSITORY_SYMBOL,
+  REST_REPOSITORY_PROPERTY_KEY,
   REST_SERVICE_OPTIONS_METADATA_KEY,
 } from "src/constants";
 import { RestServiceOptions } from "src/services/rest-service-options.interface";
@@ -36,14 +36,14 @@ export class RestServiceFactory<
 
     type Interface = RestService<Entity, CreateDto, UpdateDto, LookupField>;
     return class RestService implements Interface {
-      readonly [REST_REPOSITORY_SYMBOL]: Repository<Entity>;
+      readonly [REST_REPOSITORY_PROPERTY_KEY]: Repository<Entity>;
 
       constructor(repository: Repository<Entity>) {
-        this[REST_REPOSITORY_SYMBOL] = repository;
+        this[REST_REPOSITORY_PROPERTY_KEY] = repository;
       }
 
       async list(...[options]: Parameters<Interface["list"]>) {
-        return await this[REST_REPOSITORY_SYMBOL].find({
+        return await this[REST_REPOSITORY_PROPERTY_KEY].find({
           where: {}, // let Typeorm know these are options, not conditions
           take: options?.limit,
           skip: options?.offset,
@@ -51,18 +51,18 @@ export class RestServiceFactory<
       }
 
       async create(...[dto]: Parameters<Interface["create"]>) {
-        const entity = this[REST_REPOSITORY_SYMBOL].create(dto);
-        return await this[REST_REPOSITORY_SYMBOL].save(entity);
+        const entity = this[REST_REPOSITORY_PROPERTY_KEY].create(dto);
+        return await this[REST_REPOSITORY_PROPERTY_KEY].save(entity);
       }
 
       async retrieve(...[lookup]: Parameters<Interface["retrieve"]>) {
-        return await this[REST_REPOSITORY_SYMBOL].findOneOrFail({
+        return await this[REST_REPOSITORY_PROPERTY_KEY].findOneOrFail({
           [options.lookupField]: lookup,
         });
       }
 
       async replace(...[lookup, dto]: Parameters<Interface["replace"]>) {
-        const entity = await this[REST_REPOSITORY_SYMBOL].findOne(lookup);
+        const entity = await this[REST_REPOSITORY_PROPERTY_KEY].findOne(lookup);
         if (entity) return await this.update(lookup, dto);
         return await this.create(dto);
       }
@@ -70,16 +70,16 @@ export class RestServiceFactory<
       async update(...[lookup, dto]: Parameters<Interface["update"]>) {
         const entity = await this.retrieve(lookup);
         Object.assign(entity, dto);
-        return await this[REST_REPOSITORY_SYMBOL].save(entity);
+        return await this[REST_REPOSITORY_PROPERTY_KEY].save(entity);
       }
 
       async destroy(...[lookup]: Parameters<Interface["destroy"]>) {
         const entity = await this.retrieve(lookup);
-        return await this[REST_REPOSITORY_SYMBOL].remove(entity);
+        return await this[REST_REPOSITORY_PROPERTY_KEY].remove(entity);
       }
 
       async count(...[]: Parameters<Interface["count"]>) {
-        return await this[REST_REPOSITORY_SYMBOL].count();
+        return await this[REST_REPOSITORY_PROPERTY_KEY].count();
       }
     };
   }

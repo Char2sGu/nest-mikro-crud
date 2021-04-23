@@ -10,11 +10,7 @@ import {
   Query,
   UseFilters,
 } from "@nestjs/common";
-import {
-  ClassConstructor,
-  ClassTransformOptions,
-  plainToClass,
-} from "class-transformer";
+import { ClassConstructor, plainToClass } from "class-transformer";
 import {
   REST_SERVICE_OPTIONS_METADATA_KEY,
   REST_SERVICE_SYMBOL,
@@ -24,6 +20,7 @@ import { EntityNotFoundErrorFilter } from "src/entity-not-found-error.filter";
 import { LookupFields } from "src/services/lookup-fields.type";
 import { RestServiceOptions } from "src/services/rest-service-options.interface";
 import { RestService } from "src/services/rest-service.interface";
+import { RestControllerOptions } from "./rest-controller-options.interface";
 import { RestController } from "./rest-controller.interface";
 import { RouteNames } from "./route-names.types";
 
@@ -43,12 +40,7 @@ export class RestControllerFactory<
   readonly controller;
   readonly serviceOptions;
 
-  constructor(options: {
-    restServiceClass: ClassConstructor<Service>;
-    routes: RouteNames[];
-    lookupParam?: string;
-    serializationOptions?: ClassTransformOptions;
-  }) {
+  constructor(options: RestControllerOptions<Service>) {
     options.lookupParam = options.lookupParam ?? "lookup";
     options.serializationOptions = options.serializationOptions ?? {};
     this.options = options as Required<typeof options>;

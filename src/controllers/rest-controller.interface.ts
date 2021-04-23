@@ -1,5 +1,7 @@
+import { REST_SERVICE_SYMBOL } from "src/constants";
 import { ListQueryDto } from "src/dtos/list-query.dto";
 import { LookupFields } from "src/services/lookup-fields.type";
+import { RestService } from "src/services/rest-service.interface";
 
 /**
  * ### Metadata in Overriding
@@ -24,6 +26,8 @@ export interface RestController<
   UpdateDto = CreateDto,
   LookupField extends LookupFields<Entity> = LookupFields<Entity>
 > {
+  [REST_SERVICE_SYMBOL]: RestService<Entity, CreateDto, UpdateDto, LookupField>;
+
   list(query: ListQueryDto, ...args: any[]): Promise<Entity[]>;
 
   create(dto: CreateDto, ...args: any[]): Promise<Entity>;

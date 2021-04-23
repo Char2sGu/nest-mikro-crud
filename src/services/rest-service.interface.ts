@@ -1,3 +1,5 @@
+import { REST_REPOSITORY_PROPERTY_KEY } from "src/constants";
+import { Repository } from "typeorm";
 import { LookupFields } from "./lookup-fields.type";
 
 export interface RestService<
@@ -6,6 +8,8 @@ export interface RestService<
   UpdateDto = CreateDto,
   LookupField extends LookupFields<Entity> = LookupFields<Entity>
 > {
+  [REST_REPOSITORY_PROPERTY_KEY]: Repository<Entity>;
+
   list(options?: { limit?: number; offset?: number }): Promise<Entity[]>;
 
   create(dto: CreateDto): Promise<Entity>;

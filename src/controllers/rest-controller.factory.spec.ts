@@ -1,12 +1,13 @@
 import { Exclude } from "class-transformer";
 import "reflect-metadata";
 import {
+  REST_REPOSITORY_PROPERTY_KEY,
   REST_SERVICE_OPTIONS_METADATA_KEY,
   REST_SERVICE_PROPERTY_KEY,
 } from "src/constants";
 import { ListQueryDto } from "src/dtos/list-query.dto";
 import { RestServiceOptions } from "src/services/rest-service-options.interface";
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, PrimaryGeneratedColumn, Repository } from "typeorm";
 import { RestControllerFactory } from "./rest-controller.factory";
 import { RestController } from "./rest-controller.interface";
 
@@ -28,6 +29,7 @@ describe("RestControllerFactory", () => {
   };
 
   const TestServiceProto = {
+    [REST_REPOSITORY_PROPERTY_KEY]: new Repository(),
     list: jest.fn(),
     create: jest.fn(),
     retrieve: jest.fn(),

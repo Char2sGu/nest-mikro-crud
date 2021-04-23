@@ -1,5 +1,8 @@
 import { plainToClass } from "class-transformer";
-import { REST_SERVICE_OPTIONS_METADATA_KEY } from "src/constants";
+import {
+  REST_REPOSITORY_PROPERTY_KEY,
+  REST_SERVICE_OPTIONS_METADATA_KEY,
+} from "src/constants";
 import { Resolved } from "src/utils/resolved.type";
 import { Repository } from "typeorm";
 import { RestServiceFactory } from "./rest-service.factory";
@@ -28,22 +31,22 @@ describe("RestServiceFactory", () => {
   });
 
   describe(".service", () => {
-    let TestService: typeof factory.service;
     let repository: Repository<TestEntity>;
     let service: RestService<TestEntity>;
     let entity: TestEntity;
 
     beforeEach(() => {
-      TestService = class TestService extends factory.service {};
       repository = new Repository();
-      service = new TestService(repository);
+      service = new factory.service();
+      // @ts-expect-error - manual injection
+      service[REST_REPOSITORY_PROPERTY_KEY] = repository;
       entity = { id: 1 };
     });
 
     it("should have the metadata of the options passed", () => {
       const metadata = Reflect.getMetadata(
         REST_SERVICE_OPTIONS_METADATA_KEY,
-        TestService
+        factory.service
       );
       expect(metadata).toBeDefined();
       expect(metadata).toBeInstanceOf(Object);

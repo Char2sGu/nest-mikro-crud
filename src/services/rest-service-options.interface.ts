@@ -8,6 +8,7 @@ export interface RestServiceOptions<
   LookupField extends LookupFields<Entity> = LookupFields<Entity>
 > {
   entityClass: ClassConstructor<Entity>;
+  repoConnection?: string;
   dtoClasses: {
     create: ClassConstructor<CreateDto>;
     update: ClassConstructor<UpdateDto>;

@@ -44,13 +44,7 @@ describe("Integration", () => {
     entityClass: TestEntity,
     dtoClasses: { create: TestCreateDto, update: TestUpdateDto },
     lookupField: "id",
-  }).service {
-    constructor(
-      @InjectRepository(TestEntity) repository: Repository<TestEntity>
-    ) {
-      super(repository);
-    }
-  }
+  }).service {}
 
   @UsePipes(ValidationPipe)
   @Controller()

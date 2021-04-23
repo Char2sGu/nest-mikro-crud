@@ -1,3 +1,5 @@
+import { Inject } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
 import {
   REST_REPOSITORY_PROPERTY_KEY,
   REST_SERVICE_OPTIONS_METADATA_KEY,
@@ -24,6 +26,8 @@ export class RestServiceFactory<
     >
   ) {
     this.service = this.createRawClass();
+    this.emitInjectionsMetadata();
+
     Reflect.defineMetadata(
       REST_SERVICE_OPTIONS_METADATA_KEY,
       options,
@@ -37,10 +41,6 @@ export class RestServiceFactory<
     type Interface = RestService<Entity, CreateDto, UpdateDto, LookupField>;
     return class RestService implements Interface {
       readonly [REST_REPOSITORY_PROPERTY_KEY]: Repository<Entity>;
-
-      constructor(repository: Repository<Entity>) {
-        this[REST_REPOSITORY_PROPERTY_KEY] = repository;
-      }
 
       async list(...[options]: Parameters<Interface["list"]>) {
         return await this[REST_REPOSITORY_PROPERTY_KEY].find({
@@ -82,5 +82,12 @@ export class RestServiceFactory<
         return await this[REST_REPOSITORY_PROPERTY_KEY].count();
       }
     };
+  }
+
+  protected emitInjectionsMetadata() {
+    InjectRepository(this.options.entityClass, this.options.repoConnection)(
+      this.service.prototype,
+      REST_REPOSITORY_PROPERTY_KEY
+    );
   }
 }

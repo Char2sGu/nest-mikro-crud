@@ -55,15 +55,12 @@ describe("Integration", () => {
   @UsePipes(ValidationPipe)
   @Controller()
   class TestController extends new RestControllerFactory({
+    routes: ["list", "create", "retrieve", "update", "destroy"],
     restServiceClass: TestService,
-  })
-    .enableRoutes({
-      routeNames: ["list", "create", "retrieve", "update", "destroy"],
-    })
-    .applyDecorators(
-      "update",
-      UsePipes(jest.fn(() => ({ transform: testPipe })))
-    ).controller {
+  }).applyDecorators(
+    "update",
+    UsePipes(jest.fn(() => ({ transform: testPipe })))
+  ).controller {
     constructor(service: TestService) {
       super(service);
     }

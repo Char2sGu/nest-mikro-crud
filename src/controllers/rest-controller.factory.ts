@@ -39,15 +39,20 @@ export class RestControllerFactory<
     LookupField
   > = RestService<Entity, CreateDto, UpdateDto, LookupField>
 > {
+  readonly options;
   readonly controller;
   readonly serviceOptions;
 
-  constructor(
-    readonly options: {
-      restServiceClass: ClassConstructor<Service>;
-      serializationOptions?: ClassTransformOptions;
-    }
-  ) {
+  constructor(options: {
+    restServiceClass: ClassConstructor<Service>;
+    routes: RouteNames[];
+    lookupParam?: string;
+    serializationOptions?: ClassTransformOptions;
+  }) {
+    options.lookupParam = options.lookupParam ?? "lookup";
+    options.serializationOptions = options.serializationOptions ?? {};
+    this.options = options as Required<typeof options>;
+
     this.serviceOptions = Reflect.getMetadata(
       REST_SERVICE_OPTIONS_METADATA_KEY,
       this.options.restServiceClass
@@ -55,6 +60,7 @@ export class RestControllerFactory<
 
     this.controller = this.createRawClass();
     this.emitRoutesParamsMetadata();
+    this.emitRoutesMethodsMetadata();
 
     UseFilters(EntityNotFoundErrorFilter)(this.controller);
     this.applyDecorators("destroy", HttpCode(204));
@@ -120,6 +126,32 @@ export class RestControllerFactory<
       .emitParamTypesMetadata("destroy", ["lookup"]);
   }
 
+  protected emitRoutesMethodsMetadata() {
+    const path = `:${this.options.lookupParam}`;
+
+    const LookupParam = Param(this.options.lookupParam);
+    const AllParams = Query();
+    const Dto = Body();
+
+    const routesMapping: Record<
+      RouteNames,
+      [MethodDecorator, ParameterDecorator[][]]
+    > = {
+      list: [Get(), [[AllParams]]],
+      create: [Post(), [[Dto]]],
+      retrieve: [Get(path), [[LookupParam]]],
+      replace: [Put(path), [[LookupParam], [Dto]]],
+      update: [Patch(path), [[LookupParam], [Dto]]],
+      destroy: [Delete(path), [[LookupParam]]],
+    };
+
+    this.options.routes.forEach((routeName) => {
+      const [routeDecorator, paramDecorators] = routesMapping[routeName];
+      this.applyDecorators(routeName, routeDecorator);
+      this.applyDecorators(routeName, ...paramDecorators);
+    });
+  }
+
   /**
    * Emit param types metadata to "design:paramtypes" manually.
    */
@@ -165,40 +197,6 @@ export class RestControllerFactory<
       this.controller.prototype,
       name
     );
-
-    return this;
-  }
-
-  enableRoutes({
-    lookupParam = "lookup",
-    routeNames,
-  }: {
-    lookupParam?: string;
-    routeNames: RouteNames[];
-  }) {
-    const path = `:${lookupParam}`;
-
-    const LookupParam = Param(lookupParam);
-    const AllParams = Query();
-    const Dto = Body();
-
-    const routesMapping: Record<
-      RouteNames,
-      [MethodDecorator, ParameterDecorator[][]]
-    > = {
-      list: [Get(), [[AllParams]]],
-      create: [Post(), [[Dto]]],
-      retrieve: [Get(path), [[LookupParam]]],
-      replace: [Put(path), [[LookupParam], [Dto]]],
-      update: [Patch(path), [[LookupParam], [Dto]]],
-      destroy: [Delete(path), [[LookupParam]]],
-    };
-
-    routeNames.forEach((routeName) => {
-      const [routeDecorator, paramDecorators] = routesMapping[routeName];
-      this.applyDecorators(routeName, routeDecorator);
-      this.applyDecorators(routeName, ...paramDecorators);
-    });
 
     return this;
   }

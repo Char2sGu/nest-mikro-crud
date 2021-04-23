@@ -61,10 +61,6 @@ describe("Integration", () => {
     "update",
     UsePipes(jest.fn(() => ({ transform: testPipe })))
   ).controller {
-    constructor(service: TestService) {
-      super(service);
-    }
-
     @Post()
     create(dto: TestCreateDto, @Param() params: any) {
       params; // do something with params

@@ -3,6 +3,7 @@ import {
   Delete,
   Get,
   HttpCode,
+  Inject,
   Param,
   Patch,
   Post,
@@ -49,6 +50,7 @@ export class RestControllerFactory<
     ) as RestServiceOptions<Entity, CreateDto, UpdateDto, LookupField>;
 
     this.controller = this.createRawClass();
+    this.emitInjectionsMetadata();
     this.emitRoutesParamsMetadata();
     this.emitRoutesMethodsMetadata();
     UseFilters(EntityNotFoundErrorFilter)(this.controller);
@@ -78,10 +80,6 @@ export class RestControllerFactory<
     type Interface = RestController<Entity, CreateDto, UpdateDto, LookupField>;
     return class RestController implements Interface {
       readonly [REST_SERVICE_PROPERTY_KEY]: Service;
-
-      constructor(service: Service) {
-        this[REST_SERVICE_PROPERTY_KEY] = service;
-      }
 
       async list(...[query]: Parameters<Interface["list"]>) {
         query = plainToClass(ListQueryDto, query, {
@@ -116,6 +114,11 @@ export class RestControllerFactory<
         await this[REST_SERVICE_PROPERTY_KEY].destroy(lookup);
       }
     };
+  }
+
+  protected emitInjectionsMetadata() {
+    const target = this.controller.prototype;
+    Inject(this.options.restServiceClass)(target, REST_SERVICE_PROPERTY_KEY);
   }
 
   protected emitRoutesParamsMetadata() {

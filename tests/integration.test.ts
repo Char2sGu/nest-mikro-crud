@@ -101,13 +101,14 @@ describe("Integration", () => {
   });
 
   describe("/ (GET)", () => {
-    it.each([
-      [2, {}],
-      [1, { limit: 1 }],
-      [1, { offset: 1 }],
-    ])(
-      "should return %i serialized entities when query is %o",
-      async (length, query: ListQueryDto) => {
+    it.each`
+      count | query
+      ${2}  | ${{}}
+      ${1}  | ${{ limit: 1 }}
+      ${1}  | ${{ offset: 1 }}
+    `(
+      "should return $count serialized entities when query is $query",
+      async ({ count, query }: { count: number; query: ListQueryDto }) => {
         const anotherEntity: TestEntity = { id: 2, field: "str" };
         await repository.save(anotherEntity);
         await requester
@@ -117,7 +118,7 @@ describe("Integration", () => {
           .expect(({ body }) => {
             expect(body).toBeInstanceOf(Array);
             expect(body[0]).toEqual(serializedEntity);
-            expect(body).toHaveLength(length);
+            expect(body).toHaveLength(count);
           });
       }
     );

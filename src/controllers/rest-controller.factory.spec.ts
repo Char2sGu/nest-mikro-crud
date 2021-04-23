@@ -6,7 +6,6 @@ import { RestServiceOptions } from "src/services/rest-service-options.interface"
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 import { RestControllerFactory } from "./rest-controller.factory";
 import { RestController } from "./rest-controller.interface";
-import { RouteNames } from "./route-names.types";
 
 jest.mock("@nestjs/common", () => ({
   ...jest.requireActual("@nestjs/common"),
@@ -60,36 +59,33 @@ describe("RestControllerFactory", () => {
     expect(factory).toBeDefined();
   });
 
-  it.each(
-    Object.entries({
-      list: [ListQueryDto],
-      create: [TestEntity],
-      retrieve: [Number],
-      update: [Number, TestEntity],
-      replace: [Number, TestEntity],
-      destroy: [Number],
-    } as Record<RouteNames, any[]>)
-  )(
-    "should emit correct parameter types metadata to `.%s()`",
-    (name, types) => {
-      const metadata = Reflect.getMetadata(
-        "design:paramtypes",
-        factory.controller.prototype,
-        name
-      );
-      expect(metadata).toEqual(types);
-    }
-  );
+  it.each`
+    name          | types
+    ${"list"}     | ${[ListQueryDto]}
+    ${"create"}   | ${[TestEntity]}
+    ${"retrieve"} | ${[Number]}
+    ${"update"}   | ${[Number, TestEntity]}
+    ${"replace"}  | ${[Number, TestEntity]}
+    ${"destroy"}  | ${[Number]}
+  `("should emit parameter types metadata to `.$name()`", ({ name, types }) => {
+    const metadata = Reflect.getMetadata(
+      "design:paramtypes",
+      factory.controller.prototype,
+      name
+    );
+    expect(metadata).toEqual(types);
+  });
 
   describe(".emitParamTypesMetadata()", () => {
-    it.each([
-      [ListQueryDto, ListQueryDto],
-      ["lookup", Number],
-      ["dto:create", TestEntity],
-    ])(
-      "should define the proper metadata to the param and return `this` when param `type` is %s",
-      (type: any, expected) => {
-        const ret = factory.emitParamTypesMetadata("list", [type]);
+    it.each`
+      param           | type
+      ${ListQueryDto} | ${ListQueryDto}
+      ${"lookup"}     | ${Number}
+      ${"dto:create"} | ${TestEntity}
+    `(
+      "should define the proper metadata to the param and return `this` when param `type` is $param",
+      ({ param, type }) => {
+        const ret = factory.emitParamTypesMetadata("list", [param]);
         expect(ret).toBe(factory);
 
         const metadata = Reflect.getMetadata(
@@ -97,7 +93,7 @@ describe("RestControllerFactory", () => {
           factory.controller.prototype,
           "list"
         );
-        expect(metadata[0]).toBe(expected);
+        expect(metadata[0]).toBe(type);
       }
     );
   });
@@ -135,20 +131,14 @@ describe("RestControllerFactory", () => {
     });
   });
 
-  describe.each([
-    [
-      "create",
-      () => [
-        factory.controller.prototype,
-        "create",
-        Object.getOwnPropertyDescriptor(factory.controller.prototype, "create"),
-      ],
-    ],
-    ["create:0", () => [factory.controller.prototype, "create", 0]],
-  ])(".applyDecorators(%s, ...)", (target: any, params) => {
+  describe.each`
+    name          | params
+    ${"create"}   | ${() => [factory.controller.prototype, "create", Object.getOwnPropertyDescriptor(factory.controller.prototype, "create")]}
+    ${"create:0"} | ${() => [factory.controller.prototype, "create", 0]}
+  `(".applyDecorators($name, ...)", ({ name, params }) => {
     it("should call the decorator once with proper params passed and return itself", () => {
       const decorator = jest.fn();
-      const ret = factory.applyDecorators(target, decorator);
+      const ret = factory.applyDecorators(name, decorator);
       expect(ret).toBe(factory);
       expect(decorator).toHaveBeenCalledTimes(1);
       expect(decorator).toHaveBeenCalledWith(...params());

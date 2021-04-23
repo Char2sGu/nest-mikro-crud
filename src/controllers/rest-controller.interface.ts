@@ -26,7 +26,7 @@ export interface RestController<
   UpdateDto = CreateDto,
   LookupField extends LookupFields<Entity> = LookupFields<Entity>
 > {
-  [REST_SERVICE_PROPERTY_KEY]: RestService<
+  readonly [REST_SERVICE_PROPERTY_KEY]: RestService<
     Entity,
     CreateDto,
     UpdateDto,

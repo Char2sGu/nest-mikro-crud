@@ -8,7 +8,7 @@ export interface RestService<
   UpdateDto = CreateDto,
   LookupField extends LookupFields<Entity> = LookupFields<Entity>
 > {
-  [REST_REPOSITORY_PROPERTY_KEY]: Repository<Entity>;
+  readonly [REST_REPOSITORY_PROPERTY_KEY]: Repository<Entity>;
 
   list(options?: { limit?: number; offset?: number }): Promise<Entity[]>;
 

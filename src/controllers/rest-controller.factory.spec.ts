@@ -69,6 +69,7 @@ describe("RestControllerFactory", () => {
 
         beforeEach(() => {
           controller = new factory.controller();
+          // @ts-expect-error - manual injection
           controller[REST_SERVICE_PROPERTY_KEY] = new TestService();
           entity = { id: 1, field: 2 };
           serializedEntity = { id: 1 };

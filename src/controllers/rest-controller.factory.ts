@@ -214,11 +214,11 @@ export class RestControllerFactory<
   /**
    * Apply a list of parameter-level decorators to each parameter in order on a routing method
    * @param target
-   * @param decoratorSet
+   * @param decoratorSets
    */
   applyDecorators(
     target: RouteNames,
-    ...decoratorSet: ParameterDecorator[][]
+    ...decoratorSets: ParameterDecorator[][]
   ): this;
   applyDecorators(
     target: RouteNames | `${RouteNames}:${number}`,

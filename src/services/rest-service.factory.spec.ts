@@ -4,7 +4,7 @@ import {
   REST_SERVICE_OPTIONS_METADATA_KEY,
 } from "src/constants";
 import { Resolved } from "src/utils/resolved.type";
-import { Repository } from "typeorm";
+import { EntityNotFoundError, Repository } from "typeorm";
 import { RestServiceFactory } from "./rest-service.factory";
 import { RestService } from "./rest-service.interface";
 
@@ -121,14 +121,19 @@ describe("RestServiceFactory", () => {
 
     describe(".replace()", () => {
       it("should create and return an entity when not found", async () => {
-        const spy = jest.spyOn(service, "create").mockResolvedValueOnce(entity);
+        const spys = {
+          create: jest.spyOn(service, "create").mockResolvedValueOnce(entity),
+          update: jest.spyOn(service, "update").mockImplementationOnce(() => {
+            throw new EntityNotFoundError(class {}, {});
+          }),
+        };
         const ret = await service.replace(1, entity);
-        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spys.update).toHaveBeenCalledTimes(1);
+        expect(spys.create).toHaveBeenCalledTimes(1);
         expect(ret).toEqual(entity);
       });
 
       it("should update and return an entity when found", async () => {
-        MockRepository.prototype.findOne.mockResolvedValueOnce(entity);
         const spy = jest.spyOn(service, "update").mockResolvedValueOnce(entity);
         const ret = await service.replace(1, entity);
         expect(spy).toHaveBeenCalledTimes(1);

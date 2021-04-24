@@ -5,7 +5,7 @@ import {
   REST_SERVICE_OPTIONS_METADATA_KEY,
 } from "src/constants";
 import { RestServiceFactoryOptions } from "src/services/rest-service-factory-options.interface";
-import { Repository } from "typeorm";
+import { EntityNotFoundError, Repository } from "typeorm";
 import { LookupFields } from "./lookup-fields.type";
 import { RestService } from "./rest-service.interface";
 
@@ -62,9 +62,13 @@ export class RestServiceFactory<
       }
 
       async replace(...[lookup, dto]: Parameters<Interface["replace"]>) {
-        const entity = await this[REST_REPOSITORY_PROPERTY_KEY].findOne(lookup);
-        if (entity) return await this.update(lookup, dto);
-        return await this.create(dto);
+        try {
+          return await this.update(lookup, dto);
+        } catch (error) {
+          if (error instanceof EntityNotFoundError)
+            return await this.create(dto);
+          throw error;
+        }
       }
 
       async update(...[lookup, dto]: Parameters<Interface["update"]>) {

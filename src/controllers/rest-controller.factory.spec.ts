@@ -6,7 +6,7 @@ import {
   REST_SERVICE_PROPERTY_KEY,
 } from "src/constants";
 import { ListQueryDto } from "src/dtos/list-query.dto";
-import { RestServiceOptions } from "src/services/rest-service-options.interface";
+import { RestServiceFactoryOptions } from "src/services/rest-service-factory-options.interface";
 import { Column, Entity, PrimaryGeneratedColumn, Repository } from "typeorm";
 import { RestControllerFactory } from "./rest-controller.factory";
 import { RestController } from "./rest-controller.interface";
@@ -22,7 +22,7 @@ describe("RestControllerFactory", () => {
     field!: number;
   }
 
-  const testServiceOptions: RestServiceOptions<TestEntity> = {
+  const testServiceOptions: RestServiceFactoryOptions<TestEntity> = {
     entityClass: TestEntity,
     dtoClasses: { create: TestEntity, update: TestEntity },
     lookupField: "field",

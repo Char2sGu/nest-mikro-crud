@@ -4,7 +4,7 @@ import {
   REST_REPOSITORY_PROPERTY_KEY,
   REST_SERVICE_OPTIONS_METADATA_KEY,
 } from "src/constants";
-import { RestServiceOptions } from "src/services/rest-service-options.interface";
+import { RestServiceFactoryOptions } from "src/services/rest-service-factory-options.interface";
 import { Repository } from "typeorm";
 import { LookupFields } from "./lookup-fields.type";
 import { RestService } from "./rest-service.interface";
@@ -18,7 +18,7 @@ export class RestServiceFactory<
   readonly service;
 
   constructor(
-    readonly options: RestServiceOptions<
+    readonly options: RestServiceFactoryOptions<
       Entity,
       CreateDto,
       UpdateDto,

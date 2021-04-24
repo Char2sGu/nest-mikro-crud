@@ -19,9 +19,9 @@ import {
 import { ListQueryDto } from "src/dtos/list-query.dto";
 import { EntityNotFoundErrorFilter } from "src/filters/entity-not-found-error.filter";
 import { LookupFields } from "src/services/lookup-fields.type";
-import { RestServiceOptions } from "src/services/rest-service-options.interface";
+import { RestServiceFactoryOptions } from "src/services/rest-service-factory-options.interface";
 import { RestService } from "src/services/rest-service.interface";
-import { RestControllerOptions } from "./rest-controller-options.interface";
+import { RestControllerFactoryOptions } from "./rest-controller-factory-options.interface";
 import { RestController } from "./rest-controller.interface";
 import { RouteNames } from "./route-names.types";
 
@@ -41,13 +41,13 @@ export class RestControllerFactory<
   readonly controller;
   readonly serviceOptions;
 
-  constructor(options: RestControllerOptions<Service>) {
+  constructor(options: RestControllerFactoryOptions<Service>) {
     this.options = this.processOptions(options);
 
     this.serviceOptions = Reflect.getMetadata(
       REST_SERVICE_OPTIONS_METADATA_KEY,
       this.options.restServiceClass
-    ) as RestServiceOptions<Entity, CreateDto, UpdateDto, LookupField>;
+    ) as RestServiceFactoryOptions<Entity, CreateDto, UpdateDto, LookupField>;
 
     this.controller = this.createRawClass();
     this.emitInjectionsMetadata();
@@ -57,7 +57,7 @@ export class RestControllerFactory<
     this.applyDecorators("destroy", HttpCode(204));
   }
 
-  protected processOptions(options: RestControllerOptions<Service>) {
+  protected processOptions(options: RestControllerFactoryOptions<Service>) {
     options.lookupParam = options.lookupParam ?? "lookup";
     return options as Required<typeof options>;
   }

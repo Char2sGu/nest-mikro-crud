@@ -1,3 +1,5 @@
+export * from "./constants";
+export * from "./controllers/rest-controller-options.interface";
 export * from "./controllers/rest-controller.factory";
 export * from "./controllers/rest-controller.interface";
 export * from "./controllers/route-names.types";

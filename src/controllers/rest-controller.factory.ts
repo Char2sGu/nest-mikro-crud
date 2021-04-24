@@ -17,7 +17,7 @@ import {
   REST_SERVICE_PROPERTY_KEY,
 } from "src/constants";
 import { ListQueryDto } from "src/dtos/list-query.dto";
-import { EntityNotFoundErrorFilter } from "src/entity-not-found-error.filter";
+import { EntityNotFoundErrorFilter } from "src/filters/entity-not-found-error.filter";
 import { LookupFields } from "src/services/lookup-fields.type";
 import { RestServiceOptions } from "src/services/rest-service-options.interface";
 import { RestService } from "src/services/rest-service.interface";

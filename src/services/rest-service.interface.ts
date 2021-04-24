@@ -27,4 +27,7 @@ export interface RestService<
   destroy(lookup: Entity[LookupField]): Promise<Entity>;
 
   count(): Promise<number>;
+
+  transform(entities: Entity[]): Promise<Entity[]>;
+  transform(entity: Entity): Promise<Entity>;
 }

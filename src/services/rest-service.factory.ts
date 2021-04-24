@@ -1,4 +1,5 @@
 import { InjectRepository } from "@nestjs/typeorm";
+import { plainToClass } from "class-transformer";
 import {
   REST_REPOSITORY_PROPERTY_KEY,
   REST_SERVICE_OPTIONS_METADATA_KEY,
@@ -79,6 +80,15 @@ export class RestServiceFactory<
 
       async count(...[]: Parameters<Interface["count"]>) {
         return await this[REST_REPOSITORY_PROPERTY_KEY].count();
+      }
+
+      async transform(entity: Entity): Promise<Entity>;
+      async transform(entities: Entity[]): Promise<Entity[]>;
+      async transform(entities: Entity | Entity[]) {
+        // to trigger overloads
+        return entities instanceof Array
+          ? plainToClass(options.entityClass, entities)
+          : plainToClass(options.entityClass, entities);
       }
     };
   }

@@ -1,4 +1,4 @@
-import { plainToClass } from "class-transformer";
+import { Exclude, plainToClass } from "class-transformer";
 import {
   REST_REPOSITORY_PROPERTY_KEY,
   REST_SERVICE_OPTIONS_METADATA_KEY,
@@ -13,6 +13,7 @@ const MockRepository = Repository as jest.MockedClass<typeof Repository>;
 
 describe("RestServiceFactory", () => {
   class TestEntity {
+    @Exclude()
     id!: number;
   }
 
@@ -164,6 +165,18 @@ describe("RestServiceFactory", () => {
       it("should call `repo.count()`", async () => {
         await service.count();
         expect(MockRepository.prototype.count).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    describe(".transform()", () => {
+      it("should return a transformed entity when passed an entity", async () => {
+        const ret = await service.transform({ id: 1 });
+        expect(ret).toEqual({});
+      });
+
+      it("should return an array of transformed entities when passed an array", async () => {
+        const ret = await service.transform([{ id: 1 }]);
+        expect(ret).toEqual([{}]);
       });
     });
   });

@@ -37,6 +37,7 @@ describe("RestControllerFactory", () => {
     update: jest.fn(),
     destroy: jest.fn(),
     count: jest.fn(),
+    transform: jest.fn(),
   };
 
   const TestService = jest.fn(() => TestServiceProto);
@@ -64,22 +65,18 @@ describe("RestControllerFactory", () => {
     describe(".controller", () => {
       describe(".prototype", () => {
         let controller: RestController;
-        let entity: TestEntity;
-        let serializedEntity: Partial<TestEntity>;
 
         beforeEach(() => {
           controller = new factory.controller();
           // @ts-expect-error - manual injection
           controller[REST_SERVICE_PROPERTY_KEY] = new TestService();
-          entity = { id: 1, field: 2 };
-          serializedEntity = { id: 1 };
         });
 
         describe(".list()", () => {
-          it("should serialize and return what the service returns", async () => {
-            TestServiceProto.list.mockResolvedValueOnce([entity]);
-            const ret = await controller.list({ limit: 1, offset: 1 });
-            expect(ret[0]).toEqual(serializedEntity);
+          it("should call service's methods", async () => {
+            await controller.list({});
+            expect(TestServiceProto.list).toHaveBeenCalledTimes(1);
+            expect(TestServiceProto.transform).toHaveBeenCalledTimes(1);
           });
 
           it("should parse numbers in query params", async () => {
@@ -92,43 +89,41 @@ describe("RestControllerFactory", () => {
         });
 
         describe(".create()", () => {
-          it("should serialize and return what the service returns", async () => {
-            TestServiceProto.create.mockResolvedValueOnce(entity);
-            const ret = await controller.create({});
-            expect(ret).toEqual(serializedEntity);
+          it("should call service's methods", async () => {
+            await controller.create({});
+            expect(TestServiceProto.create).toHaveBeenCalledTimes(1);
+            expect(TestServiceProto.transform).toHaveBeenCalledTimes(1);
           });
         });
 
         describe(".retrieve()", () => {
-          it("should serialize and return what the service returns", async () => {
-            TestServiceProto.retrieve.mockResolvedValueOnce(entity);
-            const ret = await controller.retrieve(1);
-            expect(ret).toEqual(serializedEntity);
+          it("should call service's methods", async () => {
+            await controller.retrieve({});
+            expect(TestServiceProto.retrieve).toHaveBeenCalledTimes(1);
+            expect(TestServiceProto.transform).toHaveBeenCalledTimes(1);
           });
         });
 
         describe(".replace()", () => {
-          it("should serialize and return what the service returns", async () => {
-            TestServiceProto.replace.mockResolvedValueOnce(entity);
-            const ret = await controller.replace(1, {});
-            expect(ret).toEqual(serializedEntity);
+          it("should call service's methods", async () => {
+            await controller.replace({}, {});
+            expect(TestServiceProto.replace).toHaveBeenCalledTimes(1);
+            expect(TestServiceProto.transform).toHaveBeenCalledTimes(1);
           });
         });
 
         describe(".update()", () => {
-          it("should serialize and return what the service returns", async () => {
-            TestServiceProto.update.mockResolvedValueOnce(entity);
-            const ret = await controller.update(1, {});
-            expect(ret).toEqual(serializedEntity);
+          it("should call service's methods", async () => {
+            await controller.update({}, {});
+            expect(TestServiceProto.update).toHaveBeenCalledTimes(1);
+            expect(TestServiceProto.transform).toHaveBeenCalledTimes(1);
           });
         });
 
         describe(".destroy()", () => {
-          it("should call the service and return nothing", async () => {
-            TestServiceProto.destroy.mockResolvedValueOnce(entity);
-            const ret = await controller.destroy(1);
+          it("should call service's methods", async () => {
+            await controller.destroy({});
             expect(TestServiceProto.destroy).toHaveBeenCalledTimes(1);
-            expect(ret).toBeUndefined();
           });
         });
       });

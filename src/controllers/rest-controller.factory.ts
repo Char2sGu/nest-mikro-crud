@@ -59,7 +59,6 @@ export class RestControllerFactory<
 
   protected processOptions(options: RestControllerOptions<Service>) {
     options.lookupParam = options.lookupParam ?? "lookup";
-    options.serializationOptions = options.serializationOptions ?? {};
     return options as Required<typeof options>;
   }
 
@@ -67,16 +66,6 @@ export class RestControllerFactory<
    * Create a no-metadata controller class
    */
   protected createRawClass() {
-    const serialize: {
-      (plain: Entity): Entity;
-      (plain: Entity[]): Entity[];
-    } = (plain: Entity | Entity[]) =>
-      plainToClass(
-        this.serviceOptions.entityClass,
-        plain,
-        this.options.serializationOptions ?? {}
-      ) as any;
-
     type Interface = RestController<Entity, CreateDto, UpdateDto, LookupField>;
     return class RestController implements Interface {
       readonly [REST_SERVICE_PROPERTY_KEY]: Service;
@@ -85,33 +74,33 @@ export class RestControllerFactory<
         query = plainToClass(ListQueryDto, query, {
           excludeExtraneousValues: true,
         }); // parse number strings to numbers
-        return serialize(await this[REST_SERVICE_PROPERTY_KEY].list(query));
+        const service = this[REST_SERVICE_PROPERTY_KEY];
+        return await service.transform(await service.list(query));
       }
 
       async create(...[dto]: Parameters<Interface["create"]>) {
-        return serialize(await this[REST_SERVICE_PROPERTY_KEY].create(dto));
+        const service = this[REST_SERVICE_PROPERTY_KEY];
+        return await service.transform(await service.create(dto));
       }
 
       async retrieve(...[lookup]: Parameters<Interface["retrieve"]>) {
-        return serialize(
-          await this[REST_SERVICE_PROPERTY_KEY].retrieve(lookup)
-        );
+        const service = this[REST_SERVICE_PROPERTY_KEY];
+        return await service.transform(await service.retrieve(lookup));
       }
 
       async replace(...[lookup, dto]: Parameters<Interface["replace"]>) {
-        return serialize(
-          await this[REST_SERVICE_PROPERTY_KEY].replace(lookup, dto)
-        );
+        const service = this[REST_SERVICE_PROPERTY_KEY];
+        return await service.transform(await service.replace(lookup, dto));
       }
 
       async update(...[lookup, dto]: Parameters<Interface["update"]>) {
-        return serialize(
-          await this[REST_SERVICE_PROPERTY_KEY].update(lookup, dto)
-        );
+        const service = this[REST_SERVICE_PROPERTY_KEY];
+        return await service.transform(await service.update(lookup, dto));
       }
 
       async destroy(...[lookup]: Parameters<Interface["destroy"]>) {
-        await this[REST_SERVICE_PROPERTY_KEY].destroy(lookup);
+        const service = this[REST_SERVICE_PROPERTY_KEY];
+        await service.destroy(lookup);
       }
     };
   }

@@ -9,7 +9,7 @@ import { EntityNotFoundError } from "typeorm";
 export class EntityNotFoundErrorFilter extends BaseExceptionFilter {
   catch(
     ...[exception, ...args]: Parameters<
-      BaseExceptionFilter<EntityNotFoundErrorFilter>["catch"]
+      BaseExceptionFilter<EntityNotFoundError>["catch"]
     >
   ) {
     super.catch(new NotFoundException(), ...args);

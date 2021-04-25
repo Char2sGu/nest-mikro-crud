@@ -1,8 +1,5 @@
 import { Exclude, plainToClass } from "class-transformer";
-import {
-  REST_REPOSITORY_PROPERTY_KEY,
-  REST_SERVICE_OPTIONS_METADATA_KEY,
-} from "src/constants";
+import { REST_SERVICE_OPTIONS_METADATA_KEY } from "src/constants";
 import { Resolved } from "src/utils/resolved.type";
 import { EntityNotFoundError, Repository } from "typeorm";
 import { RestServiceFactory } from "./rest-service.factory";
@@ -40,7 +37,7 @@ describe("RestServiceFactory", () => {
       repository = new Repository();
       service = new factory.service();
       // @ts-expect-error - manual injection
-      service[REST_REPOSITORY_PROPERTY_KEY] = repository;
+      service.repository = repository;
       entity = { id: 1 };
     });
 

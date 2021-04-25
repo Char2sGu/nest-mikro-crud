@@ -1,4 +1,3 @@
-import { REST_SERVICE_PROPERTY_KEY } from "src/constants";
 import { ListQueryDto } from "src/dtos/list-query.dto";
 import { LookupFields } from "src/services/lookup-fields.type";
 import { RestService } from "src/services/rest-service.interface";
@@ -26,12 +25,7 @@ export interface RestController<
   UpdateDto = CreateDto,
   LookupField extends LookupFields<Entity> = LookupFields<Entity>
 > {
-  readonly [REST_SERVICE_PROPERTY_KEY]: RestService<
-    Entity,
-    CreateDto,
-    UpdateDto,
-    LookupField
-  >;
+  readonly service: RestService<Entity, CreateDto, UpdateDto, LookupField>;
 
   list(query: ListQueryDto, ...args: any[]): Promise<Entity[]>;
 

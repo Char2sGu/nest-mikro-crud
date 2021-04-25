@@ -1,9 +1,6 @@
 import { InjectRepository } from "@nestjs/typeorm";
 import { plainToClass } from "class-transformer";
-import {
-  REST_REPOSITORY_PROPERTY_KEY,
-  REST_SERVICE_OPTIONS_METADATA_KEY,
-} from "src/constants";
+import { REST_SERVICE_OPTIONS_METADATA_KEY } from "src/constants";
 import { RestServiceFactoryOptions } from "src/services/rest-service-factory-options.interface";
 import { EntityNotFoundError, Repository } from "typeorm";
 import { LookupFields } from "./lookup-fields.type";
@@ -40,10 +37,10 @@ export class RestServiceFactory<
 
     type Interface = RestService<Entity, CreateDto, UpdateDto, LookupField>;
     return class RestService implements Interface {
-      readonly [REST_REPOSITORY_PROPERTY_KEY]: Repository<Entity>;
+      readonly repository!: Repository<Entity>;
 
       async list(...[options]: Parameters<Interface["list"]>) {
-        return await this[REST_REPOSITORY_PROPERTY_KEY].find({
+        return await this.repository.find({
           where: {}, // let Typeorm know these are options, not conditions
           take: options?.limit,
           skip: options?.offset,
@@ -51,12 +48,12 @@ export class RestServiceFactory<
       }
 
       async create(...[dto]: Parameters<Interface["create"]>) {
-        const entity = this[REST_REPOSITORY_PROPERTY_KEY].create(dto);
-        return await this[REST_REPOSITORY_PROPERTY_KEY].save(entity);
+        const entity = this.repository.create(dto);
+        return await this.repository.save(entity);
       }
 
       async retrieve(...[lookup]: Parameters<Interface["retrieve"]>) {
-        return await this[REST_REPOSITORY_PROPERTY_KEY].findOneOrFail({
+        return await this.repository.findOneOrFail({
           [options.lookupField]: lookup,
         });
       }
@@ -74,16 +71,16 @@ export class RestServiceFactory<
       async update(...[lookup, dto]: Parameters<Interface["update"]>) {
         const entity = await this.retrieve(lookup);
         Object.assign(entity, dto);
-        return await this[REST_REPOSITORY_PROPERTY_KEY].save(entity);
+        return await this.repository.save(entity);
       }
 
       async destroy(...[lookup]: Parameters<Interface["destroy"]>) {
         const entity = await this.retrieve(lookup);
-        return await this[REST_REPOSITORY_PROPERTY_KEY].remove(entity);
+        return await this.repository.remove(entity);
       }
 
       async count(...[]: Parameters<Interface["count"]>) {
-        return await this[REST_REPOSITORY_PROPERTY_KEY].count();
+        return await this.repository.count();
       }
 
       async transform(entity: Entity): Promise<Entity>;
@@ -100,7 +97,7 @@ export class RestServiceFactory<
   protected emitInjectionsMetadata() {
     InjectRepository(this.options.entityClass, this.options.repoConnection)(
       this.service.prototype,
-      REST_REPOSITORY_PROPERTY_KEY
+      "repository"
     );
   }
 }

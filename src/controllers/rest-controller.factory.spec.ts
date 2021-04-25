@@ -1,10 +1,6 @@
 import { Exclude } from "class-transformer";
 import "reflect-metadata";
-import {
-  REST_REPOSITORY_PROPERTY_KEY,
-  REST_SERVICE_OPTIONS_METADATA_KEY,
-  REST_SERVICE_PROPERTY_KEY,
-} from "src/constants";
+import { REST_SERVICE_OPTIONS_METADATA_KEY } from "src/constants";
 import { ListQueryDto } from "src/dtos/list-query.dto";
 import { RestServiceFactoryOptions } from "src/services/rest-service-factory-options.interface";
 import { Column, Entity, PrimaryGeneratedColumn, Repository } from "typeorm";
@@ -29,7 +25,7 @@ describe("RestControllerFactory", () => {
   };
 
   const TestServiceProto = {
-    [REST_REPOSITORY_PROPERTY_KEY]: new Repository(),
+    repository: new Repository(),
     list: jest.fn(),
     create: jest.fn(),
     retrieve: jest.fn(),
@@ -69,7 +65,7 @@ describe("RestControllerFactory", () => {
         beforeEach(() => {
           controller = new factory.controller();
           // @ts-expect-error - manual injection
-          controller[REST_SERVICE_PROPERTY_KEY] = new TestService();
+          controller.service = new TestService();
         });
 
         describe(".list()", () => {

@@ -12,10 +12,7 @@ import {
   UseFilters,
 } from "@nestjs/common";
 import { ClassConstructor, plainToClass } from "class-transformer";
-import {
-  REST_SERVICE_OPTIONS_METADATA_KEY,
-  REST_SERVICE_PROPERTY_KEY,
-} from "src/constants";
+import { REST_SERVICE_OPTIONS_METADATA_KEY } from "src/constants";
 import { ListQueryDto } from "src/dtos/list-query.dto";
 import { EntityNotFoundErrorFilter } from "src/filters/entity-not-found-error.filter";
 import { LookupFields } from "src/services/lookup-fields.type";
@@ -68,46 +65,45 @@ export class RestControllerFactory<
   protected createRawClass() {
     type Interface = RestController<Entity, CreateDto, UpdateDto, LookupField>;
     return class RestController implements Interface {
-      readonly [REST_SERVICE_PROPERTY_KEY]: Service;
+      readonly service!: Service;
 
       async list(...[query]: Parameters<Interface["list"]>) {
         query = plainToClass(ListQueryDto, query, {
           excludeExtraneousValues: true,
         }); // parse number strings to numbers
-        const service = this[REST_SERVICE_PROPERTY_KEY];
-        return await service.transform(await service.list(query));
+        const entities = await this.service.list(query);
+        return await this.service.transform(entities);
       }
 
       async create(...[dto]: Parameters<Interface["create"]>) {
-        const service = this[REST_SERVICE_PROPERTY_KEY];
-        return await service.transform(await service.create(dto));
+        const entity = await this.service.create(dto);
+        return await this.service.transform(entity);
       }
 
       async retrieve(...[lookup]: Parameters<Interface["retrieve"]>) {
-        const service = this[REST_SERVICE_PROPERTY_KEY];
-        return await service.transform(await service.retrieve(lookup));
+        const entity = await this.service.retrieve(lookup);
+        return await this.service.transform(entity);
       }
 
       async replace(...[lookup, dto]: Parameters<Interface["replace"]>) {
-        const service = this[REST_SERVICE_PROPERTY_KEY];
-        return await service.transform(await service.replace(lookup, dto));
+        const entity = await this.service.replace(lookup, dto);
+        return await this.service.transform(entity);
       }
 
       async update(...[lookup, dto]: Parameters<Interface["update"]>) {
-        const service = this[REST_SERVICE_PROPERTY_KEY];
-        return await service.transform(await service.update(lookup, dto));
+        const entity = await this.service.update(lookup, dto);
+        return await this.service.transform(entity);
       }
 
       async destroy(...[lookup]: Parameters<Interface["destroy"]>) {
-        const service = this[REST_SERVICE_PROPERTY_KEY];
-        await service.destroy(lookup);
+        await this.service.destroy(lookup);
       }
     };
   }
 
   protected emitInjectionsMetadata() {
     const target = this.controller.prototype;
-    Inject(this.options.restServiceClass)(target, REST_SERVICE_PROPERTY_KEY);
+    Inject(this.options.restServiceClass)(target, "service");
   }
 
   protected emitRoutesParamsMetadata() {

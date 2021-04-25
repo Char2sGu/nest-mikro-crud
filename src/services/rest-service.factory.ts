@@ -2,7 +2,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { plainToClass } from "class-transformer";
 import { REST_SERVICE_OPTIONS_METADATA_KEY } from "src/constants";
 import { RestServiceFactoryOptions } from "src/services/rest-service-factory-options.interface";
-import { EntityNotFoundError, Repository } from "typeorm";
+import { EntityNotFoundError, FindConditions, Repository } from "typeorm";
 import { LookupFields } from "./lookup-fields.type";
 import { RestService } from "./rest-service.interface";
 
@@ -41,7 +41,7 @@ export class RestServiceFactory<
 
       async list(...[options]: Parameters<Interface["list"]>) {
         return await this.repository.find({
-          where: {}, // let Typeorm know these are options, not conditions
+          where: await this.getQueryConditions(),
           take: options?.limit,
           skip: options?.offset,
         });
@@ -54,7 +54,7 @@ export class RestServiceFactory<
 
       async retrieve(...[lookup]: Parameters<Interface["retrieve"]>) {
         return await this.repository.findOneOrFail({
-          [options.lookupField]: lookup,
+          where: await this.getQueryConditions(lookup),
         });
       }
 
@@ -90,6 +90,16 @@ export class RestServiceFactory<
         return entities instanceof Array
           ? plainToClass(options.entityClass, entities)
           : plainToClass(options.entityClass, entities);
+      }
+
+      async getQueryConditions(
+        ...[lookup]: Parameters<Interface["getQueryConditions"]>
+      ) {
+        return lookup != null
+          ? (({
+              [options.lookupField]: lookup,
+            } as unknown) as FindConditions<Entity>)
+          : {};
       }
     };
   }

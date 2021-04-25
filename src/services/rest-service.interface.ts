@@ -1,4 +1,4 @@
-import { Repository } from "typeorm";
+import { FindConditions, Repository } from "typeorm";
 import { LookupFields } from "./lookup-fields.type";
 
 export interface RestService<
@@ -19,7 +19,6 @@ export interface RestService<
 
   update(
     lookup: Entity[LookupField],
-
     dto: CreateDto | UpdateDto
   ): Promise<Entity>;
 
@@ -34,4 +33,12 @@ export interface RestService<
    */
   transform(entities: Entity[]): Promise<Entity[]>;
   transform(entity: Entity): Promise<Entity>;
+
+  /**
+   * Could be overrided to enforce some conditions.
+   * @param lookup
+   */
+  getQueryConditions(
+    lookup?: Entity[LookupField]
+  ): Promise<FindConditions<Entity>>;
 }

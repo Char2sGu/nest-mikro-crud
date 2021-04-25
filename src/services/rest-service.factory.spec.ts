@@ -105,14 +105,11 @@ describe("RestServiceFactory", () => {
         MockRepository.prototype.findOneOrFail.mockResolvedValueOnce(
           "something"
         );
+        const getQueryConditionsSpy = jest.spyOn(service, "getQueryConditions");
         const ret = await service.retrieve(1);
         expect(ret).toBe("something");
         expect(MockRepository.prototype.findOneOrFail).toHaveBeenCalledTimes(1);
-        expect(MockRepository.prototype.findOneOrFail.mock.calls[0][0]).toEqual(
-          {
-            id: 1,
-          }
-        );
+        expect(getQueryConditionsSpy).toHaveBeenCalledTimes(1);
       });
     });
 
@@ -179,6 +176,20 @@ describe("RestServiceFactory", () => {
       it("should return an array of transformed entities when passed an array", async () => {
         const ret = await service.transform([{ id: 1 }]);
         expect(ret).toEqual([{}]);
+      });
+    });
+
+    describe(".getQueryConditions()", () => {
+      it("should return an empty object", async () => {
+        const ret = await service.getQueryConditions();
+        expect(ret).toEqual({});
+      });
+    });
+
+    describe(".getQueryConditions(0)", () => {
+      it("should return a condition object filled with the lookup condition", async () => {
+        const ret = await service.getQueryConditions(0);
+        expect(ret).toEqual({ id: 0 });
       });
     });
   });

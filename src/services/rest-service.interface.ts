@@ -28,6 +28,11 @@ export interface RestService<
 
   count(): Promise<number>;
 
+  /**
+   * Exclude fields.
+   *
+   * Interceptors are not used because overloading may change the data structure.
+   */
   transform(entities: Entity[]): Promise<Entity[]>;
   transform(entity: Entity): Promise<Entity>;
 }

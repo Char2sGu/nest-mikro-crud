@@ -3,6 +3,7 @@ import "reflect-metadata";
 import { REST_SERVICE_OPTIONS_METADATA_KEY } from "src/constants";
 import { ListQueryDto } from "src/dtos/list-query.dto";
 import { RestServiceFactoryOptions } from "src/services/rest-service-factory-options.interface";
+import { Resolved } from "src/utils/resolved.type";
 import { Column, Entity, PrimaryGeneratedColumn, Repository } from "typeorm";
 import { RestControllerFactory } from "./rest-controller.factory";
 import { RestController } from "./rest-controller.interface";
@@ -24,16 +25,20 @@ describe("RestControllerFactory", () => {
     lookupField: "field",
   };
 
+  const entity = { k: "v" };
+  const entities = [entity];
+
   const TestServiceProto = {
     repository: new Repository(),
-    list: jest.fn(),
-    create: jest.fn(),
-    retrieve: jest.fn(),
-    replace: jest.fn(),
-    update: jest.fn(),
-    destroy: jest.fn(),
-    count: jest.fn(),
-    transform: jest.fn(),
+    list: jest.fn(async () => entities),
+    create: jest.fn(async () => entity),
+    retrieve: jest.fn(async () => entity),
+    replace: jest.fn(async () => entity),
+    update: jest.fn(async () => entity),
+    destroy: jest.fn(async () => entity),
+    count: jest.fn(async () => entities.length),
+    transform: jest.fn(async (v) => v),
+    getQueryConditions: jest.fn(async () => ({})),
   };
 
   const TestService = jest.fn(() => TestServiceProto);
@@ -68,60 +73,205 @@ describe("RestControllerFactory", () => {
           controller.service = new TestService();
         });
 
-        describe(".list()", () => {
-          it("should call service's methods", async () => {
-            await controller.list({});
-            expect(TestServiceProto.list).toHaveBeenCalledTimes(1);
-            expect(TestServiceProto.transform).toHaveBeenCalledTimes(1);
-          });
+        describe.each`
+          rawOptions                     | parsedOptions              | rest
+          ${{ limit: "1", offset: "1" }} | ${{ limit: 1, offset: 1 }} | ${["extra"]}
+        `(
+          ".list($rawOptions, ...$rest)",
+          ({
+            rawOptions,
+            parsedOptions,
+            rest,
+          }: {
+            rawOptions: {};
+            parsedOptions: {};
+            rest: [];
+          }) => {
+            let ret: Resolved<ReturnType<typeof controller.list>>;
 
-          it("should parse numbers in query params", async () => {
-            await controller.list({ limit: "1", offset: "1" } as any);
-            expect(TestServiceProto.list.mock.calls[0][0]).toEqual({
-              limit: 1,
-              offset: 1,
+            beforeEach(async () => {
+              ret = await controller.list(rawOptions, ...rest);
             });
-          });
-        });
 
-        describe(".create()", () => {
-          it("should call service's methods", async () => {
-            await controller.create({});
+            it("should query the entities", () => {
+              expect(TestServiceProto.list).toHaveBeenCalledTimes(1);
+              expect(TestServiceProto.list).toHaveBeenCalledWith(
+                parsedOptions,
+                ...rest
+              );
+            });
+
+            it("should transform the entities", () => {
+              expect(TestServiceProto.transform).toHaveBeenCalledTimes(1);
+              expect(TestServiceProto.transform).toHaveBeenCalledWith(
+                entities,
+                ...rest
+              );
+            });
+
+            it("should return the entities", () => {
+              expect(ret).toEqual(entities);
+            });
+          }
+        );
+
+        describe.each`
+          dto              | rest
+          ${{ im: "dto" }} | ${["extra"]}
+        `(".create($dto, ...$rest)", ({ dto, rest }: { dto: {}; rest: [] }) => {
+          let ret: Resolved<ReturnType<typeof controller.create>>;
+
+          beforeEach(async () => {
+            ret = await controller.create(dto, ...rest);
+          });
+
+          it("should create an entity", () => {
             expect(TestServiceProto.create).toHaveBeenCalledTimes(1);
+            expect(TestServiceProto.create).toHaveBeenCalledWith(dto, ...rest);
+          });
+
+          it("should transform the entity", () => {
             expect(TestServiceProto.transform).toHaveBeenCalledTimes(1);
+            expect(TestServiceProto.transform).toHaveBeenCalledWith(
+              entity,
+              ...rest
+            );
+          });
+
+          it("should return the entity", () => {
+            expect(ret).toEqual(entity);
           });
         });
 
-        describe(".retrieve()", () => {
-          it("should call service's methods", async () => {
-            await controller.retrieve({});
-            expect(TestServiceProto.retrieve).toHaveBeenCalledTimes(1);
-            expect(TestServiceProto.transform).toHaveBeenCalledTimes(1);
-          });
-        });
+        describe.each`
+          lookup | rest
+          ${1}   | ${["extra"]}
+        `(
+          ".retrieve($lookup, ...$rest)",
+          ({ lookup, rest }: { lookup: number; rest: [] }) => {
+            let ret: Resolved<ReturnType<typeof controller.retrieve>>;
 
-        describe(".replace()", () => {
-          it("should call service's methods", async () => {
-            await controller.replace({}, {});
-            expect(TestServiceProto.replace).toHaveBeenCalledTimes(1);
-            expect(TestServiceProto.transform).toHaveBeenCalledTimes(1);
-          });
-        });
+            beforeEach(async () => {
+              ret = await controller.retrieve(lookup, ...rest);
+            });
 
-        describe(".update()", () => {
-          it("should call service's methods", async () => {
-            await controller.update({}, {});
-            expect(TestServiceProto.update).toHaveBeenCalledTimes(1);
-            expect(TestServiceProto.transform).toHaveBeenCalledTimes(1);
-          });
-        });
+            it("should retrieve the entity", () => {
+              expect(TestServiceProto.retrieve).toHaveBeenCalledTimes(1);
+              expect(TestServiceProto.retrieve).toHaveBeenCalledWith(
+                lookup,
+                ...rest
+              );
+            });
 
-        describe(".destroy()", () => {
-          it("should call service's methods", async () => {
-            await controller.destroy({});
-            expect(TestServiceProto.destroy).toHaveBeenCalledTimes(1);
-          });
-        });
+            it("should transform the entitiy", () => {
+              expect(TestServiceProto.transform).toHaveBeenCalledTimes(1);
+              expect(TestServiceProto.transform).toHaveBeenCalledWith(
+                entity,
+                ...rest
+              );
+            });
+
+            it("should return the entity", () => {
+              expect(ret).toEqual(entity);
+            });
+          }
+        );
+
+        describe.each`
+          lookup | dto                   | rest
+          ${1}   | ${{ replace: "dto" }} | ${["rest"]}
+        `(
+          ".replace($lookup, $dto, ...$rest)",
+          ({ lookup, dto, rest }: { lookup: number; dto: {}; rest: [] }) => {
+            let ret: Resolved<ReturnType<typeof controller.replace>>;
+
+            beforeEach(async () => {
+              ret = await controller.replace(lookup, dto, ...rest);
+            });
+
+            it("should replace the entity", () => {
+              expect(TestServiceProto.replace).toHaveBeenCalledTimes(1);
+              expect(TestServiceProto.replace).toHaveBeenCalledWith(
+                lookup,
+                dto,
+                ...rest
+              );
+            });
+
+            it("should transform the entity", () => {
+              expect(TestServiceProto.transform).toHaveBeenCalledTimes(1);
+              expect(TestServiceProto.transform).toHaveBeenCalledWith(
+                entity,
+                ...rest
+              );
+            });
+
+            it("should return the entity", () => {
+              expect(ret).toEqual(entity);
+            });
+          }
+        );
+
+        describe.each`
+          lookup | dto                  | rest
+          ${1}   | ${{ update: "dto" }} | ${["rest"]}
+        `(
+          ".update($lookup, $dto, ...$rest)",
+          ({ lookup, dto, rest }: { lookup: number; dto: {}; rest: [] }) => {
+            let ret: Resolved<ReturnType<typeof controller.update>>;
+
+            beforeEach(async () => {
+              ret = await controller.update(lookup, dto, ...rest);
+            });
+
+            it("should update the entity", () => {
+              expect(TestServiceProto.update).toHaveBeenCalledTimes(1);
+              expect(TestServiceProto.update).toHaveBeenCalledWith(
+                lookup,
+                dto,
+                ...rest
+              );
+            });
+
+            it("should transform the entity", () => {
+              expect(TestServiceProto.transform).toHaveBeenCalledTimes(1);
+              expect(TestServiceProto.transform).toHaveBeenCalledWith(
+                entity,
+                ...rest
+              );
+            });
+
+            it("should return the entity", () => {
+              expect(ret).toEqual(entity);
+            });
+          }
+        );
+
+        describe.each`
+          $lookup | rest
+          ${1}    | ${["rest-destroy"]}
+        `(
+          ".destroy($lookup, ...$rest)",
+          ({ lookup, rest }: { lookup: number; rest: [] }) => {
+            let ret: Resolved<ReturnType<typeof controller.destroy>>;
+
+            beforeEach(async () => {
+              ret = await controller.destroy(lookup, ...rest);
+            });
+
+            it("should delete the entity", () => {
+              expect(TestServiceProto.destroy).toHaveBeenCalledTimes(1);
+              expect(TestServiceProto.destroy).toHaveBeenCalledWith(
+                lookup,
+                ...rest
+              );
+            });
+
+            it("should return nothing", () => {
+              expect(ret).toBeUndefined();
+            });
+          }
+        );
       });
     });
   });

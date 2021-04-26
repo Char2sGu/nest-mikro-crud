@@ -67,36 +67,38 @@ export class RestControllerFactory<
     return class RestController implements Interface {
       readonly service!: Service;
 
-      async list(...[query]: Parameters<Interface["list"]>) {
+      async list(...[query, ...args]: Parameters<Interface["list"]>) {
         query = plainToClass(ListQueryDto, query, {
           excludeExtraneousValues: true,
         }); // parse number strings to numbers
-        const entities = await this.service.list(query);
-        return await this.service.transform(entities);
+        const entities = await this.service.list(query, ...args);
+        return await this.service.transform(entities, ...args);
       }
 
-      async create(...[dto]: Parameters<Interface["create"]>) {
-        const entity = await this.service.create(dto);
-        return await this.service.transform(entity);
+      async create(...[dto, ...args]: Parameters<Interface["create"]>) {
+        const entity = await this.service.create(dto, ...args);
+        return await this.service.transform(entity, ...args);
       }
 
-      async retrieve(...[lookup]: Parameters<Interface["retrieve"]>) {
-        const entity = await this.service.retrieve(lookup);
-        return await this.service.transform(entity);
+      async retrieve(...[lookup, ...args]: Parameters<Interface["retrieve"]>) {
+        const entity = await this.service.retrieve(lookup, ...args);
+        return await this.service.transform(entity, ...args);
       }
 
-      async replace(...[lookup, dto]: Parameters<Interface["replace"]>) {
-        const entity = await this.service.replace(lookup, dto);
-        return await this.service.transform(entity);
+      async replace(
+        ...[lookup, dto, ...args]: Parameters<Interface["replace"]>
+      ) {
+        const entity = await this.service.replace(lookup, dto, ...args);
+        return await this.service.transform(entity, ...args);
       }
 
-      async update(...[lookup, dto]: Parameters<Interface["update"]>) {
-        const entity = await this.service.update(lookup, dto);
-        return await this.service.transform(entity);
+      async update(...[lookup, dto, ...args]: Parameters<Interface["update"]>) {
+        const entity = await this.service.update(lookup, dto, ...args);
+        return await this.service.transform(entity, ...args);
       }
 
-      async destroy(...[lookup]: Parameters<Interface["destroy"]>) {
-        await this.service.destroy(lookup);
+      async destroy(...[lookup, ...args]: Parameters<Interface["destroy"]>) {
+        await this.service.destroy(lookup, ...args);
       }
     };
   }

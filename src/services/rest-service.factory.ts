@@ -39,53 +39,55 @@ export class RestServiceFactory<
     return class RestService implements Interface {
       readonly repository!: Repository<Entity>;
 
-      async list(...[options]: Parameters<Interface["list"]>) {
+      async list(...[options, ...args]: Parameters<Interface["list"]>) {
         return await this.repository.find({
-          where: await this.getQueryConditions(),
+          where: await this.getQueryConditions(...args),
           take: options?.limit,
           skip: options?.offset,
         });
       }
 
-      async create(...[dto]: Parameters<Interface["create"]>) {
+      async create(...[dto, ...args]: Parameters<Interface["create"]>) {
         const entity = this.repository.create(dto);
         return await this.repository.save(entity);
       }
 
-      async retrieve(...[lookup]: Parameters<Interface["retrieve"]>) {
+      async retrieve(...[lookup, ...args]: Parameters<Interface["retrieve"]>) {
         return await this.repository.findOneOrFail({
-          where: await this.getQueryConditions(lookup),
+          where: await this.getQueryConditions(lookup, ...args),
         });
       }
 
-      async replace(...[lookup, dto]: Parameters<Interface["replace"]>) {
+      async replace(
+        ...[lookup, dto, ...args]: Parameters<Interface["replace"]>
+      ) {
         try {
-          return await this.update(lookup, dto);
+          return await this.update(lookup, dto, ...args);
         } catch (error) {
           if (error instanceof EntityNotFoundError)
-            return await this.create(dto);
+            return await this.create(dto, ...args);
           throw error;
         }
       }
 
-      async update(...[lookup, dto]: Parameters<Interface["update"]>) {
-        const entity = await this.retrieve(lookup);
+      async update(...[lookup, dto, ...args]: Parameters<Interface["update"]>) {
+        const entity = await this.retrieve(lookup, ...args);
         Object.assign(entity, dto);
         return await this.repository.save(entity);
       }
 
-      async destroy(...[lookup]: Parameters<Interface["destroy"]>) {
-        const entity = await this.retrieve(lookup);
+      async destroy(...[lookup, ...args]: Parameters<Interface["destroy"]>) {
+        const entity = await this.retrieve(lookup, ...args);
         return await this.repository.remove(entity);
       }
 
-      async count(...[]: Parameters<Interface["count"]>) {
+      async count(...[...args]: Parameters<Interface["count"]>) {
         return await this.repository.count();
       }
 
-      async transform(entity: Entity): Promise<Entity>;
-      async transform(entities: Entity[]): Promise<Entity[]>;
-      async transform(entities: Entity | Entity[]) {
+      async transform(entity: Entity, ...args: any[]): Promise<Entity>;
+      async transform(entities: Entity[], ...args: any[]): Promise<Entity[]>;
+      async transform(entities: Entity | Entity[], ...args: any[]) {
         // to trigger overloads
         return entities instanceof Array
           ? plainToClass(options.entityClass, entities)
@@ -93,7 +95,7 @@ export class RestServiceFactory<
       }
 
       async getQueryConditions(
-        ...[lookup]: Parameters<Interface["getQueryConditions"]>
+        ...[lookup, ...args]: Parameters<Interface["getQueryConditions"]>
       ) {
         return lookup != null
           ? (({

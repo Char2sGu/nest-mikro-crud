@@ -9,36 +9,45 @@ export interface RestService<
 > {
   readonly repository: Repository<Entity>;
 
-  list(options?: { limit?: number; offset?: number }): Promise<Entity[]>;
+  list(
+    options?: { limit?: number; offset?: number },
+    ...args: any[]
+  ): Promise<Entity[]>;
 
-  create(dto: CreateDto): Promise<Entity>;
+  create(dto: CreateDto, ...args: any[]): Promise<Entity>;
 
-  retrieve(lookup: Entity[LookupField]): Promise<Entity>;
+  retrieve(lookup: Entity[LookupField], ...args: any[]): Promise<Entity>;
 
-  replace(lookup: Entity[LookupField], dto: CreateDto): Promise<Entity>;
+  replace(
+    lookup: Entity[LookupField],
+    dto: CreateDto,
+    ...args: any[]
+  ): Promise<Entity>;
 
   update(
     lookup: Entity[LookupField],
-    dto: CreateDto | UpdateDto
+    dto: CreateDto | UpdateDto,
+    ...args: any[]
   ): Promise<Entity>;
 
-  destroy(lookup: Entity[LookupField]): Promise<Entity>;
+  destroy(lookup: Entity[LookupField], ...args: any[]): Promise<Entity>;
 
-  count(): Promise<number>;
+  count(...args: any[]): Promise<number>;
 
   /**
    * Exclude fields.
    *
    * Interceptors are not used because overloading may change the data structure.
    */
-  transform(entities: Entity[]): Promise<Entity[]>;
-  transform(entity: Entity): Promise<Entity>;
+  transform(entities: Entity[], ...args: any[]): Promise<Entity[]>;
+  transform(entity: Entity, ...args: any[]): Promise<Entity>;
 
   /**
    * Could be overrided to enforce some conditions.
    * @param lookup
    */
   getQueryConditions(
-    lookup?: Entity[LookupField]
+    lookup?: Entity[LookupField],
+    ...args: any[]
   ): Promise<FindConditions<Entity>>;
 }

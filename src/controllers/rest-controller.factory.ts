@@ -48,8 +48,8 @@ export class RestControllerFactory<
 
     this.controller = this.createRawClass();
     this.emitInjectionsMetadata();
-    this.emitRoutesParamsMetadata();
-    this.emitRoutesMethodsMetadata();
+    this.emitRoutesTypesMetadata();
+    this.applyRoutesDecorators();
     UseFilters(EntityNotFoundErrorFilter)(this.controller);
     this.applyDecorators("destroy", HttpCode(204));
   }
@@ -108,7 +108,7 @@ export class RestControllerFactory<
     Inject(this.options.restServiceClass)(target, "service");
   }
 
-  protected emitRoutesParamsMetadata() {
+  protected emitRoutesTypesMetadata() {
     this.emitParamTypesMetadata("list", [ListQueryDto])
       .emitParamTypesMetadata("create", ["dto:create"])
       .emitParamTypesMetadata("retrieve", ["lookup"])
@@ -117,7 +117,7 @@ export class RestControllerFactory<
       .emitParamTypesMetadata("destroy", ["lookup"]);
   }
 
-  protected emitRoutesMethodsMetadata() {
+  protected applyRoutesDecorators() {
     const path = `:${this.options.lookupParam}`;
 
     const LookupParam = Param(this.options.lookupParam);

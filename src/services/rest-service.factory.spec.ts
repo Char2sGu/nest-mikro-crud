@@ -4,9 +4,9 @@ import { Resolved } from "src/utils";
 import { EntityNotFoundError, Repository } from "typeorm";
 import { RestServiceFactory } from "./rest-service.factory";
 import { RestService } from "./rest-service.interface";
+import { _ } from "tests/mocked-helper";
 
 jest.mock("typeorm");
-const MockRepository = Repository as jest.MockedClass<typeof Repository>;
 
 describe("RestServiceFactory", () => {
   class TestEntity {
@@ -54,7 +54,7 @@ describe("RestServiceFactory", () => {
       let ret: Resolved<ReturnType<RestService["list"]>>;
 
       beforeEach(async () => {
-        MockRepository.prototype.find.mockResolvedValueOnce([
+        _(Repository).prototype.find.mockResolvedValueOnce([
           plainToClass(TestEntity, { id: 1 }),
         ]);
         ret = await service.list();
@@ -66,7 +66,7 @@ describe("RestServiceFactory", () => {
       });
 
       it("should call `repo.find()`", async () => {
-        expect(MockRepository.prototype.find).toHaveBeenCalledTimes(1);
+        expect(_(Repository).prototype.find).toHaveBeenCalledTimes(1);
       });
     });
 
@@ -77,10 +77,10 @@ describe("RestServiceFactory", () => {
       beforeEach(async () => {
         dto = { id: 1 };
 
-        MockRepository.prototype.create.mockReturnValueOnce(
+        _(Repository).prototype.create.mockReturnValueOnce(
           plainToClass(TestEntity, dto)
         );
-        MockRepository.prototype.save.mockImplementationOnce(async (v) => v);
+        _(Repository).prototype.save.mockImplementationOnce(async (v) => v);
         ret = await service.create(dto);
       });
 
@@ -89,26 +89,26 @@ describe("RestServiceFactory", () => {
       });
 
       it("should call `repo.save()` once with an entity", () => {
-        expect(MockRepository.prototype.save.mock.calls[0][0]).toBeInstanceOf(
+        expect(_(Repository).prototype.save.mock.calls[0][0]).toBeInstanceOf(
           TestEntity
         );
       });
 
       it("should call `repo.create()` once with a dto", () => {
-        expect(MockRepository.prototype.create).toHaveBeenCalledTimes(1);
-        expect(MockRepository.prototype.create).toHaveBeenCalledWith(dto);
+        expect(_(Repository).prototype.create).toHaveBeenCalledTimes(1);
+        expect(_(Repository).prototype.create).toHaveBeenCalledWith(dto);
       });
     });
 
     describe(".retrieve()", () => {
       it("should call `repo.findOne()` once with the lookup condition and return the return value", async () => {
-        MockRepository.prototype.findOneOrFail.mockResolvedValueOnce(
+        _(Repository).prototype.findOneOrFail.mockResolvedValueOnce(
           "something"
         );
         const getQueryConditionsSpy = jest.spyOn(service, "getQueryConditions");
         const ret = await service.retrieve(1);
         expect(ret).toBe("something");
-        expect(MockRepository.prototype.findOneOrFail).toHaveBeenCalledTimes(1);
+        expect(_(Repository).prototype.findOneOrFail).toHaveBeenCalledTimes(1);
         expect(getQueryConditionsSpy).toHaveBeenCalledTimes(1);
       });
     });
@@ -141,7 +141,7 @@ describe("RestServiceFactory", () => {
         const spy = jest
           .spyOn(service, "retrieve")
           .mockResolvedValueOnce(entity);
-        MockRepository.prototype.save.mockImplementationOnce(async (v) => v);
+        _(Repository).prototype.save.mockImplementationOnce(async (v) => v);
         const ret = await service.update(1, updated);
         expect(spy).toHaveBeenCalledTimes(1);
         expect(ret).toEqual(updated);
@@ -155,15 +155,15 @@ describe("RestServiceFactory", () => {
           .mockResolvedValueOnce(entity);
         await service.destroy(1);
         expect(spy).toHaveBeenCalledTimes(1);
-        expect(MockRepository.prototype.remove).toHaveBeenCalledTimes(1);
-        expect(MockRepository.prototype.remove).toHaveBeenCalledWith(entity);
+        expect(_(Repository).prototype.remove).toHaveBeenCalledTimes(1);
+        expect(_(Repository).prototype.remove).toHaveBeenCalledWith(entity);
       });
     });
 
     describe(".count()", () => {
       it("should call `repo.count()`", async () => {
         await service.count();
-        expect(MockRepository.prototype.count).toHaveBeenCalledTimes(1);
+        expect(_(Repository).prototype.count).toHaveBeenCalledTimes(1);
       });
     });
 

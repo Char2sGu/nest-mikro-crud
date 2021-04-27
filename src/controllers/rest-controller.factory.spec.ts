@@ -53,10 +53,30 @@ describe("RestControllerFactory", () => {
   describe("()", () => {
     beforeEach(() => {
       factory = new RestControllerFactory({
-        routes: ["list"],
+        routes: ["list", "create", "retrieve", "replace", "update", "destroy"],
         restServiceClass: TestService,
       });
     });
+
+    it.each`
+      name          | types
+      ${"list"}     | ${[ListQueryDto]}
+      ${"create"}   | ${[TestEntity]}
+      ${"retrieve"} | ${[Number]}
+      ${"update"}   | ${[Number, TestEntity]}
+      ${"replace"}  | ${[Number, TestEntity]}
+      ${"destroy"}  | ${[Number]}
+    `(
+      "should emit parameter types metadata to `.$name()`",
+      ({ name, types }) => {
+        const metadata = Reflect.getMetadata(
+          "design:paramtypes",
+          factory.controller.prototype,
+          name
+        );
+        expect(metadata).toEqual(types);
+      }
+    );
 
     it("should assign the options of the service to  `.serviceOptions`", () => {
       expect(factory.serviceOptions).toBeDefined();
@@ -287,26 +307,6 @@ describe("RestControllerFactory", () => {
     it("should be defined", () => {
       expect(factory).toBeDefined();
     });
-
-    it.each`
-      name          | types
-      ${"list"}     | ${[ListQueryDto]}
-      ${"create"}   | ${[TestEntity]}
-      ${"retrieve"} | ${[Number]}
-      ${"update"}   | ${[Number, TestEntity]}
-      ${"replace"}  | ${[Number, TestEntity]}
-      ${"destroy"}  | ${[Number]}
-    `(
-      "should emit parameter types metadata to `.$name()`",
-      ({ name, types }) => {
-        const metadata = Reflect.getMetadata(
-          "design:paramtypes",
-          factory.controller.prototype,
-          name
-        );
-        expect(metadata).toEqual(types);
-      }
-    );
 
     describe.each`
       param           | type

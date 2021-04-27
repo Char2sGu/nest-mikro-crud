@@ -1,7 +1,7 @@
 import { InjectRepository } from "@nestjs/typeorm";
 import { plainToClass } from "class-transformer";
 import { REST_SERVICE_OPTIONS_METADATA_KEY } from "src/constants";
-import { RestServiceFactoryOptions } from "src/services/rest-service-factory-options.interface";
+import { RestServiceFactoryOptions } from "src/services";
 import { EntityNotFoundError, FindConditions, Repository } from "typeorm";
 import { LookupFields } from "./lookup-fields.type";
 import { RestService } from "./rest-service.interface";

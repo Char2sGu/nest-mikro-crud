@@ -9,12 +9,12 @@ import {
 import { NestApplication } from "@nestjs/core";
 import { PartialType } from "@nestjs/mapped-types";
 import { Test } from "@nestjs/testing";
-import { getRepositoryToken, InjectRepository } from "@nestjs/typeorm";
+import { getRepositoryToken } from "@nestjs/typeorm";
 import { Exclude } from "class-transformer";
 import { IsString } from "class-validator";
-import { RestControllerFactory } from "src/controllers/rest-controller.factory";
-import { ListQueryDto } from "src/dtos/list-query.dto";
-import { RestServiceFactory } from "src/services/rest-service.factory";
+import { RestControllerFactory } from "src/controllers";
+import { ListQueryDto } from "src/dtos";
+import { RestServiceFactory } from "src/services";
 import { Column, Entity, PrimaryGeneratedColumn, Repository } from "typeorm";
 import { getRequester } from "./get-requester";
 import { getTypeOrmModules } from "./get-typeorm-modules";

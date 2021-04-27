@@ -1,9 +1,9 @@
 import { Exclude } from "class-transformer";
 import "reflect-metadata";
 import { REST_SERVICE_OPTIONS_METADATA_KEY } from "src/constants";
-import { ListQueryDto } from "src/dtos/list-query.dto";
-import { RestServiceFactoryOptions } from "src/services/rest-service-factory-options.interface";
-import { Resolved } from "src/utils/resolved.type";
+import { ListQueryDto } from "src/dtos";
+import { RestServiceFactoryOptions } from "src/services";
+import { Resolved } from "src/utils";
 import { Column, Entity, PrimaryGeneratedColumn, Repository } from "typeorm";
 import { RestControllerFactory } from "./rest-controller.factory";
 import { RestController } from "./rest-controller.interface";

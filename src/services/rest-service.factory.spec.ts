@@ -1,6 +1,6 @@
 import { Exclude, plainToClass } from "class-transformer";
 import { REST_SERVICE_OPTIONS_METADATA_KEY } from "src/constants";
-import { Resolved } from "src/utils/resolved.type";
+import { Resolved } from "src/utils";
 import { EntityNotFoundError, Repository } from "typeorm";
 import { RestServiceFactory } from "./rest-service.factory";
 import { RestService } from "./rest-service.interface";

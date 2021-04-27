@@ -1,4 +1,4 @@
-import { ExtractKeys } from "src/utils/extract-keys.type";
+import { ExtractKeys } from "src/utils";
 
 export type LookupFields<Entity> = Extract<
   ExtractKeys<Entity, string | number>,

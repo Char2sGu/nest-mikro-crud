@@ -1,6 +1,5 @@
-import { ListQueryDto } from "src/dtos/list-query.dto";
-import { LookupFields } from "src/services/lookup-fields.type";
-import { RestService } from "src/services/rest-service.interface";
+import { ListQueryDto } from "src/dtos";
+import { LookupFields, RestService } from "src/services";
 
 /**
  * ### Metadata in Overriding

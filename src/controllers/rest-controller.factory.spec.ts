@@ -25,7 +25,7 @@ import { REST_SERVICE_OPTIONS_METADATA_KEY } from "src/constants";
 import { ListQueryDto } from "src/dtos";
 import { RestService, RestServiceFactoryOptions } from "src/services";
 import { Resolved } from "src/utils";
-import { _ } from "tests/mocked-helper";
+import { _ } from "tests/mocked-type-helper";
 import { Repository } from "typeorm";
 import { RestControllerFactoryOptions } from "./rest-controller-factory-options.interface";
 import { RestControllerFactory } from "./rest-controller.factory";

@@ -4,7 +4,7 @@ import { Resolved } from "src/utils";
 import { EntityNotFoundError, Repository } from "typeorm";
 import { RestServiceFactory } from "./rest-service.factory";
 import { RestService } from "./rest-service.interface";
-import { _ } from "tests/mocked-helper";
+import { _ } from "tests/mocked-type-helper";
 
 jest.mock("typeorm");
 

@@ -123,14 +123,14 @@ export class RestControllerFactory<
     const path = `:${this.options.lookupParam}`;
 
     const LookupParam = Param(this.options.lookupParam);
-    const AllParams = Query();
+    const AllQueries = Query();
     const Dto = Body();
 
     const routesMapping: Record<
       RouteNames,
       [MethodDecorator, ParameterDecorator[][]]
     > = {
-      list: [Get(), [[AllParams]]],
+      list: [Get(), [[AllQueries]]],
       create: [Post(), [[Dto]]],
       retrieve: [Get(path), [[LookupParam]]],
       replace: [Put(path), [[LookupParam], [Dto]]],

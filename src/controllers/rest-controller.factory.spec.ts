@@ -59,7 +59,6 @@ describe("RestControllerFactory", () => {
     transform: jest.fn(async (v) => v),
     getQueryConditions: jest.fn(async () => ({})),
   };
-
   const TestService = jest.fn(() => testService);
 
   const options: RestControllerFactoryOptions = {
@@ -82,10 +81,8 @@ describe("RestControllerFactory", () => {
   });
 
   it("should fill default values of the passed options and expose it", () => {
-    expect(factory.options).toEqual<RestControllerFactoryOptions>({
-      ...options,
-      lookupParam: "lookup",
-    });
+    expect(factory.options.lookupParam).toBeDefined();
+    expect(factory.options.customArgs).toBeDefined();
   });
 
   it("should expose the service's options", () => {

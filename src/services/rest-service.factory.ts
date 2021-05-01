@@ -10,7 +10,8 @@ export class RestServiceFactory<
   Entity = any,
   CreateDto = Entity,
   UpdateDto = CreateDto,
-  LookupField extends LookupFields<Entity> = LookupFields<Entity>
+  LookupField extends LookupFields<Entity> = LookupFields<Entity>,
+  CustomArgs extends any[] = any[]
 > {
   readonly service;
 
@@ -35,13 +36,19 @@ export class RestServiceFactory<
   protected createRawClass() {
     const options = this.options;
 
-    type Interface = RestService<Entity, CreateDto, UpdateDto, LookupField>;
+    type Interface = RestService<
+      Entity,
+      CreateDto,
+      UpdateDto,
+      LookupField,
+      CustomArgs
+    >;
     return class RestService implements Interface {
       readonly repository!: Repository<Entity>;
 
       async list(...[options, ...args]: Parameters<Interface["list"]>) {
         return await this.repository.find({
-          where: await this.getQueryConditions(...args),
+          where: await this.getQueryConditions(undefined, ...args),
           take: options?.limit,
           skip: options?.offset,
         });

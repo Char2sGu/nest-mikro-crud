@@ -29,18 +29,20 @@ export class RestControllerFactory<
   CreateDto = Entity,
   UpdateDto = CreateDto,
   LookupField extends LookupFields<Entity> = LookupFields<Entity>,
+  CustomArgs extends any[] = any[],
   Service extends RestService<
     Entity,
     CreateDto,
     UpdateDto,
-    LookupField
-  > = RestService<Entity, CreateDto, UpdateDto, LookupField>
+    LookupField,
+    CustomArgs
+  > = RestService<Entity, CreateDto, UpdateDto, LookupField, CustomArgs>
 > {
   readonly options;
   readonly controller;
   readonly serviceOptions;
 
-  constructor(options: RestControllerFactoryOptions<Service>) {
+  constructor(options: RestControllerFactoryOptions<Service, CustomArgs>) {
     this.options = this.processOptions(options);
 
     this.serviceOptions = Reflect.getMetadata(
@@ -58,6 +60,10 @@ export class RestControllerFactory<
 
   protected processOptions(options: RestControllerFactoryOptions<Service>) {
     options.lookupParam = options.lookupParam ?? "lookup";
+    options.customArgs = options.customArgs ?? {
+      description: [],
+      typeHelper: () => null,
+    };
     return options as Required<typeof options>;
   }
 
@@ -65,7 +71,13 @@ export class RestControllerFactory<
    * Create a no-metadata controller class
    */
   protected createRawClass() {
-    type Interface = RestController<Entity, CreateDto, UpdateDto, LookupField>;
+    type Interface = RestController<
+      Entity,
+      CreateDto,
+      UpdateDto,
+      LookupField,
+      CustomArgs
+    >;
     return class RestController implements Interface {
       readonly service!: Service;
 
@@ -111,12 +123,13 @@ export class RestControllerFactory<
   }
 
   protected emitRoutesTypesMetadata() {
-    this.emitParamTypesMetadata("list", [ListQueryDto])
-      .emitParamTypesMetadata("create", ["dto:create"])
-      .emitParamTypesMetadata("retrieve", ["lookup"])
-      .emitParamTypesMetadata("replace", ["lookup", "dto:create"])
-      .emitParamTypesMetadata("update", ["lookup", "dto:update"])
-      .emitParamTypesMetadata("destroy", ["lookup"]);
+    const extra = this.options.customArgs.description.map(([type]) => type);
+    this.emitParamTypesMetadata("list", [ListQueryDto, ...extra])
+      .emitParamTypesMetadata("create", ["dto:create", ...extra])
+      .emitParamTypesMetadata("retrieve", ["lookup", ...extra])
+      .emitParamTypesMetadata("replace", ["lookup", "dto:create", ...extra])
+      .emitParamTypesMetadata("update", ["lookup", "dto:update", ...extra])
+      .emitParamTypesMetadata("destroy", ["lookup", ...extra]);
   }
 
   protected applyRoutesDecorators() {
@@ -126,16 +139,19 @@ export class RestControllerFactory<
     const AllQueries = Query();
     const Dto = Body();
 
+    const extra = this.options.customArgs.description.map(
+      ([, decoraotrs]) => decoraotrs
+    );
     const routesMapping: Record<
       RouteNames,
       [MethodDecorator, ParameterDecorator[][]]
     > = {
-      list: [Get(), [[AllQueries]]],
-      create: [Post(), [[Dto]]],
-      retrieve: [Get(path), [[LookupParam]]],
-      replace: [Put(path), [[LookupParam], [Dto]]],
-      update: [Patch(path), [[LookupParam], [Dto]]],
-      destroy: [Delete(path), [[LookupParam]]],
+      list: [Get(), [[AllQueries], ...extra]],
+      create: [Post(), [[Dto], ...extra]],
+      retrieve: [Get(path), [[LookupParam], ...extra]],
+      replace: [Put(path), [[LookupParam], [Dto], ...extra]],
+      update: [Patch(path), [[LookupParam], [Dto], ...extra]],
+      destroy: [Delete(path), [[LookupParam], ...extra]],
     };
 
     this.options.routes.forEach((routeName) => {

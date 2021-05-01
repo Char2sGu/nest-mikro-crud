@@ -1,7 +1,7 @@
 import {
+  Body,
   Controller,
   Injectable,
-  Param,
   Post,
   UsePipes,
   ValidationPipe,
@@ -18,6 +18,7 @@ import { RestServiceFactory } from "src/services";
 import { Column, Entity, PrimaryGeneratedColumn, Repository } from "typeorm";
 import { getRequester } from "./get-requester";
 import { getTypeOrmModules } from "./get-typeorm-modules";
+import { _ } from "./mocked-type-helper";
 
 describe("Integration", () => {
   const testPipe = jest.fn((v) => v);
@@ -51,14 +52,17 @@ describe("Integration", () => {
   class TestController extends new RestControllerFactory({
     routes: ["list", "create", "retrieve", "update", "destroy"],
     restServiceClass: TestService,
+    customArgs: {
+      description: [[Object, [Body()]]],
+      typeHelper: (body: any) => null,
+    },
   }).applyDecorators(
     "update",
     UsePipes(jest.fn(() => ({ transform: testPipe })))
   ).controller {
     @Post()
-    create(dto: TestCreateDto, @Param() params: any) {
-      params; // do something with params
-      return super.create(dto);
+    create(dto: TestCreateDto, body: any) {
+      return super.create(dto, body);
     }
   }
 
@@ -113,6 +117,7 @@ describe("Integration", () => {
 
   describe("/ (POST)", () => {
     it("should return a serialized entity", async () => {
+      jest.spyOn(TestService.prototype, "create");
       const entity: TestCreateDto = { field: "created" };
       const serializedEntity: Partial<TestEntity> = { field: "created" };
       await requester
@@ -122,6 +127,8 @@ describe("Integration", () => {
         .expect(({ body }) => {
           expect(body).toEqual(serializedEntity);
         });
+      expect(TestService.prototype.create).toHaveBeenCalledTimes(1);
+      expect(_(TestService.prototype.create).mock.calls[0]).toHaveLength(2);
     });
 
     it("should return a 400 when passed illegal data", async () => {
@@ -153,7 +160,7 @@ describe("Integration", () => {
         .expect(({ body }) => {
           expect(body).toEqual({ ...serializedEntity, field: "updated" });
         });
-      expect(testPipe).toHaveBeenCalledTimes(2);
+      expect(testPipe).toHaveBeenCalledTimes(3);
     });
 
     it("should return a 404 when not found", async () => {

@@ -22,27 +22,34 @@ export interface RestController<
   Entity = any,
   CreateDto = Entity,
   UpdateDto = CreateDto,
-  LookupField extends LookupFields<Entity> = LookupFields<Entity>
+  LookupField extends LookupFields<Entity> = LookupFields<Entity>,
+  CustomArgs extends any[] = any[]
 > {
-  readonly service: RestService<Entity, CreateDto, UpdateDto, LookupField>;
+  readonly service: RestService<
+    Entity,
+    CreateDto,
+    UpdateDto,
+    LookupField,
+    CustomArgs
+  >;
 
-  list(query: ListQueryDto, ...args: any[]): Promise<Entity[]>;
+  list(query: ListQueryDto, ...args: CustomArgs): Promise<Entity[]>;
 
-  create(dto: CreateDto, ...args: any[]): Promise<Entity>;
+  create(dto: CreateDto, ...args: CustomArgs): Promise<Entity>;
 
-  retrieve(lookup: Entity[LookupField], ...args: any[]): Promise<Entity>;
+  retrieve(lookup: Entity[LookupField], ...args: CustomArgs): Promise<Entity>;
 
   replace(
     lookup: Entity[LookupField],
     dto: CreateDto,
-    ...args: any[]
+    ...args: CustomArgs
   ): Promise<Entity>;
 
   update(
     lookup: Entity[LookupField],
     dto: UpdateDto,
-    ...args: any[]
+    ...args: CustomArgs
   ): Promise<Entity>;
 
-  destroy(lookup: Entity[LookupField], ...args: any[]): Promise<void>;
+  destroy(lookup: Entity[LookupField], ...args: CustomArgs): Promise<void>;
 }

@@ -6,7 +6,7 @@ module.exports = {
   restoreMocks: true,
   globals: {
     "ts-jest": {
-      tsconfig: "src/tsconfig.json",
+      tsconfig: "tests/tsconfig.json",
     },
   },
 };

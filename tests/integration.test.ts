@@ -16,9 +16,9 @@ import { RestControllerFactory } from "src/controllers";
 import { ListQueryDto } from "src/dtos";
 import { RestServiceFactory } from "src/services";
 import { Column, Entity, PrimaryGeneratedColumn, Repository } from "typeorm";
-import { getRequester } from "./get-requester";
-import { getTypeOrmModules } from "./get-typeorm-modules";
-import { _ } from "./mocked-type-helper";
+import { getRequester } from "./units/get-requester";
+import { getTypeOrmModules } from "./utils/get-typeorm-modules";
+import { _ } from "./utils/mocked-type-helper";
 
 describe("Integration", () => {
   const testPipe = jest.fn((v) => v);

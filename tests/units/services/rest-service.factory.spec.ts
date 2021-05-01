@@ -1,10 +1,10 @@
 import { Exclude, plainToClass } from "class-transformer";
 import { REST_SERVICE_OPTIONS_METADATA_KEY } from "src/constants";
+import { RestServiceFactory } from "src/services/rest-service.factory";
+import { RestService } from "src/services/rest-service.interface";
 import { Resolved } from "src/utils";
+import { _ } from "tests/utils/mocked-type-helper";
 import { EntityNotFoundError, Repository } from "typeorm";
-import { RestServiceFactory } from "./rest-service.factory";
-import { RestService } from "./rest-service.interface";
-import { _ } from "tests/mocked-type-helper";
 
 jest.mock("typeorm");
 

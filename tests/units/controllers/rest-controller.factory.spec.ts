@@ -22,15 +22,15 @@ import {
   Query,
 } from "@nestjs/common";
 import { REST_SERVICE_OPTIONS_METADATA_KEY } from "src/constants";
+import { RestControllerFactoryOptions } from "src/controllers/rest-controller-factory-options.interface";
+import { RestControllerFactory } from "src/controllers/rest-controller.factory";
+import { RestController } from "src/controllers/rest-controller.interface";
+import { RouteNames } from "src/controllers/route-names.types";
 import { ListQueryDto } from "src/dtos";
 import { RestService, RestServiceFactoryOptions } from "src/services";
 import { Resolved } from "src/utils";
-import { _ } from "tests/mocked-type-helper";
+import { _ } from "tests/utils/mocked-type-helper";
 import { Repository } from "typeorm";
-import { RestControllerFactoryOptions } from "./rest-controller-factory-options.interface";
-import { RestControllerFactory } from "./rest-controller.factory";
-import { RestController } from "./rest-controller.interface";
-import { RouteNames } from "./route-names.types";
 
 describe("RestControllerFactory", () => {
   class TestEntity {

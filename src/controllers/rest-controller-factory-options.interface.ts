@@ -7,7 +7,7 @@ export interface RestControllerFactoryOptions<
   ContextArgs extends any[] = any[]
 > {
   /**
-   * The service will be auto-injected for db CRUD.
+   * The service will be auto-injected for db CRUD actions.
    */
   restServiceClass: ClassConstructor<Service>;
   /**
@@ -27,4 +27,9 @@ export interface RestControllerFactoryOptions<
    * Specify the parameter name for entity lookup in the URL
    */
   lookupParam?: string;
+  /**
+   * Specify whether to apply the filter to catch TypeORM's EntityNotFoundError
+   * and throw NestJS's EntityNotFoundException instead
+   */
+  catchEntityNotFound?: boolean;
 }

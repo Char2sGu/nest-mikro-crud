@@ -83,6 +83,7 @@ describe("RestControllerFactory", () => {
   it("should fill default values of the passed options and expose it", () => {
     expect(factory.options.lookupParam).toBeDefined();
     expect(factory.options.customArgs).toBeDefined();
+    expect(factory.options.catchEntityNotFound).toBeDefined();
   });
 
   it("should expose the service's options", () => {

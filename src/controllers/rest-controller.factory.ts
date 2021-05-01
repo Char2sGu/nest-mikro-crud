@@ -54,7 +54,8 @@ export class RestControllerFactory<
     this.emitInjectionsMetadata();
     this.emitRoutesTypesMetadata();
     this.applyRoutesDecorators();
-    UseFilters(EntityNotFoundErrorFilter)(this.controller);
+    if (options.catchEntityNotFound)
+      UseFilters(EntityNotFoundErrorFilter)(this.controller);
     this.applyDecorators("destroy", HttpCode(204));
   }
 
@@ -64,6 +65,7 @@ export class RestControllerFactory<
       description: [],
       typeHelper: () => null,
     };
+    options.catchEntityNotFound = options.catchEntityNotFound ?? true;
     return options as Required<typeof options>;
   }
 

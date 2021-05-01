@@ -1,3 +1,4 @@
+// This file is only used to make the IDE work properly
 {
   "extends": "../tsconfig.base.json",
   "compilerOptions": {

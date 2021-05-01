@@ -1,5 +1,5 @@
 import { ClassConstructor } from "class-transformer";
-import { RestService } from "src/services";
+import { RestService } from "../services";
 import { RouteNames } from "./route-names.types";
 
 export interface RestControllerFactoryOptions<

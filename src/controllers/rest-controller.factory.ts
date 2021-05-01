@@ -12,14 +12,14 @@ import {
   UseFilters,
 } from "@nestjs/common";
 import { ClassConstructor, plainToClass } from "class-transformer";
-import { REST_SERVICE_OPTIONS_METADATA_KEY } from "src/constants";
-import { ListQueryDto } from "src/dtos";
-import { EntityNotFoundErrorFilter } from "src/filters";
+import { REST_SERVICE_OPTIONS_METADATA_KEY } from "../constants";
+import { ListQueryDto } from "../dtos";
+import { EntityNotFoundErrorFilter } from "../filters";
 import {
   LookupFields,
   RestService,
   RestServiceFactoryOptions,
-} from "src/services";
+} from "../services";
 import { RestControllerFactoryOptions } from "./rest-controller-factory-options.interface";
 import { RestController } from "./rest-controller.interface";
 import { RouteNames } from "./route-names.types";

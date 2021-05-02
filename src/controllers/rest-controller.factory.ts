@@ -59,8 +59,8 @@ export class RestControllerFactory<
     ) as RestServiceFactoryOptions<Entity, CreateDto, UpdateDto, LookupField>;
 
     this.product = this.createRawClass();
-    this.emitInjectionsMetadata();
-    this.emitRoutesTypesMetadata();
+    this.defineInjectionsMetadata();
+    this.defineRoutesTypesMetadata();
     this.applyRoutesDecorators();
     if (options.catchEntityNotFound)
       UseFilters(EntityNotFoundErrorFilter)(this.product);
@@ -127,12 +127,12 @@ export class RestControllerFactory<
     };
   }
 
-  protected emitInjectionsMetadata() {
+  protected defineInjectionsMetadata() {
     const target = this.product.prototype;
     Inject(this.options.restServiceClass)(target, "service");
   }
 
-  protected emitRoutesTypesMetadata() {
+  protected defineRoutesTypesMetadata() {
     const {
       dtoClasses: { create: createDto, update: updateDto },
       entityClass,

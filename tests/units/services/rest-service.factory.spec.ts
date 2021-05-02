@@ -118,20 +118,7 @@ describe(RestServiceFactory.name, () => {
     });
 
     describe(d(".replace()"), () => {
-      it("should create and return an entity when not found", async () => {
-        const spys = {
-          create: jest.spyOn(service, "create").mockResolvedValueOnce(entity),
-          update: jest.spyOn(service, "update").mockImplementationOnce(() => {
-            throw new EntityNotFoundError(class {}, {});
-          }),
-        };
-        const ret = await service.replace(1, entity);
-        expect(spys.update).toHaveBeenCalledTimes(1);
-        expect(spys.create).toHaveBeenCalledTimes(1);
-        expect(ret).toEqual(entity);
-      });
-
-      it("should update and return an entity when found", async () => {
+      it("should replace and return the entity", async () => {
         const spy = jest.spyOn(service, "update").mockResolvedValueOnce(entity);
         const ret = await service.replace(1, entity);
         expect(spy).toHaveBeenCalledTimes(1);

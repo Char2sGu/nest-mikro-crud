@@ -50,7 +50,7 @@ describe("Integration", () => {
   @UsePipes(ValidationPipe)
   @Controller()
   class TestController extends new RestControllerFactory({
-    routes: ["list", "create", "retrieve", "update", "destroy"],
+    routes: ["list", "create", "retrieve", "replace", "update", "destroy"],
     restServiceClass: TestService,
     customArgs: {
       description: [[Object, [Body()]]],
@@ -113,6 +113,10 @@ describe("Integration", () => {
           });
       }
     );
+
+    it("should return a 400 when passed illegal queries", async () => {
+      await requester.get("/").query({ limit: "illegal" }).expect(400);
+    });
   });
 
   describe("/ (POST)", () => {
@@ -148,6 +152,28 @@ describe("Integration", () => {
 
     it("should return a 404 when not found", async () => {
       await requester.get("/notexists/").expect(404);
+    });
+  });
+
+  describe("/:id/ (PUT)", () => {
+    it("should replace and return the entity when the entity exists", async () => {
+      await repository.save(entity);
+      const { body }: { body: TestEntity } = await requester
+        .put("/1/")
+        .send({ field: "newStr" })
+        .expect(200);
+      expect(body).toBeDefined();
+      expect(body.field).not.toBe(entity.field);
+    });
+
+    it("should return a 404 when the entity not exists", async () => {
+      const dto: Partial<TestEntity> = { field: entity.field };
+      await requester.put("/notexists/").send(dto).expect(404);
+    });
+
+    it("should return a 400 when passed illegal data", async () => {
+      await repository.save({ id: 1, field: "" });
+      await requester.put("/1/").send({ field: 0 }).expect(400);
     });
   });
 

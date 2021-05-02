@@ -73,13 +73,7 @@ export class RestServiceFactory<
       async replace(
         ...[lookup, dto, ...args]: Parameters<Interface["replace"]>
       ) {
-        try {
-          return await this.update(lookup, dto, ...args);
-        } catch (error) {
-          if (error instanceof EntityNotFoundError)
-            return await this.create(dto, ...args);
-          throw error;
-        }
+        return await this.update(lookup, dto, ...args);
       }
 
       async update(...[lookup, dto, ...args]: Parameters<Interface["update"]>) {

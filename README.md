@@ -4,14 +4,14 @@ Graceful flexible builder for RESTful APIs with TypeORM.
 
 # API Endpoints
 
-| Action   | Method | URL                              | Code        |
-| -------- | ------ | -------------------------------- | ----------- |
-| List     | GET    | /?limit=<number>&offset=<number> | 200         |
-| Create   | POST   | /                                | 201,400     |
-| Retrieve | GET    | /:lookup/                        | 200,404     |
-| Replace  | PUT    | /:lookup/                        | 200,400,404 |
-| Update   | PATCH  | /:lookup/                        | 200,400,404 |
-| Destroy  | DELETE | /:lookup/                        | 204,404     |
+| Action   | Method | URL                                  | Code        |
+| -------- | ------ | ------------------------------------ | ----------- |
+| List     | GET    | /?limit=\<number\>&offset=\<number\> | 200         |
+| Create   | POST   | /                                    | 201,400     |
+| Retrieve | GET    | /:lookup/                            | 200,404     |
+| Replace  | PUT    | /:lookup/                            | 200,400,404 |
+| Update   | PATCH  | /:lookup/                            | 200,400,404 |
+| Destroy  | DELETE | /:lookup/                            | 204,404     |
 
 # Quick Start
 

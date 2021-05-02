@@ -35,7 +35,7 @@ describe("RestServiceFactory", () => {
 
     beforeEach(() => {
       repository = new Repository();
-      service = new factory.service();
+      service = new factory.product();
       // @ts-expect-error - manual injection
       service.repository = repository;
       entity = { id: 1 };
@@ -44,7 +44,7 @@ describe("RestServiceFactory", () => {
     it("should have the metadata of the options passed", () => {
       const metadata = Reflect.getMetadata(
         REST_SERVICE_OPTIONS_METADATA_KEY,
-        factory.service
+        factory.product
       );
       expect(metadata).toBeDefined();
       expect(metadata).toBeInstanceOf(Object);

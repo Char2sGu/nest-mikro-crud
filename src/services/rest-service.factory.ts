@@ -1,6 +1,7 @@
 import { InjectRepository } from "@nestjs/typeorm";
 import { plainToClass } from "class-transformer";
 import { EntityNotFoundError, FindConditions, Repository } from "typeorm";
+import { AbstractFactory } from "../abstract.factory";
 import { REST_SERVICE_OPTIONS_METADATA_KEY } from "../constants";
 import { LookupFields } from "./lookup-fields.type";
 import { RestServiceFactoryOptions } from "./rest-service-factory-options.interface";
@@ -12,8 +13,10 @@ export class RestServiceFactory<
   UpdateDto = CreateDto,
   LookupField extends LookupFields<Entity> = LookupFields<Entity>,
   CustomArgs extends any[] = any[]
+> extends AbstractFactory<
+  RestService<Entity, CreateDto, UpdateDto, LookupField, CustomArgs>
 > {
-  readonly service;
+  readonly product;
 
   constructor(
     readonly options: RestServiceFactoryOptions<
@@ -23,13 +26,15 @@ export class RestServiceFactory<
       LookupField
     >
   ) {
-    this.service = this.createRawClass();
+    super();
+
+    this.product = this.createRawClass();
     this.emitInjectionsMetadata();
 
     Reflect.defineMetadata(
       REST_SERVICE_OPTIONS_METADATA_KEY,
       options,
-      this.service
+      this.product
     );
   }
 
@@ -115,7 +120,7 @@ export class RestServiceFactory<
 
   protected emitInjectionsMetadata() {
     InjectRepository(this.options.entityClass, this.options.repoConnection)(
-      this.service.prototype,
+      this.product.prototype,
       "repository"
     );
   }

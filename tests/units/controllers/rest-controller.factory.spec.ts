@@ -69,13 +69,19 @@ describe("RestControllerFactory", () => {
   let factory: RestControllerFactory;
 
   beforeEach(() => {
-    jest.spyOn(Reflect, "getMetadata").mockReturnValueOnce(testServiceOptions);
+    jest
+      .spyOn(Reflect, "getMetadata")
+      .mockReturnValueOnce(testServiceOptions) // get service's options
+      .mockReturnValueOnce(Number); // get entity's lookup field type
     jest.spyOn(Reflect, "defineMetadata");
     jest
-      .spyOn(RestControllerFactory.prototype, "applyDecorators")
+      .spyOn(RestControllerFactory.prototype, "applyMethodDecorators")
       .mockReturnThis();
     jest
-      .spyOn(RestControllerFactory.prototype, "emitParamTypesMetadata")
+      .spyOn(RestControllerFactory.prototype, "applyParamDecoratorSets")
+      .mockReturnThis();
+    jest
+      .spyOn(RestControllerFactory.prototype, "defineParamTypesMetadata")
       .mockReturnThis();
     factory = new RestControllerFactory(options);
   });
@@ -98,7 +104,7 @@ describe("RestControllerFactory", () => {
     let controller: RestController;
 
     beforeEach(() => {
-      controller = new factory.controller();
+      controller = new factory.product();
       // @ts-expect-error - manual injection
       controller.service = new TestService();
     });
@@ -281,7 +287,7 @@ describe("RestControllerFactory", () => {
     expect(Inject).toHaveBeenCalledWith(TestService);
     expect(_(Inject).mock.results[0].value).toHaveBeenCalledTimes(1);
     expect(_(Inject).mock.results[0].value).toHaveBeenCalledWith(
-      factory.controller.prototype,
+      factory.product.prototype,
       "service"
     );
   });
@@ -289,13 +295,16 @@ describe("RestControllerFactory", () => {
   it.each`
     name          | types
     ${"list"}     | ${[ListQueryDto]}
-    ${"create"}   | ${["dto:create"]}
-    ${"retrieve"} | ${["lookup"]}
-    ${"replace"}  | ${["lookup", "dto:create"]}
-    ${"update"}   | ${["lookup", "dto:update"]}
-    ${"destroy"}  | ${["lookup"]}
+    ${"create"}   | ${[TestEntity]}
+    ${"retrieve"} | ${[Number]}
+    ${"replace"}  | ${[Number, TestEntity]}
+    ${"update"}   | ${[Number, TestEntity]}
+    ${"destroy"}  | ${[Number]}
   `("should emit parameter types metadata to `.$name()`", ({ name, types }) => {
-    expect(factory.emitParamTypesMetadata).toHaveBeenCalledWith(name, types);
+    expect(factory.defineParamTypesMetadata).toHaveBeenCalledWith(
+      name,
+      ...types
+    );
   });
 
   it.each`
@@ -324,7 +333,7 @@ describe("RestControllerFactory", () => {
         ...(withLookup ? [":lookup"] : [])
       );
       const inner = _(decorators).mock.results[nth].value;
-      expect(factory.applyDecorators).toHaveBeenCalledWith(name, inner);
+      expect(factory.applyMethodDecorators).toHaveBeenCalledWith(name, inner);
     }
   );
 
@@ -361,124 +370,10 @@ describe("RestControllerFactory", () => {
       const decoratorSets = decoratorBuilderSets.map((builders) =>
         builders.map((builder) => _(builder).mock.results[0].value)
       );
-      expect(factory.applyDecorators).toHaveBeenCalledWith(
+      expect(factory.applyParamDecoratorSets).toHaveBeenCalledWith(
         name,
         ...decoratorSets
       );
     }
   );
-
-  describe.each`
-    shortcutTypes     | types
-    ${[ListQueryDto]} | ${[ListQueryDto]}
-    ${["lookup"]}     | ${[Number]}
-    ${["dto:create"]} | ${[TestEntity]}
-  `(
-    ".emitParamTypesMetadata(<method-name>, $shortcutTypes)",
-    ({ shortcutTypes, types }: { shortcutTypes: []; types: [] }) => {
-      const name = "list";
-
-      let ret: unknown;
-
-      beforeEach(() => {
-        _(Reflect.getMetadata).mockReturnValueOnce(Number);
-        _(factory.emitParamTypesMetadata).mockRestore();
-        ret = factory.emitParamTypesMetadata(name, shortcutTypes);
-      });
-
-      it("should define the types metadata", () => {
-        expect(Reflect.defineMetadata).toHaveBeenCalledWith(
-          "design:paramtypes",
-          types,
-          factory.controller.prototype,
-          name
-        );
-      });
-
-      it("should return `this`", () => {
-        expect(ret).toBe(factory);
-      });
-    }
-  );
-
-  describe(".applyDecorators(<method-name>, ...<method-decorators>)", () => {
-    const target: RouteNames = "create";
-    const decorator: MethodDecorator = jest.fn();
-
-    let ret: unknown;
-
-    beforeEach(() => {
-      _(factory.applyDecorators).mockRestore();
-      ret = factory.applyDecorators(target, decorator);
-    });
-
-    it("should apply the method decorators", () => {
-      expect(decorator).toHaveBeenCalledWith(
-        factory.controller.prototype,
-        target,
-        Object.getOwnPropertyDescriptor(factory.controller.prototype, target)
-      );
-    });
-
-    it("should return `this`", () => {
-      expect(ret).toBe(factory);
-    });
-  });
-
-  describe(".applyDecorators(<method-name-with-param-index>, ...<param-decorators>)", () => {
-    const decorator: ParameterDecorator = jest.fn();
-    const name: RouteNames = "create";
-    const index = 0;
-    const target = `${name}:${index}` as `${RouteNames}:${number}`;
-
-    let ret: unknown;
-
-    beforeEach(() => {
-      _(factory.applyDecorators).mockRestore();
-      ret = factory.applyDecorators(target, decorator);
-    });
-
-    it("should apply the param decorators", () => {
-      expect(decorator).toHaveBeenCalledWith(
-        factory.controller.prototype,
-        name,
-        index
-      );
-    });
-
-    it("should return this", () => {
-      expect(ret).toBe(factory);
-    });
-  });
-
-  describe(".applyDecorators(<method-name>, ...<param-decorator-sets>)", () => {
-    const name: RouteNames = "create";
-    const decorator: ParameterDecorator = jest.fn();
-
-    let ret: unknown;
-
-    beforeEach(() => {
-      _(factory.applyDecorators).mockRestore();
-      jest.spyOn(factory, "applyDecorators");
-      ret = factory.applyDecorators(name, [decorator]);
-    });
-
-    it("should call itself to apply the param decorators", () => {
-      expect(factory.applyDecorators).toHaveBeenCalledTimes(2);
-      expect(factory.applyDecorators).toHaveBeenCalledWith(
-        `${name}:0`,
-        decorator
-      );
-      expect(decorator).toHaveBeenCalledTimes(1);
-      expect(decorator).toHaveBeenCalledWith(
-        factory.controller.prototype,
-        name,
-        0
-      );
-    });
-
-    it("should return `this`", () => {
-      expect(ret).toBe(factory);
-    });
-  });
 });

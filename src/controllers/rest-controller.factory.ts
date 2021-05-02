@@ -11,8 +11,12 @@ import {
   Query,
   UseFilters,
 } from "@nestjs/common";
-import { ClassConstructor, plainToClass } from "class-transformer";
-import { REST_SERVICE_OPTIONS_METADATA_KEY } from "../constants";
+import { plainToClass } from "class-transformer";
+import { AbstractFactory } from "../abstract.factory";
+import {
+  REST_SERVICE_OPTIONS_METADATA_KEY,
+  TS_TYPE_METADATA_KEY,
+} from "../constants";
 import { ListQueryDto } from "../dtos";
 import { EntityNotFoundErrorFilter } from "../filters";
 import {
@@ -37,12 +41,16 @@ export class RestControllerFactory<
     LookupField,
     CustomArgs
   > = RestService<Entity, CreateDto, UpdateDto, LookupField, CustomArgs>
+> extends AbstractFactory<
+  RestController<Entity, CreateDto, UpdateDto, LookupField, CustomArgs>
 > {
   readonly options;
-  readonly controller;
+  readonly product;
   readonly serviceOptions;
 
   constructor(options: RestControllerFactoryOptions<Service, CustomArgs>) {
+    super();
+
     this.options = this.processOptions(options);
 
     this.serviceOptions = Reflect.getMetadata(
@@ -50,13 +58,13 @@ export class RestControllerFactory<
       this.options.restServiceClass
     ) as RestServiceFactoryOptions<Entity, CreateDto, UpdateDto, LookupField>;
 
-    this.controller = this.createRawClass();
+    this.product = this.createRawClass();
     this.emitInjectionsMetadata();
     this.emitRoutesTypesMetadata();
     this.applyRoutesDecorators();
     if (options.catchEntityNotFound)
-      UseFilters(EntityNotFoundErrorFilter)(this.controller);
-    this.applyDecorators("destroy", HttpCode(204));
+      UseFilters(EntityNotFoundErrorFilter)(this.product);
+    this.applyMethodDecorators("destroy", HttpCode(204));
   }
 
   protected processOptions(options: RestControllerFactoryOptions<Service>) {
@@ -120,18 +128,28 @@ export class RestControllerFactory<
   }
 
   protected emitInjectionsMetadata() {
-    const target = this.controller.prototype;
+    const target = this.product.prototype;
     Inject(this.options.restServiceClass)(target, "service");
   }
 
   protected emitRoutesTypesMetadata() {
+    const {
+      dtoClasses: { create: createDto, update: updateDto },
+      entityClass,
+      lookupField,
+    } = this.serviceOptions;
+    const lookupType = Reflect.getMetadata(
+      TS_TYPE_METADATA_KEY,
+      entityClass.prototype,
+      lookupField
+    );
     const extra = this.options.customArgs.description.map(([type]) => type);
-    this.emitParamTypesMetadata("list", [ListQueryDto, ...extra])
-      .emitParamTypesMetadata("create", ["dto:create", ...extra])
-      .emitParamTypesMetadata("retrieve", ["lookup", ...extra])
-      .emitParamTypesMetadata("replace", ["lookup", "dto:create", ...extra])
-      .emitParamTypesMetadata("update", ["lookup", "dto:update", ...extra])
-      .emitParamTypesMetadata("destroy", ["lookup", ...extra]);
+    this.defineParamTypesMetadata("list", ListQueryDto, ...extra)
+      .defineParamTypesMetadata("create", createDto, ...extra)
+      .defineParamTypesMetadata("retrieve", lookupType, ...extra)
+      .defineParamTypesMetadata("replace", lookupType, createDto, ...extra)
+      .defineParamTypesMetadata("update", lookupType, updateDto, ...extra)
+      .defineParamTypesMetadata("destroy", lookupType, ...extra);
   }
 
   protected applyRoutesDecorators() {
@@ -157,122 +175,9 @@ export class RestControllerFactory<
     };
 
     this.options.routes.forEach((routeName) => {
-      const [routeDecorator, paramDecorators] = routesMapping[routeName];
-      this.applyDecorators(routeName, routeDecorator);
-      this.applyDecorators(routeName, ...paramDecorators);
+      const [routeDecorator, paramDecoratorSets] = routesMapping[routeName];
+      this.applyMethodDecorators(routeName, routeDecorator);
+      this.applyParamDecoratorSets(routeName, ...paramDecoratorSets);
     });
-  }
-
-  /**
-   * Emit param types metadata to "design:paramtypes" manually.
-   */
-  emitParamTypesMetadata(
-    name: RouteNames,
-    types: (
-      | ClassConstructor<unknown>
-      | "lookup"
-      | `dto:${"create" | "update"}`
-    )[]
-  ) {
-    const TS_PARAM_TYPES_METADATA_KEY = "design:paramtypes";
-    const TS_TYPE_METADATA_KEY = "design:type";
-
-    const {
-      dtoClasses: { create: createDto, update: updateDto },
-      entityClass,
-      lookupField,
-    } = this.serviceOptions;
-
-    const lookupType = Reflect.getMetadata(
-      TS_TYPE_METADATA_KEY,
-      entityClass.prototype,
-      lookupField
-    );
-
-    const shortcutMap: Record<
-      Extract<typeof types[0], string>,
-      ClassConstructor<unknown>
-    > = {
-      lookup: lookupType,
-      "dto:create": createDto,
-      "dto:update": updateDto,
-    };
-
-    types = types.map((type) =>
-      typeof type == "string" ? shortcutMap[type] : type
-    );
-
-    Reflect.defineMetadata(
-      TS_PARAM_TYPES_METADATA_KEY,
-      types,
-      this.controller.prototype,
-      name
-    );
-
-    return this;
-  }
-
-  /**
-   * Apply multiple route-level decorators on a routing method
-   * @param target
-   * @param decorators
-   */
-  applyDecorators(target: RouteNames, ...decorators: MethodDecorator[]): this;
-  /**
-   * Apply multiple param-level decorators on a method param
-   * @param target
-   * @param decorators
-   */
-  applyDecorators(
-    target: `${RouteNames}:${number}`,
-    ...decorators: ParameterDecorator[]
-  ): this;
-  /**
-   * Apply a list of parameter-level decorators to each parameter in order on a routing method
-   * @param target
-   * @param decoratorSets
-   */
-  applyDecorators(
-    target: RouteNames,
-    ...decoratorSets: ParameterDecorator[][]
-  ): this;
-  applyDecorators(
-    target: RouteNames | `${RouteNames}:${number}`,
-    ...decorators:
-      | MethodDecorator[]
-      | ParameterDecorator[]
-      | ParameterDecorator[][]
-  ) {
-    if (!decorators.length) return this;
-
-    const isParamDecorators = (
-      v: typeof decorators
-    ): v is ParameterDecorator[] => target.includes(":");
-
-    const isParamDecoratorSets = (
-      v: typeof decorators
-    ): v is ParameterDecorator[][] => decorators[0] instanceof Array;
-
-    const proto = this.controller.prototype;
-
-    if (isParamDecorators(decorators)) {
-      const [name, index] = target.split(":");
-      decorators.forEach((d) => d(proto, name, +index));
-    } else if (isParamDecoratorSets(decorators)) {
-      const name = target;
-      decorators.forEach((decorators, index) =>
-        this.applyDecorators(
-          `${name}:${index}` as `${RouteNames}:${number}`,
-          ...decorators
-        )
-      );
-    } else {
-      const name = target;
-      decorators.forEach((d) =>
-        d(proto, name, Object.getOwnPropertyDescriptor(proto, name)!)
-      );
-    }
-
-    return this;
   }
 }

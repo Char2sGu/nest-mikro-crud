@@ -45,7 +45,7 @@ describe("Integration", () => {
     entityClass: TestEntity,
     dtoClasses: { create: TestCreateDto, update: TestUpdateDto },
     lookupField: "id",
-  }).service {}
+  }).product {}
 
   @UsePipes(ValidationPipe)
   @Controller()
@@ -56,10 +56,10 @@ describe("Integration", () => {
       description: [[Object, [Body()]]],
       typeHelper: (body: any) => null,
     },
-  }).applyDecorators(
+  }).applyMethodDecorators(
     "update",
     UsePipes(jest.fn(() => ({ transform: testPipe })))
-  ).controller {
+  ).product {
     @Post()
     create(dto: TestCreateDto, body: any) {
       return super.create(dto, body);

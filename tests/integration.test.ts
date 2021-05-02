@@ -18,7 +18,7 @@ import { RestServiceFactory } from "src/services";
 import { Column, Entity, PrimaryGeneratedColumn, Repository } from "typeorm";
 import { getRequester } from "./units/get-requester";
 import { getTypeOrmModules } from "./utils/get-typeorm-modules";
-import { _ } from "./utils/mocked-type-helper";
+import { m } from "./utils/type-helpers";
 
 describe("Integration", () => {
   const testPipe = jest.fn((v) => v);
@@ -128,7 +128,7 @@ describe("Integration", () => {
           expect(body).toEqual(serializedEntity);
         });
       expect(TestService.prototype.create).toHaveBeenCalledTimes(1);
-      expect(_(TestService.prototype.create).mock.calls[0]).toHaveLength(2);
+      expect(m(TestService.prototype.create).mock.calls[0]).toHaveLength(2);
     });
 
     it("should return a 400 when passed illegal data", async () => {

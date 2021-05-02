@@ -29,10 +29,10 @@ import { RouteNames } from "src/controllers/route-names.types";
 import { ListQueryDto } from "src/dtos";
 import { RestService, RestServiceFactoryOptions } from "src/services";
 import { Resolved } from "src/utils";
-import { _ } from "tests/utils/mocked-type-helper";
+import { buildKeyChecker, m } from "tests/utils/type-helpers";
 import { Repository } from "typeorm";
 
-describe("RestControllerFactory", () => {
+describe(RestControllerFactory.name, () => {
   class TestEntity {
     id!: number;
     field!: number;
@@ -101,6 +101,7 @@ describe("RestControllerFactory", () => {
   });
 
   describe("should create the controller class", () => {
+    const d = buildKeyChecker<RestController>();
     let controller: RestController;
 
     beforeEach(() => {
@@ -113,7 +114,7 @@ describe("RestControllerFactory", () => {
       rawOptions                     | parsedOptions              | rest
       ${{ limit: "1", offset: "1" }} | ${{ limit: 1, offset: 1 }} | ${["extra"]}
     `(
-      ".list($rawOptions, ...$rest)",
+      d(".list($rawOptions, ...$rest)"),
       ({
         rawOptions,
         parsedOptions,
@@ -148,7 +149,7 @@ describe("RestControllerFactory", () => {
     describe.each`
       dto              | rest
       ${{ im: "dto" }} | ${["extra"]}
-    `(".create($dto, ...$rest)", ({ dto, rest }: { dto: {}; rest: [] }) => {
+    `(d(".create($dto, ...$rest)"), ({ dto, rest }: { dto: {}; rest: [] }) => {
       let ret: Resolved<ReturnType<typeof controller.create>>;
 
       beforeEach(async () => {
@@ -173,36 +174,33 @@ describe("RestControllerFactory", () => {
     describe.each`
       lookup | rest
       ${1}   | ${["extra"]}
-    `(
-      ".retrieve($lookup, ...$rest)",
-      ({ lookup, rest }: { lookup: number; rest: [] }) => {
-        let ret: Resolved<ReturnType<typeof controller.retrieve>>;
+    `(d(".retrieve()"), ({ lookup, rest }: { lookup: number; rest: [] }) => {
+      let ret: Resolved<ReturnType<typeof controller.retrieve>>;
 
-        beforeEach(async () => {
-          ret = await controller.retrieve(lookup, ...rest);
-        });
+      beforeEach(async () => {
+        ret = await controller.retrieve(lookup, ...rest);
+      });
 
-        it("should retrieve the entity", () => {
-          expect(testService.retrieve).toHaveBeenCalledTimes(1);
-          expect(testService.retrieve).toHaveBeenCalledWith(lookup, ...rest);
-        });
+      it("should retrieve the entity", () => {
+        expect(testService.retrieve).toHaveBeenCalledTimes(1);
+        expect(testService.retrieve).toHaveBeenCalledWith(lookup, ...rest);
+      });
 
-        it("should transform the entitiy", () => {
-          expect(testService.transform).toHaveBeenCalledTimes(1);
-          expect(testService.transform).toHaveBeenCalledWith(entity, ...rest);
-        });
+      it("should transform the entitiy", () => {
+        expect(testService.transform).toHaveBeenCalledTimes(1);
+        expect(testService.transform).toHaveBeenCalledWith(entity, ...rest);
+      });
 
-        it("should return the entity", () => {
-          expect(ret).toEqual(entity);
-        });
-      }
-    );
+      it("should return the entity", () => {
+        expect(ret).toEqual(entity);
+      });
+    });
 
     describe.each`
       lookup | dto                   | rest
       ${1}   | ${{ replace: "dto" }} | ${["rest"]}
     `(
-      ".replace($lookup, $dto, ...$rest)",
+      d(".replace($lookup, $dto, ...$rest)"),
       ({ lookup, dto, rest }: { lookup: number; dto: {}; rest: [] }) => {
         let ret: Resolved<ReturnType<typeof controller.replace>>;
 
@@ -234,7 +232,7 @@ describe("RestControllerFactory", () => {
       lookup | dto                  | rest
       ${1}   | ${{ update: "dto" }} | ${["rest"]}
     `(
-      ".update($lookup, $dto, ...$rest)",
+      d(".update($lookup, $dto, ...$rest)"),
       ({ lookup, dto, rest }: { lookup: number; dto: {}; rest: [] }) => {
         let ret: Resolved<ReturnType<typeof controller.update>>;
 
@@ -262,7 +260,7 @@ describe("RestControllerFactory", () => {
       $lookup | rest
       ${1}    | ${["rest-destroy"]}
     `(
-      ".destroy($lookup, ...$rest)",
+      d(".destroy($lookup, ...$rest)"),
       ({ lookup, rest }: { lookup: number; rest: [] }) => {
         let ret: Resolved<ReturnType<typeof controller.destroy>>;
 
@@ -285,8 +283,8 @@ describe("RestControllerFactory", () => {
   it("should apply dependency injection of the service", () => {
     expect(Inject).toHaveBeenCalledTimes(1);
     expect(Inject).toHaveBeenCalledWith(TestService);
-    expect(_(Inject).mock.results[0].value).toHaveBeenCalledTimes(1);
-    expect(_(Inject).mock.results[0].value).toHaveBeenCalledWith(
+    expect(m(Inject).mock.results[0].value).toHaveBeenCalledTimes(1);
+    expect(m(Inject).mock.results[0].value).toHaveBeenCalledWith(
       factory.product.prototype,
       "service"
     );
@@ -332,7 +330,7 @@ describe("RestControllerFactory", () => {
       expect(decorators).toHaveBeenCalledWith(
         ...(withLookup ? [":lookup"] : [])
       );
-      const inner = _(decorators).mock.results[nth].value;
+      const inner = m(decorators).mock.results[nth].value;
       expect(factory.applyMethodDecorators).toHaveBeenCalledWith(name, inner);
     }
   );
@@ -368,7 +366,7 @@ describe("RestControllerFactory", () => {
       decoratorBuilderSets: (() => ParameterDecorator)[][];
     }) => {
       const decoratorSets = decoratorBuilderSets.map((builders) =>
-        builders.map((builder) => _(builder).mock.results[0].value)
+        builders.map((builder) => m(builder).mock.results[0].value)
       );
       expect(factory.applyParamDecoratorSets).toHaveBeenCalledWith(
         name,

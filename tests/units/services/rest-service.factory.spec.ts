@@ -3,12 +3,14 @@ import { REST_SERVICE_OPTIONS_METADATA_KEY } from "src/constants";
 import { RestServiceFactory } from "src/services/rest-service.factory";
 import { RestService } from "src/services/rest-service.interface";
 import { Resolved } from "src/utils";
-import { _ } from "tests/utils/mocked-type-helper";
+import { buildKeyChecker, m } from "tests/utils/type-helpers";
 import { EntityNotFoundError, Repository } from "typeorm";
 
 jest.mock("typeorm");
 
-describe("RestServiceFactory", () => {
+describe(RestServiceFactory.name, () => {
+  const d = buildKeyChecker<RestServiceFactory>();
+
   class TestEntity {
     @Exclude()
     id!: number;
@@ -28,7 +30,9 @@ describe("RestServiceFactory", () => {
     expect(factory).toBeDefined();
   });
 
-  describe(".service", () => {
+  describe(d(".product"), () => {
+    const d = buildKeyChecker<RestService>();
+
     let repository: Repository<TestEntity>;
     let service: RestService<TestEntity>;
     let entity: TestEntity;
@@ -50,11 +54,11 @@ describe("RestServiceFactory", () => {
       expect(metadata).toBeInstanceOf(Object);
     });
 
-    describe(".list()", () => {
+    describe(d(".list()"), () => {
       let ret: Resolved<ReturnType<RestService["list"]>>;
 
       beforeEach(async () => {
-        _(Repository).prototype.find.mockResolvedValueOnce([
+        m(Repository).prototype.find.mockResolvedValueOnce([
           plainToClass(TestEntity, { id: 1 }),
         ]);
         ret = await service.list();
@@ -66,21 +70,21 @@ describe("RestServiceFactory", () => {
       });
 
       it("should call `repo.find()`", async () => {
-        expect(_(Repository).prototype.find).toHaveBeenCalledTimes(1);
+        expect(m(Repository).prototype.find).toHaveBeenCalledTimes(1);
       });
     });
 
-    describe(".create()", () => {
+    describe(d(".create()"), () => {
       let dto: TestEntity;
       let ret: Resolved<ReturnType<RestService["create"]>>;
 
       beforeEach(async () => {
         dto = { id: 1 };
 
-        _(Repository).prototype.create.mockReturnValueOnce(
+        m(Repository).prototype.create.mockReturnValueOnce(
           plainToClass(TestEntity, dto)
         );
-        _(Repository).prototype.save.mockImplementationOnce(async (v) => v);
+        m(Repository).prototype.save.mockImplementationOnce(async (v) => v);
         ret = await service.create(dto);
       });
 
@@ -89,31 +93,31 @@ describe("RestServiceFactory", () => {
       });
 
       it("should call `repo.save()` once with an entity", () => {
-        expect(_(Repository).prototype.save.mock.calls[0][0]).toBeInstanceOf(
+        expect(m(Repository).prototype.save.mock.calls[0][0]).toBeInstanceOf(
           TestEntity
         );
       });
 
       it("should call `repo.create()` once with a dto", () => {
-        expect(_(Repository).prototype.create).toHaveBeenCalledTimes(1);
-        expect(_(Repository).prototype.create).toHaveBeenCalledWith(dto);
+        expect(m(Repository).prototype.create).toHaveBeenCalledTimes(1);
+        expect(m(Repository).prototype.create).toHaveBeenCalledWith(dto);
       });
     });
 
-    describe(".retrieve()", () => {
+    describe(d(".retrieve()"), () => {
       it("should call `repo.findOne()` once with the lookup condition and return the return value", async () => {
-        _(Repository).prototype.findOneOrFail.mockResolvedValueOnce(
+        m(Repository).prototype.findOneOrFail.mockResolvedValueOnce(
           "something"
         );
         const getQueryConditionsSpy = jest.spyOn(service, "getQueryConditions");
         const ret = await service.retrieve(1);
         expect(ret).toBe("something");
-        expect(_(Repository).prototype.findOneOrFail).toHaveBeenCalledTimes(1);
+        expect(m(Repository).prototype.findOneOrFail).toHaveBeenCalledTimes(1);
         expect(getQueryConditionsSpy).toHaveBeenCalledTimes(1);
       });
     });
 
-    describe(".replace()", () => {
+    describe(d(".replace()"), () => {
       it("should create and return an entity when not found", async () => {
         const spys = {
           create: jest.spyOn(service, "create").mockResolvedValueOnce(entity),
@@ -135,39 +139,39 @@ describe("RestServiceFactory", () => {
       });
     });
 
-    describe(".update()", () => {
+    describe(d(".update()"), () => {
       it("should return the updated entity", async () => {
         const updated: TestEntity = { id: 2 };
         const spy = jest
           .spyOn(service, "retrieve")
           .mockResolvedValueOnce(entity);
-        _(Repository).prototype.save.mockImplementationOnce(async (v) => v);
+        m(Repository).prototype.save.mockImplementationOnce(async (v) => v);
         const ret = await service.update(1, updated);
         expect(spy).toHaveBeenCalledTimes(1);
         expect(ret).toEqual(updated);
       });
     });
 
-    describe(".destroy()", () => {
+    describe(d(".destroy()"), () => {
       it("should call `.retrieve()` and `repo.remove()`", async () => {
         const spy = jest
           .spyOn(service, "retrieve")
           .mockResolvedValueOnce(entity);
         await service.destroy(1);
         expect(spy).toHaveBeenCalledTimes(1);
-        expect(_(Repository).prototype.remove).toHaveBeenCalledTimes(1);
-        expect(_(Repository).prototype.remove).toHaveBeenCalledWith(entity);
+        expect(m(Repository).prototype.remove).toHaveBeenCalledTimes(1);
+        expect(m(Repository).prototype.remove).toHaveBeenCalledWith(entity);
       });
     });
 
-    describe(".count()", () => {
+    describe(d(".count()"), () => {
       it("should call `repo.count()`", async () => {
         await service.count();
-        expect(_(Repository).prototype.count).toHaveBeenCalledTimes(1);
+        expect(m(Repository).prototype.count).toHaveBeenCalledTimes(1);
       });
     });
 
-    describe(".transform()", () => {
+    describe(d(".transform()"), () => {
       it("should return a transformed entity when passed an entity", async () => {
         const ret = await service.transform({ id: 1 });
         expect(ret).toEqual({});
@@ -179,14 +183,14 @@ describe("RestServiceFactory", () => {
       });
     });
 
-    describe(".getQueryConditions()", () => {
+    describe(d(".getQueryConditions()"), () => {
       it("should return an empty object", async () => {
         const ret = await service.getQueryConditions();
         expect(ret).toEqual({});
       });
     });
 
-    describe(".getQueryConditions(0)", () => {
+    describe(d(".getQueryConditions(0)"), () => {
       it("should return a condition object filled with the lookup condition", async () => {
         const ret = await service.getQueryConditions(0);
         expect(ret).toEqual({ id: 0 });

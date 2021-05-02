@@ -28,7 +28,7 @@ export interface RestControllerFactoryOptions<
    */
   lookupParam?: string;
   /**
-   * Specify whether to apply the filter to catch TypeORM's EntityNotFoundError
+   * Specify whether to apply the filter to catch TypeORM's NotFoundException
    * and throw NestJS's EntityNotFoundException instead
    */
   catchEntityNotFound?: boolean;

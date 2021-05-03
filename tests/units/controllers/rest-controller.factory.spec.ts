@@ -18,7 +18,7 @@ import { RouteNames } from "src/controllers/route-names.types";
 import { ListQueryDtoFactory } from "src/dtos/list-query-dto.factory";
 import { RestService, RestServiceFactoryOptions } from "src/services";
 import { Resolved } from "src/utils";
-import { buildKeyChecker, m } from "tests/utils/type-helpers";
+import { buildKeyChecker, m } from "tests/utils";
 import { Repository } from "typeorm";
 
 jest.mock("@nestjs/common", () => ({

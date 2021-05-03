@@ -15,9 +15,7 @@ import {
   PrimaryGeneratedColumn,
   Repository,
 } from "typeorm";
-import { getRequester } from "../utils/get-requester";
-import { getTypeOrmModules } from "../utils/get-typeorm-modules";
-import { m } from "../utils/type-helpers";
+import { getRequester, getTypeOrmModules, m } from "../utils";
 
 describe("Single Entity", () => {
   const testPipe = jest.fn((v) => v);

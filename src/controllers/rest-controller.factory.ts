@@ -21,28 +21,22 @@ import {
 } from "../constants";
 import { ListQueryDtoFactory } from "../dtos";
 import { EntityNotFoundErrorFilter } from "../filters";
-import {
-  LookupFields,
-  RestService,
-  RestServiceFactoryOptions,
-} from "../services";
+import { LookupFields, RestServiceFactoryOptions } from "../services";
 import { RestControllerFactoryOptions } from "./rest-controller-factory-options.interface";
 import { RestController } from "./rest-controller.interface";
 import { RouteNames } from "./route-names.types";
 
+// TODO: Fix the issue below.
+/**
+ * Strangely, literal generic types will be lost in nested type inferences and I've not
+ * found any graceful solutions yet.
+ */
 export class RestControllerFactory<
   Entity = any,
   CreateDto = Entity,
   UpdateDto = CreateDto,
   LookupField extends LookupFields<Entity> = LookupFields<Entity>,
-  CustomArgs extends any[] = any[],
-  Service extends RestService<
-    Entity,
-    CreateDto,
-    UpdateDto,
-    LookupField,
-    CustomArgs
-  > = RestService<Entity, CreateDto, UpdateDto, LookupField, CustomArgs>
+  CustomArgs extends any[] = any[]
 > extends AbstractFactory<
   RestController<Entity, CreateDto, UpdateDto, LookupField, CustomArgs>
 > {
@@ -50,7 +44,15 @@ export class RestControllerFactory<
   readonly product;
   readonly serviceOptions;
 
-  constructor(options: RestControllerFactoryOptions<Service, CustomArgs>) {
+  constructor(
+    options: RestControllerFactoryOptions<
+      Entity,
+      CreateDto,
+      UpdateDto,
+      LookupField,
+      CustomArgs
+    >
+  ) {
     super();
 
     this.options = this.processOptions(options);
@@ -70,14 +72,19 @@ export class RestControllerFactory<
     this.applyMethodDecorators("destroy", HttpCode(204));
   }
 
-  protected processOptions(options: RestControllerFactoryOptions<Service>) {
+  protected processOptions(
+    options: RestControllerFactoryOptions<
+      Entity,
+      CreateDto,
+      UpdateDto,
+      LookupField,
+      CustomArgs
+    >
+  ) {
     options.listQueryDto =
       options.listQueryDto ?? new ListQueryDtoFactory({}).product;
     options.lookupParam = options.lookupParam ?? "lookup";
-    options.customArgs = options.customArgs ?? {
-      description: [],
-      typeHelper: () => null,
-    };
+    options.customArgs = options.customArgs ?? [];
     options.catchEntityNotFound = options.catchEntityNotFound ?? true;
     return options as Required<typeof options>;
   }
@@ -96,7 +103,7 @@ export class RestControllerFactory<
       CustomArgs
     >;
     return class RestController implements Interface {
-      readonly service!: Service;
+      readonly service!: Interface["service"];
 
       async list(...[query, ...args]: Parameters<Interface["list"]>) {
         query = plainToClass(options.listQueryDto, query, {
@@ -152,7 +159,7 @@ export class RestControllerFactory<
       entityClass.prototype,
       lookupField
     );
-    const extra = this.options.customArgs.description.map(([type]) => type);
+    const extra = this.options.customArgs.map(([type]) => type);
     this.defineParamTypesMetadata("list", this.options.listQueryDto, ...extra)
       .defineParamTypesMetadata("create", createDto, ...extra)
       .defineParamTypesMetadata("retrieve", lookupType, ...extra)
@@ -168,9 +175,7 @@ export class RestControllerFactory<
     const AllQueries = Query();
     const Dto = Body();
 
-    const extra = this.options.customArgs.description.map(
-      ([, decoraotrs]) => decoraotrs
-    );
+    const extra = this.options.customArgs.map(([, decoraotrs]) => decoraotrs);
     const routesMapping: Record<
       RouteNames,
       [MethodDecorator, ParameterDecorator[][]]

@@ -1,16 +1,21 @@
 import { ClassConstructor } from "class-transformer";
 import { ListQueryDto } from "../dtos";
-import { RestService } from "../services";
+import { LookupFields, RestService } from "../services";
 import { RouteNames } from "./route-names.types";
 
 export interface RestControllerFactoryOptions<
-  Service extends RestService = RestService,
-  ContextArgs extends any[] = any[]
+  Entity = any,
+  CreateDto = Entity,
+  UpdateDto = CreateDto,
+  LookupField extends LookupFields<Entity> = LookupFields<Entity>,
+  CustomArgs extends any[] = any[]
 > {
   /**
    * The service will be auto-injected for db CRUD actions.
    */
-  restServiceClass: ClassConstructor<Service>;
+  restServiceClass: ClassConstructor<
+    RestService<Entity, CreateDto, UpdateDto, LookupField, CustomArgs>
+  >;
   /**
    * Specify which routes should be enabled.
    */
@@ -25,10 +30,7 @@ export interface RestControllerFactoryOptions<
    * of both the controller and the service, allowing you to get more
    * context data.
    */
-  customArgs?: {
-    description: [ClassConstructor<any>, ParameterDecorator[]][];
-    typeHelper: (...args: ContextArgs) => any;
-  };
+  customArgs?: [ClassConstructor<any>, ParameterDecorator[]][];
   /**
    * Specify the parameter name for entity lookup in the URL
    */

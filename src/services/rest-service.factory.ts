@@ -23,7 +23,8 @@ export class RestServiceFactory<
       Entity,
       CreateDto,
       UpdateDto,
-      LookupField
+      LookupField,
+      CustomArgs
     >
   ) {
     super();
@@ -49,7 +50,7 @@ export class RestServiceFactory<
       CustomArgs
     >;
     return class RestService implements Interface {
-      readonly repository!: Repository<Entity>;
+      readonly repository!: Interface["repository"];
 
       async list(...[options, ...args]: Parameters<Interface["list"]>) {
         return await this.repository.find({

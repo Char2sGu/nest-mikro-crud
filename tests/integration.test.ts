@@ -7,7 +7,7 @@ import { Exclude } from "class-transformer";
 import { IsString } from "class-validator";
 import { RestControllerFactory } from "src/controllers";
 import { ListQueryDto, ListQueryDtoFactory } from "src/dtos";
-import { RestServiceFactory } from "src/services";
+import { RestService, RestServiceFactory } from "src/services";
 import { Column, Entity, PrimaryGeneratedColumn, Repository } from "typeorm";
 import { getRequester } from "./units/get-requester";
 import { getTypeOrmModules } from "./utils/get-typeorm-modules";
@@ -38,6 +38,7 @@ describe("Integration", () => {
     entityClass: TestEntity,
     dtoClasses: { create: TestCreateDto, update: TestUpdateDto },
     lookupField: "id",
+    customArgs: (body: any) => null,
   }).product {}
 
   @Controller()
@@ -47,10 +48,7 @@ describe("Integration", () => {
     listQueryDto: new ListQueryDtoFactory({
       limit: { max: 2, default: 1 },
     }).product,
-    customArgs: {
-      description: [[Object, [Body()]]],
-      typeHelper: (body: any) => null,
-    },
+    customArgs: [[Object, [Body()]]],
   }).applyMethodDecorators(
     "update",
     UsePipes(jest.fn(() => ({ transform: testPipe })))

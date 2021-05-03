@@ -2,10 +2,10 @@
   "name": "nest-restful",
   "version": "0.0.0",
   "description": "Graceful flexible builder for RESTful APIs with TypeORM.",
-  "main": "dist/index.js",
+  "main": "lib/index.js",
   "scripts": {
     "test": "jest",
-    "prebuild": "rimraf dist",
+    "prebuild": "rimraf lib",
     "build": "tsc -b",
     "prepublishOnly": "npm run build || exit 1"
   },

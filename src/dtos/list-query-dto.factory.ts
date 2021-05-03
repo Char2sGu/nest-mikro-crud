@@ -1,4 +1,4 @@
-import { Expose, Type } from "class-transformer";
+import { Type } from "class-transformer";
 import { IsNumber, IsOptional, Max, Min } from "class-validator";
 import { AbstractFactory } from "../abstract.factory";
 import { ListQueryDtoFactoryOptions } from "./list-query-dto-factory-options.interface";
@@ -17,7 +17,6 @@ export class ListQueryDtoFactory extends AbstractFactory<ListQueryDto> {
     };
 
     const commonDecorators = [
-      Expose(),
       IsOptional(),
       IsNumber(),
       Type(() => Number),

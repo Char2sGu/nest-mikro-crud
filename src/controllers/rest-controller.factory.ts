@@ -10,6 +10,8 @@ import {
   Put,
   Query,
   UseFilters,
+  UsePipes,
+  ValidationPipe,
 } from "@nestjs/common";
 import { plainToClass } from "class-transformer";
 import { AbstractFactory } from "../abstract.factory";
@@ -62,6 +64,7 @@ export class RestControllerFactory<
     this.defineInjectionsMetadata();
     this.defineRoutesTypesMetadata();
     this.applyRoutesDecorators();
+    this.applyClassDecorators(UsePipes(ValidationPipe));
     if (options.catchEntityNotFound)
       this.applyClassDecorators(UseFilters(EntityNotFoundErrorFilter));
     this.applyMethodDecorators("destroy", HttpCode(204));

@@ -47,7 +47,6 @@ describe("Integration", () => {
     lookupField: "id",
   }).product {}
 
-  @UsePipes(ValidationPipe)
   @Controller()
   class TestController extends new RestControllerFactory({
     routes: ["list", "create", "retrieve", "replace", "update", "destroy"],

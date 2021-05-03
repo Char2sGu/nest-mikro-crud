@@ -9,11 +9,11 @@ import { RestControllerFactory } from "src/controllers";
 import { ListQueryDto, ListQueryDtoFactory } from "src/dtos";
 import { RestServiceFactory } from "src/services";
 import { Column, Entity, PrimaryGeneratedColumn, Repository } from "typeorm";
-import { getRequester } from "./units/get-requester";
-import { getTypeOrmModules } from "./utils/get-typeorm-modules";
-import { m } from "./utils/type-helpers";
+import { getRequester } from "../units/get-requester";
+import { getTypeOrmModules } from "../utils/get-typeorm-modules";
+import { m } from "../utils/type-helpers";
 
-describe("Integration", () => {
+describe("Single Entity", () => {
   const testPipe = jest.fn((v) => v);
 
   @Entity()

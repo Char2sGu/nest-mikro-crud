@@ -8,7 +8,13 @@ import { IsString } from "class-validator";
 import { RestControllerFactory } from "src/controllers";
 import { ListQueryDto, ListQueryDtoFactory } from "src/dtos";
 import { RestServiceFactory } from "src/services";
-import { Column, Entity, PrimaryGeneratedColumn, Repository } from "typeorm";
+import {
+  Column,
+  Entity,
+  getConnection,
+  PrimaryGeneratedColumn,
+  Repository,
+} from "typeorm";
 import { getRequester } from "../units/get-requester";
 import { getTypeOrmModules } from "../utils/get-typeorm-modules";
 import { m } from "../utils/type-helpers";
@@ -82,6 +88,10 @@ describe("Single Entity", () => {
     serializedEntity = { field: "str" };
 
     await repository.save(entity);
+  });
+
+  afterEach(async () => {
+    await getConnection().close();
   });
 
   describe("/ (GET)", () => {

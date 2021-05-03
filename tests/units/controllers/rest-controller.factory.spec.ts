@@ -137,8 +137,8 @@ describe(RestControllerFactory.name, () => {
         });
 
         it("should transform the entities", () => {
-          expect(testService.transform).toHaveBeenCalledTimes(1);
-          expect(testService.transform).toHaveBeenCalledWith(entities, ...rest);
+          expect(testService.transform).toHaveBeenCalledTimes(entities.length);
+          expect(testService.transform).toHaveBeenCalledWith(entity, ...rest);
         });
 
         it("should return the entities", () => {

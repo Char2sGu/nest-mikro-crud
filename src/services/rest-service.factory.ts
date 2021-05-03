@@ -1,6 +1,6 @@
 import { InjectRepository } from "@nestjs/typeorm";
 import { plainToClass } from "class-transformer";
-import { FindConditions, Repository } from "typeorm";
+import { FindConditions } from "typeorm";
 import { AbstractFactory } from "../abstract.factory";
 import { REST_SERVICE_OPTIONS_METADATA_KEY } from "../constants";
 import { LookupFields } from "./lookup-fields.type";
@@ -92,13 +92,8 @@ export class RestServiceFactory<
         return await this.repository.count();
       }
 
-      async transform(entity: Entity, ...args: any[]): Promise<Entity>;
-      async transform(entities: Entity[], ...args: any[]): Promise<Entity[]>;
-      async transform(entities: Entity | Entity[], ...args: any[]) {
-        // to trigger overloads
-        return entities instanceof Array
-          ? plainToClass(options.entityClass, entities)
-          : plainToClass(options.entityClass, entities);
+      async transform(entities: Entity, ...args: any[]) {
+        return plainToClass(options.entityClass, entities);
       }
 
       async getQueryConditions(

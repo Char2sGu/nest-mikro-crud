@@ -36,11 +36,10 @@ export interface RestService<
   count(...args: CustomArgs): Promise<number>;
 
   /**
-   * Exclude fields.
+   * Transform the entity before sending the response.
    *
    * Interceptors are not used because overloading may change the data structure.
    */
-  transform(entities: Entity[], ...args: CustomArgs): Promise<Entity[]>;
   transform(entity: Entity, ...args: CustomArgs): Promise<Entity>;
 
   /**

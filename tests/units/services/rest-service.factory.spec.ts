@@ -158,14 +158,9 @@ describe(RestServiceFactory.name, () => {
     });
 
     describe(d(".transform()"), () => {
-      it("should return a transformed entity when passed an entity", async () => {
+      it("should return a transformed entity", async () => {
         const ret = await service.transform({ id: 1 });
         expect(ret).toEqual({});
-      });
-
-      it("should return an array of transformed entities when passed an array", async () => {
-        const ret = await service.transform([{ id: 1 }]);
-        expect(ret).toEqual([{}]);
       });
     });
 

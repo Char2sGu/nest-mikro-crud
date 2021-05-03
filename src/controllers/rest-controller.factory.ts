@@ -112,7 +112,9 @@ export class RestControllerFactory<
         // The query dto may be customized with some extra fields.
         const { limit, offset } = query;
         const entities = await this.service.list({ limit, offset }, ...args);
-        return await this.service.transform(entities, ...args);
+        return Promise.all(
+          entities.map((entity) => this.service.transform(entity, ...args))
+        );
       }
 
       async create(...[dto, ...args]: Parameters<Interface["create"]>) {

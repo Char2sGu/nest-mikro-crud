@@ -6,7 +6,7 @@ Graceful flexible builder for RESTful APIs with TypeORM.
 
 | Action   | Method | URL                                  | Code        | Response |
 | -------- | ------ | ------------------------------------ | ----------- | -------- |
-| List     | GET    | /?limit=\<number\>&offset=\<number\> | 200         | Entity[] |
+| List     | GET    | /?limit=\<number\>&offset=\<number\> | 200,400     | Entity[] |
 | Create   | POST   | /                                    | 201,400     | Entity   |
 | Retrieve | GET    | /:lookup/                            | 200,404     | Entity   |
 | Replace  | PUT    | /:lookup/                            | 200,400,404 | Entity   |

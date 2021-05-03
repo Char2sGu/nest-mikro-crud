@@ -1,11 +1,4 @@
-import {
-  Body,
-  Controller,
-  Injectable,
-  Post,
-  UsePipes,
-  ValidationPipe,
-} from "@nestjs/common";
+import { Body, Controller, Injectable, Post, UsePipes } from "@nestjs/common";
 import { NestApplication } from "@nestjs/core";
 import { PartialType } from "@nestjs/mapped-types";
 import { Test } from "@nestjs/testing";
@@ -121,6 +114,17 @@ describe("Integration", () => {
 
     it("should return a 400 when limit is to large", async () => {
       await requester.get("/").query({ limit: 3 }).expect(400);
+    });
+
+    it.each`
+      name
+      ${"limit"}
+      ${"offset"}
+    `("should return a 400 when $name is 0", async ({ name }) => {
+      await requester
+        .get("/")
+        .query({ [name]: 0 })
+        .expect(400);
     });
 
     it("should return a 400 when passed illegal queries", async () => {

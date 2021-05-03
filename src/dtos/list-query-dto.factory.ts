@@ -1,5 +1,5 @@
 import { Expose, Type } from "class-transformer";
-import { IsNumber, IsOptional, Max } from "class-validator";
+import { IsNumber, IsOptional, Max, Min } from "class-validator";
 import { AbstractFactory } from "../abstract.factory";
 import { ListQueryDtoFactoryOptions } from "./list-query-dto-factory-options.interface";
 import { ListQueryDto } from "./list-query-dto.interface";
@@ -21,6 +21,7 @@ export class ListQueryDtoFactory extends AbstractFactory<ListQueryDto> {
       IsOptional(),
       IsNumber(),
       Type(() => Number),
+      Min(1),
     ];
 
     this.applyPropertyDecorators(

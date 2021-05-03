@@ -1,15 +1,3 @@
-jest.mock("@nestjs/common", () => ({
-  ...jest.requireActual("@nestjs/common"),
-  Body: jest.fn(() => jest.fn()),
-  Delete: jest.fn(() => jest.fn()),
-  Get: jest.fn(() => jest.fn()),
-  Inject: jest.fn(() => jest.fn()),
-  Param: jest.fn(() => jest.fn()),
-  Patch: jest.fn(() => jest.fn()),
-  Post: jest.fn(() => jest.fn()),
-  Put: jest.fn(() => jest.fn()),
-  Query: jest.fn(() => jest.fn()),
-}));
 import {
   Body,
   Delete,
@@ -22,21 +10,34 @@ import {
   Query,
 } from "@nestjs/common";
 import { ClassConstructor } from "class-transformer";
-jest.mock("src/dtos/list-query-dto.factory", () => ({
-  ListQueryDtoFactory: jest.fn(() => ({
-    product: class {},
-  })),
-}));
-import { ListQueryDtoFactory } from "src/dtos/list-query-dto.factory";
 import { REST_SERVICE_OPTIONS_METADATA_KEY } from "src/constants";
 import { RestControllerFactoryOptions } from "src/controllers/rest-controller-factory-options.interface";
 import { RestControllerFactory } from "src/controllers/rest-controller.factory";
 import { RestController } from "src/controllers/rest-controller.interface";
 import { RouteNames } from "src/controllers/route-names.types";
+import { ListQueryDtoFactory } from "src/dtos/list-query-dto.factory";
 import { RestService, RestServiceFactoryOptions } from "src/services";
 import { Resolved } from "src/utils";
 import { buildKeyChecker, m } from "tests/utils/type-helpers";
 import { Repository } from "typeorm";
+
+jest.mock("@nestjs/common", () => ({
+  ...jest.requireActual("@nestjs/common"),
+  Body: jest.fn(() => jest.fn()),
+  Delete: jest.fn(() => jest.fn()),
+  Get: jest.fn(() => jest.fn()),
+  Inject: jest.fn(() => jest.fn()),
+  Param: jest.fn(() => jest.fn()),
+  Patch: jest.fn(() => jest.fn()),
+  Post: jest.fn(() => jest.fn()),
+  Put: jest.fn(() => jest.fn()),
+  Query: jest.fn(() => jest.fn()),
+}));
+jest.mock("src/dtos/list-query-dto.factory", () => ({
+  ListQueryDtoFactory: jest.fn(() => ({
+    product: class {},
+  })),
+}));
 
 describe(RestControllerFactory.name, () => {
   class TestEntity {
@@ -93,6 +94,7 @@ describe(RestControllerFactory.name, () => {
   });
 
   it("should fill default values of the passed options and expose it", () => {
+    expect(ListQueryDtoFactory).toHaveBeenCalled();
     expect(factory.options.listQueryDto).toBeDefined();
     expect(factory.options.lookupParam).toBeDefined();
     expect(factory.options.customArgs).toBeDefined();

@@ -7,7 +7,7 @@ import { Exclude } from "class-transformer";
 import { IsString } from "class-validator";
 import { RestControllerFactory } from "src/controllers";
 import { ListQueryDto, ListQueryDtoFactory } from "src/dtos";
-import { RestService, RestServiceFactory } from "src/services";
+import { RestServiceFactory } from "src/services";
 import { Column, Entity, PrimaryGeneratedColumn, Repository } from "typeorm";
 import { getRequester } from "./units/get-requester";
 import { getTypeOrmModules } from "./utils/get-typeorm-modules";

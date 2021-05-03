@@ -15,6 +15,8 @@ Graceful flexible builder for RESTful APIs with TypeORM.
 
 # Quick Start
 
+## Service
+
 ```ts
 @Injectable()
 class TestService extends new RestServiceFactory({
@@ -33,9 +35,12 @@ class TestService extends new RestServiceFactory({
 }
 ```
 
+## Controller
+
+`ValidationPipe` is forced to be used in the controller.
+
 ```ts
 @UseGuards(AuthGuard)
-@UsePipes(ValidationPipe)
 @Controller()
 class TestController extends new RestControllerFactory({
   restServiceClass: TestService,
@@ -49,6 +54,10 @@ class TestController extends new RestControllerFactory({
     ],
     typeHelper: (user: User, action: string) => null,
   },
+  /**Advanced settings of the query params */
+  listQueryDto: new ListQueryDtoFactory({
+    limit: { max: 100, default: 50 },
+  }).product,
   /**Custom URL param, default `"lookup"` */
   lookupParam: "id",
   /**Whether to catch TypeORM's `EntityNotFoundError` and throw Nest's `NotFoundException` instead, default `true` */

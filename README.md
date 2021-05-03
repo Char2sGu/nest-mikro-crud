@@ -23,6 +23,8 @@ class TestService extends new RestServiceFactory({
   entityClass: TestEntity,
   dtoClasses: { create: TestCreateDto, update: TestUpdateDto },
   lookupField: "id",
+  /**Helper to infer the custom args' types */
+  customArgs: (user: User, action: string) => null,
 }).service {
   /**Force query conditions */
   async getQueryConditions(lookup?: number, user: User, action: string) {
@@ -45,15 +47,12 @@ class TestService extends new RestServiceFactory({
 class TestController extends new RestControllerFactory({
   restServiceClass: TestService,
   routes: ["list", "create", "retrieve", "replace", "update", "destroy"],
-  /**Custom args will be passed in every method of both the controller and the service */
-  customArgs: {
-    description: [
-      // [<metadata-type>, <custom-param-decorators>]
-      [User, [GetUser()]],
-      [String, [Action()]],
-    ],
-    typeHelper: (user: User, action: string) => null,
-  },
+  /**Custom args will be passed in each method of both the controller and the service */
+  customArgs: [
+    // [<metadata-type>, <custom-param-decorators>]
+    [User, [GetUser()]],
+    [String, [Action()]],
+  ],
   /**Advanced settings of the query params */
   listQueryDto: new ListQueryDtoFactory({
     limit: { max: 100, default: 50 },

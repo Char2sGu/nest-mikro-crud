@@ -17,7 +17,7 @@ import {
   REST_SERVICE_OPTIONS_METADATA_KEY,
   TS_TYPE_METADATA_KEY,
 } from "../constants";
-import { ListQueryDto } from "../dtos";
+import { ListQueryDtoFactory } from "../dtos";
 import { EntityNotFoundErrorFilter } from "../filters";
 import {
   LookupFields,
@@ -68,6 +68,8 @@ export class RestControllerFactory<
   }
 
   protected processOptions(options: RestControllerFactoryOptions<Service>) {
+    options.listQueryDto =
+      options.listQueryDto ?? new ListQueryDtoFactory({}).product;
     options.lookupParam = options.lookupParam ?? "lookup";
     options.customArgs = options.customArgs ?? {
       description: [],
@@ -81,6 +83,8 @@ export class RestControllerFactory<
    * Create a no-metadata controller class
    */
   protected createRawClass() {
+    const options = this.options;
+
     type Interface = RestController<
       Entity,
       CreateDto,
@@ -92,10 +96,12 @@ export class RestControllerFactory<
       readonly service!: Service;
 
       async list(...[query, ...args]: Parameters<Interface["list"]>) {
-        query = plainToClass(ListQueryDto, query, {
-          excludeExtraneousValues: true,
-        }); // parse number strings to numbers
-        const entities = await this.service.list(query, ...args);
+        query = plainToClass(options.listQueryDto, query, {
+          exposeDefaultValues: true,
+        });
+        // The query dto may be customized with some extra fields.
+        const { limit, offset } = query;
+        const entities = await this.service.list({ limit, offset }, ...args);
         return await this.service.transform(entities, ...args);
       }
 
@@ -144,7 +150,7 @@ export class RestControllerFactory<
       lookupField
     );
     const extra = this.options.customArgs.description.map(([type]) => type);
-    this.defineParamTypesMetadata("list", ListQueryDto, ...extra)
+    this.defineParamTypesMetadata("list", this.options.listQueryDto, ...extra)
       .defineParamTypesMetadata("create", createDto, ...extra)
       .defineParamTypesMetadata("retrieve", lookupType, ...extra)
       .defineParamTypesMetadata("replace", lookupType, createDto, ...extra)

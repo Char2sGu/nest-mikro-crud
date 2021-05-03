@@ -13,7 +13,7 @@ import { getRepositoryToken } from "@nestjs/typeorm";
 import { Exclude } from "class-transformer";
 import { IsString } from "class-validator";
 import { RestControllerFactory } from "src/controllers";
-import { ListQueryDto } from "src/dtos";
+import { ListQueryDto, ListQueryDtoFactory } from "src/dtos";
 import { RestServiceFactory } from "src/services";
 import { Column, Entity, PrimaryGeneratedColumn, Repository } from "typeorm";
 import { getRequester } from "./units/get-requester";
@@ -52,6 +52,9 @@ describe("Integration", () => {
   class TestController extends new RestControllerFactory({
     routes: ["list", "create", "retrieve", "replace", "update", "destroy"],
     restServiceClass: TestService,
+    listQueryDto: new ListQueryDtoFactory({
+      limit: { max: 2, default: 1 },
+    }).product,
     customArgs: {
       description: [[Object, [Body()]]],
       typeHelper: (body: any) => null,
@@ -94,14 +97,17 @@ describe("Integration", () => {
   describe("/ (GET)", () => {
     it.each`
       count | query
-      ${2}  | ${{}}
-      ${1}  | ${{ limit: 1 }}
+      ${1}  | ${{}}
+      ${2}  | ${{ limit: 2 }}
       ${1}  | ${{ offset: 1 }}
     `(
       "should return $count serialized entities when query is $query",
       async ({ count, query }: { count: number; query: ListQueryDto }) => {
-        const anotherEntity: TestEntity = { id: 2, field: "str" };
-        await repository.save(anotherEntity);
+        const entities: TestEntity[] = [
+          { id: 2, field: "str" },
+          { id: 3, field: "strrr" },
+        ];
+        await repository.save(entities);
         await requester
           .get("/")
           .query(query)
@@ -113,6 +119,10 @@ describe("Integration", () => {
           });
       }
     );
+
+    it("should return a 400 when limit is to large", async () => {
+      await requester.get("/").query({ limit: 3 }).expect(400);
+    });
 
     it("should return a 400 when passed illegal queries", async () => {
       await requester.get("/").query({ limit: "illegal" }).expect(400);

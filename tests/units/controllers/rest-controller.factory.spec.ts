@@ -21,12 +21,18 @@ import {
   Put,
   Query,
 } from "@nestjs/common";
+import { ClassConstructor } from "class-transformer";
+jest.mock("src/dtos/list-query-dto.factory", () => ({
+  ListQueryDtoFactory: jest.fn(() => ({
+    product: class {},
+  })),
+}));
+import { ListQueryDtoFactory } from "src/dtos/list-query-dto.factory";
 import { REST_SERVICE_OPTIONS_METADATA_KEY } from "src/constants";
 import { RestControllerFactoryOptions } from "src/controllers/rest-controller-factory-options.interface";
 import { RestControllerFactory } from "src/controllers/rest-controller.factory";
 import { RestController } from "src/controllers/rest-controller.interface";
 import { RouteNames } from "src/controllers/route-names.types";
-import { ListQueryDto } from "src/dtos";
 import { RestService, RestServiceFactoryOptions } from "src/services";
 import { Resolved } from "src/utils";
 import { buildKeyChecker, m } from "tests/utils/type-helpers";
@@ -87,6 +93,7 @@ describe(RestControllerFactory.name, () => {
   });
 
   it("should fill default values of the passed options and expose it", () => {
+    expect(factory.options.listQueryDto).toBeDefined();
     expect(factory.options.lookupParam).toBeDefined();
     expect(factory.options.customArgs).toBeDefined();
     expect(factory.options.catchEntityNotFound).toBeDefined();
@@ -111,19 +118,11 @@ describe(RestControllerFactory.name, () => {
     });
 
     describe.each`
-      rawOptions                     | parsedOptions              | rest
-      ${{ limit: "1", offset: "1" }} | ${{ limit: 1, offset: 1 }} | ${["extra"]}
+      rawOptions                     | rest
+      ${{ limit: "1", offset: "1" }} | ${["extra"]}
     `(
       d(".list($rawOptions, ...$rest)"),
-      ({
-        rawOptions,
-        parsedOptions,
-        rest,
-      }: {
-        rawOptions: {};
-        parsedOptions: {};
-        rest: [];
-      }) => {
+      ({ rawOptions, rest }: { rawOptions: {}; rest: [] }) => {
         let ret: Resolved<ReturnType<typeof controller.list>>;
 
         beforeEach(async () => {
@@ -132,7 +131,7 @@ describe(RestControllerFactory.name, () => {
 
         it("should query the entities", () => {
           expect(testService.list).toHaveBeenCalledTimes(1);
-          expect(testService.list).toHaveBeenCalledWith(parsedOptions, ...rest);
+          expect(testService.list).toHaveBeenCalledWith(rawOptions, ...rest);
         });
 
         it("should transform the entities", () => {
@@ -292,18 +291,30 @@ describe(RestControllerFactory.name, () => {
 
   it.each`
     name          | types
-    ${"list"}     | ${[ListQueryDto]}
+    ${"list"}     | ${["ListQueryDto"]}
     ${"create"}   | ${[TestEntity]}
     ${"retrieve"} | ${[Number]}
     ${"replace"}  | ${[Number, TestEntity]}
     ${"update"}   | ${[Number, TestEntity]}
     ${"destroy"}  | ${[Number]}
-  `("should emit parameter types metadata to `.$name()`", ({ name, types }) => {
-    expect(factory.defineParamTypesMetadata).toHaveBeenCalledWith(
+  `(
+    "should emit parameter types metadata to `.$name()`",
+    ({
       name,
-      ...types
-    );
-  });
+      types,
+    }: {
+      name: string;
+      types: (ClassConstructor<any> | "ListQueryDto")[];
+    }) => {
+      types = types.map((type) =>
+        type == "ListQueryDto" ? factory.options.listQueryDto : type
+      );
+      expect(factory.defineParamTypesMetadata).toHaveBeenCalledWith(
+        name,
+        ...types
+      );
+    }
+  );
 
   it.each`
     name          | decorators | withLookup | nth

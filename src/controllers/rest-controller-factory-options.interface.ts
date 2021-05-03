@@ -1,4 +1,5 @@
 import { ClassConstructor } from "class-transformer";
+import { ListQueryDto } from "../dtos";
 import { RestService } from "../services";
 import { RouteNames } from "./route-names.types";
 
@@ -14,6 +15,11 @@ export interface RestControllerFactoryOptions<
    * Specify which routes should be enabled.
    */
   routes: RouteNames[];
+  /**
+   * Use specific dto for more advanced settings, such as default values or
+   * max values.
+   */
+  listQueryDto?: ClassConstructor<ListQueryDto>;
   /**
    * Custom the rest arguments which will be passed in every method
    * of both the controller and the service, allowing you to get more

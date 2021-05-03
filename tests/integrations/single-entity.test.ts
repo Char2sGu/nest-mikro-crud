@@ -15,7 +15,7 @@ import {
   PrimaryGeneratedColumn,
   Repository,
 } from "typeorm";
-import { getRequester } from "../units/get-requester";
+import { getRequester } from "../utils/get-requester";
 import { getTypeOrmModules } from "../utils/get-typeorm-modules";
 import { m } from "../utils/type-helpers";
 

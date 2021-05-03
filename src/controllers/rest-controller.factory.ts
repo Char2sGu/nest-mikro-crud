@@ -63,7 +63,7 @@ export class RestControllerFactory<
     this.defineRoutesTypesMetadata();
     this.applyRoutesDecorators();
     if (options.catchEntityNotFound)
-      UseFilters(EntityNotFoundErrorFilter)(this.product);
+      this.applyClassDecorators(UseFilters(EntityNotFoundErrorFilter));
     this.applyMethodDecorators("destroy", HttpCode(204));
   }
 

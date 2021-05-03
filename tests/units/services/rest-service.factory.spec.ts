@@ -129,12 +129,11 @@ describe(RestServiceFactory.name, () => {
     describe(d(".update()"), () => {
       it("should return the updated entity", async () => {
         const updated: TestEntity = { id: 2 };
-        const spy = jest
-          .spyOn(service, "retrieve")
-          .mockResolvedValueOnce(entity);
-        m(Repository).prototype.save.mockImplementationOnce(async (v) => v);
+        jest.spyOn(service, "retrieve").mockResolvedValueOnce(entity);
+        m(repository.merge).mockReturnValueOnce(updated);
+        m(repository.save).mockImplementationOnce(async (v) => v as any);
         const ret = await service.update(1, updated);
-        expect(spy).toHaveBeenCalledTimes(1);
+        expect(service.retrieve).toHaveBeenCalledTimes(1);
         expect(ret).toEqual(updated);
       });
     });

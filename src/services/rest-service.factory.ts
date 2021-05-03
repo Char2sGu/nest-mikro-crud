@@ -78,9 +78,9 @@ export class RestServiceFactory<
       }
 
       async update(...[lookup, dto, ...args]: Parameters<Interface["update"]>) {
-        const entity = await this.retrieve(lookup, ...args);
-        Object.assign(entity, dto);
-        return await this.repository.save(entity);
+        const rawEntity = await this.retrieve(lookup, ...args);
+        const updatedEntity = this.repository.merge(rawEntity, dto);
+        return await this.repository.save(updatedEntity);
       }
 
       async destroy(...[lookup, ...args]: Parameters<Interface["destroy"]>) {

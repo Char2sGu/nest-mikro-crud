@@ -5,9 +5,12 @@ import { Test } from "@nestjs/testing";
 import { getRepositoryToken } from "@nestjs/typeorm";
 import { Exclude } from "class-transformer";
 import { IsString } from "class-validator";
-import { RestControllerFactory } from "src/controllers";
-import { ListQueryDto, ListQueryDtoFactory } from "src/dtos";
-import { RestServiceFactory } from "src/services";
+import {
+  ListQueryDto,
+  ListQueryDtoFactory,
+  RestControllerFactory,
+  RestServiceFactory,
+} from "src";
 import {
   Column,
   Entity,

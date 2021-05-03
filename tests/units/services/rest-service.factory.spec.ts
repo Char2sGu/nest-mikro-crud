@@ -1,8 +1,10 @@
 import { Exclude, plainToClass } from "class-transformer";
-import { REST_SERVICE_OPTIONS_METADATA_KEY } from "src/constants";
-import { RestServiceFactory } from "src/services/rest-service.factory";
-import { RestService } from "src/services/rest-service.interface";
-import { Resolved } from "src/utils";
+import {
+  Resolved,
+  RestService,
+  RestServiceFactory,
+  REST_SERVICE_OPTIONS_METADATA_KEY,
+} from "src";
 import { buildKeyChecker, m } from "tests/utils";
 import { Repository } from "typeorm";
 

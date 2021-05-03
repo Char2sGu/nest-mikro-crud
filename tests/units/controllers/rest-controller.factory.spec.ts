@@ -10,14 +10,17 @@ import {
   Query,
 } from "@nestjs/common";
 import { ClassConstructor } from "class-transformer";
-import { REST_SERVICE_OPTIONS_METADATA_KEY } from "src/constants";
-import { RestControllerFactoryOptions } from "src/controllers/rest-controller-factory-options.interface";
-import { RestControllerFactory } from "src/controllers/rest-controller.factory";
-import { RestController } from "src/controllers/rest-controller.interface";
-import { RouteNames } from "src/controllers/route-names.types";
-import { ListQueryDtoFactory } from "src/dtos/list-query-dto.factory";
-import { RestService, RestServiceFactoryOptions } from "src/services";
-import { Resolved } from "src/utils";
+import {
+  ListQueryDtoFactory,
+  Resolved,
+  RestController,
+  RestControllerFactory,
+  RestControllerFactoryOptions,
+  RestService,
+  RestServiceFactoryOptions,
+  REST_SERVICE_OPTIONS_METADATA_KEY,
+  RouteNames,
+} from "src";
 import { buildKeyChecker, m } from "tests/utils";
 import { Repository } from "typeorm";
 

@@ -1,6 +1,6 @@
 import { InjectRepository } from "@nestjs/typeorm";
 import { plainToClass } from "class-transformer";
-import { EntityNotFoundError, FindConditions, Repository } from "typeorm";
+import { FindConditions, Repository } from "typeorm";
 import { AbstractFactory } from "../abstract.factory";
 import { REST_SERVICE_OPTIONS_METADATA_KEY } from "../constants";
 import { LookupFields } from "./lookup-fields.type";

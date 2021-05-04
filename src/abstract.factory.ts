@@ -1,5 +1,5 @@
 import { ClassConstructor } from "class-transformer";
-import { TS_PARAM_TYPES_METADATA_KEY } from "./constants";
+import { TS_PARAM_TYPES_METADATA_KEY, TS_TYPE_METADATA_KEY } from "./constants";
 import { ExtractKeys } from "./utils";
 
 type AllNames<T> = Extract<keyof T, string>;
@@ -8,6 +8,16 @@ type PropertyNames<T> = Exclude<AllNames<T>, MethodNames<T>>;
 
 export abstract class AbstractFactory<T> {
   abstract readonly product: ClassConstructor<T>;
+
+  defineTypeMetadata(target: AllNames<T>, type: any): this {
+    Reflect.defineMetadata(
+      TS_TYPE_METADATA_KEY,
+      type,
+      this.product.prototype,
+      target
+    );
+    return this;
+  }
 
   defineParamTypesMetadata(
     target: MethodNames<T>,

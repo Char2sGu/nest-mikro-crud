@@ -11,7 +11,7 @@ export interface RestService<
 > {
   readonly repository: Repository<Entity>;
 
-  list(queries: QueryDto, ...args: CustomArgs): Promise<Entity[]>;
+  list(queries?: QueryDto, ...args: CustomArgs): Promise<Entity[]>;
 
   create(dto: CreateDto, ...args: CustomArgs): Promise<Entity>;
 
@@ -30,8 +30,6 @@ export interface RestService<
   ): Promise<Entity>;
 
   destroy(lookup: Entity[LookupField], ...args: CustomArgs): Promise<Entity>;
-
-  count(...args: CustomArgs): Promise<number>;
 
   /**
    * Transform the entity before sending the response.

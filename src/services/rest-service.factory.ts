@@ -90,10 +90,6 @@ export class RestServiceFactory<
         return await this.repository.remove(entity);
       }
 
-      async count(...[...args]: Parameters<Interface["count"]>) {
-        return await this.repository.count();
-      }
-
       async transform(entities: Entity, ...args: any[]) {
         return plainToClass(options.entityClass, entities);
       }

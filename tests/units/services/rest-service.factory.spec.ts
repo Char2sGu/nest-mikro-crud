@@ -152,13 +152,6 @@ describe(RestServiceFactory.name, () => {
       });
     });
 
-    describe(d(".count()"), () => {
-      it("should call `repo.count()`", async () => {
-        await service.count();
-        expect(m(Repository).prototype.count).toHaveBeenCalledTimes(1);
-      });
-    });
-
     describe(d(".transform()"), () => {
       it("should return a transformed entity", async () => {
         const ret = await service.transform({ id: 1 });

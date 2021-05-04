@@ -4,6 +4,7 @@ import {
   Get,
   Inject,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
   Put,
@@ -357,7 +358,7 @@ describe(RestControllerFactory.name, () => {
 
   it.each`
     builder  | args
-    ${Param} | ${["lookup"]}
+    ${Param} | ${["lookup", ParseIntPipe]}
     ${Query} | ${[]}
     ${Body}  | ${[]}
   `(

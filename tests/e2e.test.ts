@@ -191,18 +191,18 @@ describe("E2E", () => {
   });
 
   describe.each`
-    lookup
-    ${0}
-    ${"str"}
-  `("/$lookup/ (GET)", ({ lookup }) => {
+    lookup   | code
+    ${0}     | ${404}
+    ${"str"} | ${400}
+  `("/$lookup/ (GET)", ({ lookup, code }) => {
     let response: Response;
 
     beforeEach(async () => {
       response = await requester.get(`/${lookup}/`);
     });
 
-    it("should return 404", () => {
-      expect(response.status).toBe(404);
+    it(`should return ${code}`, () => {
+      expect(response.status).toBe(code);
     });
   });
 
@@ -246,10 +246,10 @@ describe("E2E", () => {
   });
 
   describe.each`
-    lookup
-    ${0}
-    ${"put"}
-  `("/$lookup/ (PUT)", ({ lookup }) => {
+    lookup   | code
+    ${0}     | ${404}
+    ${"put"} | ${400}
+  `("/$lookup/ (PUT)", ({ lookup, code }) => {
     let dto: CreateParentEntityDto;
     let response: Response;
 
@@ -258,8 +258,8 @@ describe("E2E", () => {
       response = await requester.put(`/${lookup}/`).send(dto);
     });
 
-    it("should return 404", () => {
-      expect(response.status).toBe(404);
+    it(`should return ${code}`, () => {
+      expect(response.status).toBe(code);
     });
   });
 
@@ -302,10 +302,10 @@ describe("E2E", () => {
   });
 
   describe.each`
-    lookup
-    ${0}
-    ${"str"}
-  `("/$lookup/ (PATCH)", ({ lookup }) => {
+    lookup   | code
+    ${0}     | ${404}
+    ${"str"} | ${400}
+  `("/$lookup/ (PATCH)", ({ lookup, code }) => {
     let dto: UpdateChildEntityDto;
     let response: Response;
 
@@ -314,8 +314,8 @@ describe("E2E", () => {
       response = await requester.patch(`/${lookup}/`).send(dto);
     });
 
-    it("should return 404", () => {
-      expect(response.status).toBe(404);
+    it(`should return ${code}`, () => {
+      expect(response.status).toBe(code);
     });
   });
 
@@ -336,18 +336,18 @@ describe("E2E", () => {
   });
 
   describe.each`
-    lookup
-    ${0}
-    ${"str"}
-  `("/$lookup/ (DELETE)", ({ lookup }) => {
+    lookup   | code
+    ${0}     | ${404}
+    ${"str"} | ${400}
+  `("/$lookup/ (DELETE)", ({ lookup, code }) => {
     let response: Response;
 
     beforeEach(async () => {
       response = await requester.delete(`/${lookup}/`);
     });
 
-    it("should return 404", () => {
-      expect(response.status).toBe(404);
+    it(`should return ${code}`, () => {
+      expect(response.status).toBe(code);
     });
   });
 });

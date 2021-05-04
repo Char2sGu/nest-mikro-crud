@@ -5,6 +5,7 @@ import {
   HttpCode,
   Inject,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
   Put,
@@ -174,7 +175,10 @@ export class RestControllerFactory<
   protected applyRoutesDecorators() {
     const path = `:${this.options.lookupParam}`;
 
-    const LookupParam = Param(this.options.lookupParam);
+    const LookupParam = Param(
+      this.options.lookupParam,
+      ...(this.lookupType == Number ? [ParseIntPipe] : [])
+    );
     const AllQueries = Query();
     const Dto = Body();
 

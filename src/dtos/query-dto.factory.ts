@@ -16,18 +16,16 @@ export class QueryDtoFactory extends AbstractFactory<QueryDto> {
       offset? = options.offset?.default;
     };
 
-    const commonDecorators = [
-      IsOptional(),
-      IsNumber(),
-      Type(() => Number),
-      Min(1),
-    ];
+    const commonDecorators = [IsOptional(), IsNumber(), Type(), Min(1)];
 
+    this.defineTypeMetadata("limit", Number);
     this.applyPropertyDecorators(
       "limit",
       ...commonDecorators,
       ...(options.limit?.max ? [Max(options.limit.max)] : [])
     );
+
+    this.defineTypeMetadata("offset", Number);
     this.applyPropertyDecorators(
       "offset",
       ...commonDecorators,

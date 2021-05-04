@@ -12,7 +12,7 @@ import {
 } from "@nestjs/common";
 import { ClassConstructor } from "class-transformer";
 import {
-  ListQueryDtoFactory,
+  QueryDtoFactory,
   Resolved,
   RestController,
   RestControllerFactory,
@@ -37,8 +37,8 @@ jest.mock("@nestjs/common", () => ({
   Put: jest.fn(() => jest.fn()),
   Query: jest.fn(() => jest.fn()),
 }));
-jest.mock("src/dtos/list-query-dto.factory", () => ({
-  ListQueryDtoFactory: jest.fn(() => ({
+jest.mock("src/dtos/query-dto.factory", () => ({
+  QueryDtoFactory: jest.fn(() => ({
     product: class {},
   })),
 }));
@@ -98,8 +98,8 @@ describe(RestControllerFactory.name, () => {
   });
 
   it("should fill default values of the passed options and expose it", () => {
-    expect(ListQueryDtoFactory).toHaveBeenCalled();
-    expect(factory.options.listQueryDto).toBeDefined();
+    expect(QueryDtoFactory).toHaveBeenCalled();
+    expect(factory.options.queryDto).toBeDefined();
     expect(factory.options.lookupParam).toBeDefined();
     expect(factory.options.customArgs).toBeDefined();
     expect(factory.options.catchEntityNotFound).toBeDefined();
@@ -301,7 +301,7 @@ describe(RestControllerFactory.name, () => {
 
   it.each`
     name          | types
-    ${"list"}     | ${["ListQueryDto"]}
+    ${"list"}     | ${["QueryDto"]}
     ${"create"}   | ${[TestEntity]}
     ${"retrieve"} | ${[Number]}
     ${"replace"}  | ${[Number, TestEntity]}
@@ -314,10 +314,10 @@ describe(RestControllerFactory.name, () => {
       types,
     }: {
       name: string;
-      types: (ClassConstructor<any> | "ListQueryDto")[];
+      types: (ClassConstructor<any> | "QueryDto")[];
     }) => {
       types = types.map((type) =>
-        type == "ListQueryDto" ? factory.options.listQueryDto : type
+        type == "QueryDto" ? factory.options.queryDto : type
       );
       expect(factory.defineParamTypesMetadata).toHaveBeenCalledWith(
         name,

@@ -3,7 +3,7 @@ import { NestApplication } from "@nestjs/core";
 import { Test } from "@nestjs/testing";
 import { getRepositoryToken } from "@nestjs/typeorm";
 import {
-  ListQueryDtoFactory,
+  QueryDtoFactory,
   RestControllerFactory,
   RestServiceFactory,
 } from "src";
@@ -32,7 +32,7 @@ class TestService extends new RestServiceFactory({
 class TestController extends new RestControllerFactory({
   restServiceClass: TestService,
   routes: ["list", "retrieve", "create", "replace", "update", "destroy"],
-  listQueryDto: new ListQueryDtoFactory({
+  queryDto: new QueryDtoFactory({
     limit: { max: 2, default: 1 },
   }).product,
 }).product {}

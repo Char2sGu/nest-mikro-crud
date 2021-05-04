@@ -55,8 +55,8 @@ export class RestServiceFactory<
       async list(...[queries, ...args]: Parameters<Interface["list"]>) {
         return await this.repository.find({
           where: await this.getQueryConditions(undefined, ...args),
-          take: queries?.limit,
-          skip: queries?.offset,
+          take: queries.limit,
+          skip: queries.offset,
           loadRelationIds: true,
         });
       }

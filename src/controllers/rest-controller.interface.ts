@@ -16,7 +16,7 @@ export interface RestController<
     CustomArgs
   >;
 
-  list(queries?: QueryDto, ...args: CustomArgs): Promise<Entity[]>;
+  list(queries: QueryDto, ...args: CustomArgs): Promise<Entity[]>;
 
   create(
     queries: QueryDto,

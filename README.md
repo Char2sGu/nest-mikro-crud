@@ -39,6 +39,7 @@ class OurService extends new RestServiceFactory({
 There is also a `RestControllerFactory` for you to create controllers.
 
 ```ts
+@Controller()
 class OurController extends new RestControllerFactory({
   restServiceClass: OurService,
   routes: ["list", "create", "retrieve", "replace", "update", "destroy"],

@@ -63,7 +63,7 @@ describe(RestServiceFactory.name, () => {
         m(Repository).prototype.find.mockResolvedValueOnce([
           plainToClass(TestEntity, { id: 1 }),
         ]);
-        ret = await service.list();
+        ret = await service.list({});
       });
 
       it("should return an array of entities", () => {
@@ -87,7 +87,7 @@ describe(RestServiceFactory.name, () => {
           plainToClass(TestEntity, dto)
         );
         m(Repository).prototype.save.mockImplementationOnce(async (v) => v);
-        ret = await service.create(dto);
+        ret = await service.create({}, dto);
       });
 
       it("should return an entity", () => {
@@ -112,7 +112,7 @@ describe(RestServiceFactory.name, () => {
           "something"
         );
         const getQueryConditionsSpy = jest.spyOn(service, "getQueryConditions");
-        const ret = await service.retrieve(1);
+        const ret = await service.retrieve(1, {});
         expect(ret).toBe("something");
         expect(m(Repository).prototype.findOneOrFail).toHaveBeenCalledTimes(1);
         expect(getQueryConditionsSpy).toHaveBeenCalledTimes(1);
@@ -125,7 +125,7 @@ describe(RestServiceFactory.name, () => {
         jest.spyOn(service, "retrieve").mockResolvedValueOnce(entity);
         m(repository.merge).mockReturnValueOnce(updated);
         m(repository.save).mockImplementationOnce(async (v) => v as any);
-        const ret = await service.replace(1, updated);
+        const ret = await service.replace(1, {}, updated);
         expect(service.retrieve).toHaveBeenCalledTimes(1);
         expect(ret).toEqual(updated);
       });
@@ -137,7 +137,7 @@ describe(RestServiceFactory.name, () => {
         jest.spyOn(service, "retrieve").mockResolvedValueOnce(entity);
         m(repository.merge).mockReturnValueOnce(updated);
         m(repository.save).mockImplementationOnce(async (v) => v as any);
-        const ret = await service.update(1, updated);
+        const ret = await service.update(1, {}, updated);
         expect(service.retrieve).toHaveBeenCalledTimes(1);
         expect(ret).toEqual(updated);
       });
@@ -148,7 +148,7 @@ describe(RestServiceFactory.name, () => {
         const spy = jest
           .spyOn(service, "retrieve")
           .mockResolvedValueOnce(entity);
-        await service.destroy(1);
+        await service.destroy(1, {});
         expect(spy).toHaveBeenCalledTimes(1);
         expect(m(Repository).prototype.remove).toHaveBeenCalledTimes(1);
         expect(m(Repository).prototype.remove).toHaveBeenCalledWith(entity);

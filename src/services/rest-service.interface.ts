@@ -13,23 +13,37 @@ export interface RestService<
 
   list(queries?: QueryDto, ...args: CustomArgs): Promise<Entity[]>;
 
-  create(dto: CreateDto, ...args: CustomArgs): Promise<Entity>;
+  create(
+    queries: QueryDto,
+    dto: CreateDto,
+    ...args: CustomArgs
+  ): Promise<Entity>;
 
-  retrieve(lookup: Entity[LookupField], ...args: CustomArgs): Promise<Entity>;
+  retrieve(
+    lookup: Entity[LookupField],
+    queries: QueryDto,
+    ...args: CustomArgs
+  ): Promise<Entity>;
 
   replace(
     lookup: Entity[LookupField],
+    queries: QueryDto,
     dto: CreateDto,
     ...args: CustomArgs
   ): Promise<Entity>;
 
   update(
     lookup: Entity[LookupField],
+    queries: QueryDto,
     dto: UpdateDto,
     ...args: CustomArgs
   ): Promise<Entity>;
 
-  destroy(lookup: Entity[LookupField], ...args: CustomArgs): Promise<Entity>;
+  destroy(
+    lookup: Entity[LookupField],
+    queries: QueryDto,
+    ...args: CustomArgs
+  ): Promise<Entity>;
 
   /**
    * Transform the entity before sending the response.

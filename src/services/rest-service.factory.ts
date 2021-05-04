@@ -61,12 +61,16 @@ export class RestServiceFactory<
         });
       }
 
-      async create(...[dto, ...args]: Parameters<Interface["create"]>) {
+      async create(
+        ...[queries, dto, ...args]: Parameters<Interface["create"]>
+      ) {
         const entity = this.repository.create(dto);
         return await this.repository.save(entity);
       }
 
-      async retrieve(...[lookup, ...args]: Parameters<Interface["retrieve"]>) {
+      async retrieve(
+        ...[lookup, queries, ...args]: Parameters<Interface["retrieve"]>
+      ) {
         return await this.repository.findOneOrFail({
           where: await this.getQueryConditions(lookup, ...args),
           loadRelationIds: true,
@@ -74,21 +78,25 @@ export class RestServiceFactory<
       }
 
       async replace(
-        ...[lookup, dto, ...args]: Parameters<Interface["replace"]>
+        ...[lookup, queries, dto, ...args]: Parameters<Interface["replace"]>
       ) {
-        const rawEntity = await this.retrieve(lookup, ...args);
+        const rawEntity = await this.retrieve(lookup, queries, ...args);
         const updatedEntity = this.repository.merge(rawEntity, dto);
         return await this.repository.save(updatedEntity);
       }
 
-      async update(...[lookup, dto, ...args]: Parameters<Interface["update"]>) {
-        const rawEntity = await this.retrieve(lookup, ...args);
+      async update(
+        ...[lookup, queries, dto, ...args]: Parameters<Interface["update"]>
+      ) {
+        const rawEntity = await this.retrieve(lookup, queries, ...args);
         const updatedEntity = this.repository.merge(rawEntity, dto);
         return await this.repository.save(updatedEntity);
       }
 
-      async destroy(...[lookup, ...args]: Parameters<Interface["destroy"]>) {
-        const entity = await this.retrieve(lookup, ...args);
+      async destroy(
+        ...[lookup, queries, ...args]: Parameters<Interface["destroy"]>
+      ) {
+        const entity = await this.retrieve(lookup, queries, ...args);
         return await this.repository.remove(entity);
       }
 

@@ -125,30 +125,43 @@ export class RestControllerFactory<
         );
       }
 
-      async create(...[dto, ...args]: Parameters<Interface["create"]>) {
-        const entity = await this.service.create(dto, ...args);
+      async create(
+        ...[queries, dto, ...args]: Parameters<Interface["create"]>
+      ) {
+        const entity = await this.service.create(queries, dto, ...args);
         return await this.service.transform(entity, ...args);
       }
 
-      async retrieve(...[lookup, ...args]: Parameters<Interface["retrieve"]>) {
-        const entity = await this.service.retrieve(lookup, ...args);
+      async retrieve(
+        ...[lookup, queries, ...args]: Parameters<Interface["retrieve"]>
+      ) {
+        const entity = await this.service.retrieve(lookup, queries, ...args);
         return await this.service.transform(entity, ...args);
       }
 
       async replace(
-        ...[lookup, dto, ...args]: Parameters<Interface["replace"]>
+        ...[lookup, queries, dto, ...args]: Parameters<Interface["replace"]>
       ) {
-        const entity = await this.service.replace(lookup, dto, ...args);
+        const entity = await this.service.replace(
+          lookup,
+          queries,
+          dto,
+          ...args
+        );
         return await this.service.transform(entity, ...args);
       }
 
-      async update(...[lookup, dto, ...args]: Parameters<Interface["update"]>) {
-        const entity = await this.service.update(lookup, dto, ...args);
+      async update(
+        ...[lookup, queries, dto, ...args]: Parameters<Interface["update"]>
+      ) {
+        const entity = await this.service.update(lookup, queries, dto, ...args);
         return await this.service.transform(entity, ...args);
       }
 
-      async destroy(...[lookup, ...args]: Parameters<Interface["destroy"]>) {
-        await this.service.destroy(lookup, ...args);
+      async destroy(
+        ...[lookup, queries, ...args]: Parameters<Interface["destroy"]>
+      ) {
+        await this.service.destroy(lookup, queries, ...args);
       }
     };
   }
@@ -159,17 +172,31 @@ export class RestControllerFactory<
   }
 
   protected defineRoutesTypesMetadata() {
+    const lookupType = this.lookupType;
     const {
       dtoClasses: { create: createDto, update: updateDto },
     } = this.serviceOptions;
-
+    const queryDto = this.options.queryDto;
     const extra = this.options.customArgs.map(([type]) => type);
-    this.defineParamTypesMetadata("list", this.options.queryDto, ...extra)
-      .defineParamTypesMetadata("create", createDto, ...extra)
-      .defineParamTypesMetadata("retrieve", this.lookupType, ...extra)
-      .defineParamTypesMetadata("replace", this.lookupType, createDto, ...extra)
-      .defineParamTypesMetadata("update", this.lookupType, updateDto, ...extra)
-      .defineParamTypesMetadata("destroy", this.lookupType, ...extra);
+
+    this.defineParamTypesMetadata("list", queryDto, ...extra)
+      .defineParamTypesMetadata("create", queryDto, createDto, ...extra)
+      .defineParamTypesMetadata("retrieve", lookupType, queryDto, ...extra)
+      .defineParamTypesMetadata(
+        "replace",
+        lookupType,
+        queryDto,
+        createDto,
+        ...extra
+      )
+      .defineParamTypesMetadata(
+        "update",
+        lookupType,
+        queryDto,
+        updateDto,
+        ...extra
+      )
+      .defineParamTypesMetadata("destroy", lookupType, queryDto, ...extra);
   }
 
   protected applyRoutesDecorators() {
@@ -188,18 +215,40 @@ export class RestControllerFactory<
       .applyParamDecoratorSets("list", [AllQueries], ...extra)
 
       .applyMethodDecorators("create", Post())
-      .applyParamDecoratorSets("create", [Dto], ...extra)
+      .applyParamDecoratorSets("create", [AllQueries], [Dto], ...extra)
 
       .applyMethodDecorators("retrieve", Get(path))
-      .applyParamDecoratorSets("retrieve", [LookupParam], ...extra)
+      .applyParamDecoratorSets(
+        "retrieve",
+        [LookupParam],
+        [AllQueries],
+        ...extra
+      )
 
       .applyMethodDecorators("replace", Put(path))
-      .applyParamDecoratorSets("replace", [LookupParam], [Dto], ...extra)
+      .applyParamDecoratorSets(
+        "replace",
+        [LookupParam],
+        [AllQueries],
+        [Dto],
+        ...extra
+      )
 
       .applyMethodDecorators("update", Patch(path))
-      .applyParamDecoratorSets("update", [LookupParam], [Dto], ...extra)
+      .applyParamDecoratorSets(
+        "update",
+        [LookupParam],
+        [AllQueries],
+        [Dto],
+        ...extra
+      )
 
       .applyMethodDecorators("destroy", Delete(path))
-      .applyParamDecoratorSets("destroy", [LookupParam], ...extra);
+      .applyParamDecoratorSets(
+        "destroy",
+        [LookupParam],
+        [AllQueries],
+        ...extra
+      );
   }
 }

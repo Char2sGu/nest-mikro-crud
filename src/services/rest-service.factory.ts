@@ -57,6 +57,7 @@ export class RestServiceFactory<
           where: await this.getQueryConditions(undefined, ...args),
           take: options?.limit,
           skip: options?.offset,
+          loadRelationIds: true,
         });
       }
 
@@ -68,6 +69,7 @@ export class RestServiceFactory<
       async retrieve(...[lookup, ...args]: Parameters<Interface["retrieve"]>) {
         return await this.repository.findOneOrFail({
           where: await this.getQueryConditions(lookup, ...args),
+          loadRelationIds: true,
         });
       }
 

@@ -2,14 +2,15 @@ import { ClassConstructor } from "class-transformer";
 import { TS_PARAM_TYPES_METADATA_KEY } from "./constants";
 import { ExtractKeys } from "./utils";
 
-type MethodKeys<T> = Extract<ExtractKeys<T, (...args: any[]) => any>, string>;
-type PropertyKeys<T> = Exclude<Extract<keyof T, string>, MethodKeys<T>>;
+type AllNames<T> = Extract<keyof T, string>;
+type MethodNames<T> = Extract<ExtractKeys<T, (...args: any[]) => any>, string>;
+type PropertyNames<T> = Exclude<AllNames<T>, MethodNames<T>>;
 
 export abstract class AbstractFactory<T> {
   abstract readonly product: ClassConstructor<T>;
 
   defineParamTypesMetadata(
-    target: MethodKeys<T>,
+    target: MethodNames<T>,
     ...types: ClassConstructor<unknown>[]
   ): this {
     Reflect.defineMetadata(
@@ -18,7 +19,6 @@ export abstract class AbstractFactory<T> {
       this.product.prototype,
       target
     );
-
     return this;
   }
 
@@ -28,7 +28,7 @@ export abstract class AbstractFactory<T> {
   }
 
   applyPropertyDecorators(
-    target: PropertyKeys<T>,
+    target: PropertyNames<T>,
     ...decorators: PropertyDecorator[]
   ): this {
     decorators.forEach((d) => d(this.product.prototype, target));
@@ -36,7 +36,7 @@ export abstract class AbstractFactory<T> {
   }
 
   applyMethodDecorators(
-    target: MethodKeys<T>,
+    target: MethodNames<T>,
     ...decorators: MethodDecorator[]
   ): this {
     decorators.forEach((d) =>
@@ -50,7 +50,7 @@ export abstract class AbstractFactory<T> {
   }
 
   applyParamDecorators(
-    target: MethodKeys<T>,
+    target: MethodNames<T>,
     index: number,
     ...decorators: ParameterDecorator[]
   ): this {
@@ -59,7 +59,7 @@ export abstract class AbstractFactory<T> {
   }
 
   applyParamDecoratorSets(
-    target: MethodKeys<T>,
+    target: MethodNames<T>,
     ...decoratorSets: ParameterDecorator[][]
   ): this {
     decoratorSets.forEach((decorators, index) =>

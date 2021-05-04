@@ -25,7 +25,7 @@ export interface RestService<
 
   update(
     lookup: Entity[LookupField],
-    dto: CreateDto | UpdateDto,
+    dto: UpdateDto,
     ...args: CustomArgs
   ): Promise<Entity>;
 

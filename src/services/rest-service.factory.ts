@@ -76,7 +76,9 @@ export class RestServiceFactory<
       async replace(
         ...[lookup, dto, ...args]: Parameters<Interface["replace"]>
       ) {
-        return await this.update(lookup, dto, ...args);
+        const rawEntity = await this.retrieve(lookup, ...args);
+        const updatedEntity = this.repository.merge(rawEntity, dto);
+        return await this.repository.save(updatedEntity);
       }
 
       async update(...[lookup, dto, ...args]: Parameters<Interface["update"]>) {

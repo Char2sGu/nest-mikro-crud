@@ -121,10 +121,13 @@ describe(RestServiceFactory.name, () => {
 
     describe(d(".replace()"), () => {
       it("should replace and return the entity", async () => {
-        const spy = jest.spyOn(service, "update").mockResolvedValueOnce(entity);
-        const ret = await service.replace(1, entity);
-        expect(spy).toHaveBeenCalledTimes(1);
-        expect(ret).toEqual(entity);
+        const updated: TestEntity = { id: 2 };
+        jest.spyOn(service, "retrieve").mockResolvedValueOnce(entity);
+        m(repository.merge).mockReturnValueOnce(updated);
+        m(repository.save).mockImplementationOnce(async (v) => v as any);
+        const ret = await service.replace(1, updated);
+        expect(service.retrieve).toHaveBeenCalledTimes(1);
+        expect(ret).toEqual(updated);
       });
     });
 

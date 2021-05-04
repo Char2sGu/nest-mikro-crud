@@ -1,4 +1,5 @@
 import { FindConditions, Repository } from "typeorm";
+import { QueryDto } from "../dtos";
 import { LookupFields } from "./lookup-fields.type";
 
 export interface RestService<
@@ -10,10 +11,7 @@ export interface RestService<
 > {
   readonly repository: Repository<Entity>;
 
-  list(
-    options?: { limit?: number; offset?: number },
-    ...args: CustomArgs
-  ): Promise<Entity[]>;
+  list(queries: QueryDto, ...args: CustomArgs): Promise<Entity[]>;
 
   create(dto: CreateDto, ...args: CustomArgs): Promise<Entity>;
 

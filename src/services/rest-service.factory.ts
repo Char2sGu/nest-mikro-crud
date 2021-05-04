@@ -52,11 +52,11 @@ export class RestServiceFactory<
     return class RestService implements Interface {
       readonly repository!: Interface["repository"];
 
-      async list(...[options, ...args]: Parameters<Interface["list"]>) {
+      async list(...[queries, ...args]: Parameters<Interface["list"]>) {
         return await this.repository.find({
           where: await this.getQueryConditions(undefined, ...args),
-          take: options?.limit,
-          skip: options?.offset,
+          take: queries?.limit,
+          skip: queries?.offset,
           loadRelationIds: true,
         });
       }

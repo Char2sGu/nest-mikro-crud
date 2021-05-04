@@ -120,8 +120,7 @@ export class RestControllerFactory<
       readonly service!: Interface["service"];
 
       async list(...[queries, ...args]: Parameters<Interface["list"]>) {
-        const { limit, offset } = queries;
-        const entities = await this.service.list({ limit, offset }, ...args);
+        const entities = await this.service.list(queries, ...args);
         return Promise.all(
           entities.map((entity) => this.service.transform(entity, ...args))
         );

@@ -24,7 +24,6 @@ import { EntityNotFoundErrorFilter } from "../filters";
 import { LookupFields, RestServiceFactoryOptions } from "../services";
 import { RestControllerFactoryOptions } from "./rest-controller-factory-options.interface";
 import { RestController } from "./rest-controller.interface";
-import { RouteNames } from "./route-names.types";
 
 // TODO: Fix the issue below.
 /**
@@ -184,22 +183,23 @@ export class RestControllerFactory<
     const Dto = Body();
 
     const extra = this.options.customArgs.map(([, decoraotrs]) => decoraotrs);
-    const routesMapping: Record<
-      RouteNames,
-      [MethodDecorator, ParameterDecorator[][]]
-    > = {
-      list: [Get(), [[AllQueries], ...extra]],
-      create: [Post(), [[Dto], ...extra]],
-      retrieve: [Get(path), [[LookupParam], ...extra]],
-      replace: [Put(path), [[LookupParam], [Dto], ...extra]],
-      update: [Patch(path), [[LookupParam], [Dto], ...extra]],
-      destroy: [Delete(path), [[LookupParam], ...extra]],
-    };
 
-    this.options.routes.forEach((routeName) => {
-      const [routeDecorator, paramDecoratorSets] = routesMapping[routeName];
-      this.applyMethodDecorators(routeName, routeDecorator);
-      this.applyParamDecoratorSets(routeName, ...paramDecoratorSets);
-    });
+    this.applyMethodDecorators("list", Get())
+      .applyParamDecoratorSets("list", [AllQueries], ...extra)
+
+      .applyMethodDecorators("create", Post())
+      .applyParamDecoratorSets("create", [Dto], ...extra)
+
+      .applyMethodDecorators("retrieve", Get(path))
+      .applyParamDecoratorSets("retrieve", [LookupParam], ...extra)
+
+      .applyMethodDecorators("replace", Put(path))
+      .applyParamDecoratorSets("replace", [LookupParam], [Dto], ...extra)
+
+      .applyMethodDecorators("update", Patch(path))
+      .applyParamDecoratorSets("update", [LookupParam], [Dto], ...extra)
+
+      .applyMethodDecorators("destroy", Delete(path))
+      .applyParamDecoratorSets("destroy", [LookupParam], ...extra);
   }
 }

@@ -1,4 +1,4 @@
-import { ListQueryDto } from "../dtos";
+import { QueryDto } from "../dtos";
 import { LookupFields, RestService } from "../services";
 
 export interface RestController<
@@ -16,7 +16,7 @@ export interface RestController<
     CustomArgs
   >;
 
-  list(query: ListQueryDto, ...args: CustomArgs): Promise<Entity[]>;
+  list(query: QueryDto, ...args: CustomArgs): Promise<Entity[]>;
 
   create(dto: CreateDto, ...args: CustomArgs): Promise<Entity>;
 

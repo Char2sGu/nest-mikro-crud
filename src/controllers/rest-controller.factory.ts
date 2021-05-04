@@ -20,7 +20,7 @@ import {
   REST_SERVICE_OPTIONS_METADATA_KEY,
   TS_TYPE_METADATA_KEY,
 } from "../constants";
-import { ListQueryDtoFactory } from "../dtos";
+import { QueryDtoFactory } from "../dtos";
 import { EntityNotFoundErrorFilter } from "../filters";
 import { LookupFields, RestServiceFactoryOptions } from "../services";
 import { RestControllerFactoryOptions } from "./rest-controller-factory-options.interface";
@@ -89,8 +89,7 @@ export class RestControllerFactory<
       CustomArgs
     >
   ) {
-    options.listQueryDto =
-      options.listQueryDto ?? new ListQueryDtoFactory({}).product;
+    options.queryDto = options.queryDto ?? new QueryDtoFactory({}).product;
     options.lookupParam = options.lookupParam ?? "lookup";
     options.customArgs = options.customArgs ?? [];
     options.catchEntityNotFound = options.catchEntityNotFound ?? true;
@@ -114,7 +113,7 @@ export class RestControllerFactory<
       readonly service!: Interface["service"];
 
       async list(...[query, ...args]: Parameters<Interface["list"]>) {
-        query = plainToClass(options.listQueryDto, query, {
+        query = plainToClass(options.queryDto, query, {
           exposeDefaultValues: true,
         });
         // The query dto may be customized with some extra fields.
@@ -164,7 +163,7 @@ export class RestControllerFactory<
     } = this.serviceOptions;
 
     const extra = this.options.customArgs.map(([type]) => type);
-    this.defineParamTypesMetadata("list", this.options.listQueryDto, ...extra)
+    this.defineParamTypesMetadata("list", this.options.queryDto, ...extra)
       .defineParamTypesMetadata("create", createDto, ...extra)
       .defineParamTypesMetadata("retrieve", this.lookupType, ...extra)
       .defineParamTypesMetadata("replace", this.lookupType, createDto, ...extra)

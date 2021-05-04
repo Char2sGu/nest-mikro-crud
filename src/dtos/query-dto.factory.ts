@@ -1,16 +1,16 @@
 import { Type } from "class-transformer";
 import { IsNumber, IsOptional, Max, Min } from "class-validator";
 import { AbstractFactory } from "../abstract.factory";
-import { ListQueryDtoFactoryOptions } from "./list-query-dto-factory-options.interface";
-import { ListQueryDto } from "./list-query-dto.interface";
+import { QueryDtoFactoryOptions } from "./query-dto-factory-options.interface";
+import { QueryDto } from "./query-dto.interface";
 
-export class ListQueryDtoFactory extends AbstractFactory<ListQueryDto> {
+export class QueryDtoFactory extends AbstractFactory<QueryDto> {
   readonly product;
 
-  constructor(readonly options: ListQueryDtoFactoryOptions) {
+  constructor(readonly options: QueryDtoFactoryOptions) {
     super();
 
-    type Interface = ListQueryDto;
+    type Interface = QueryDto;
     this.product = class ListQueryDto implements Interface {
       limit? = options.limit?.default;
       offset? = options.offset?.default;

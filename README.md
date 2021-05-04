@@ -204,3 +204,22 @@ Currently, all the relations will be output as primary keys.
   "relationField": 1
 }
 ```
+
+## Overriding Routing Methods
+
+Here is something you should know before overriding the route methods, or something confusing may happen to you.
+
+- Nest's controller decorators store metadata in constructors, and when getting metadata, it will look up the value in the prototype chain, so there is no need to decorate the class again when extending another class.
+- Nest's route method decorators store metadata in route methods directly, when looking metadata, it will look up the value directly from the method, but if we override a method, the method will be a different one, so all the metadata will be lost, we need to apply route method decorators again.
+- Nest's param decorators store metadata in the constructors, as said before, there is no need to apply param decorators again.
+
+So here is the example:
+
+```ts
+class OurController /*extends ...*/ {
+  @Patch(":lookup")
+  async update(lookup: number, dto: UpdateOurEntityDto) {
+    // ...
+  }
+}
+```

@@ -1,23 +1,6 @@
 import { ListQueryDto } from "../dtos";
 import { LookupFields, RestService } from "../services";
 
-/**
- * ### Metadata in Overriding
- *
- * - Controller-level decorators store metadata in the controller, there is **NO
- * NEED** to decorate controllers again.
- * - Route-level decorators store metadata in the route method directly, which
- * will be lost when overriding the routes, so the routes **SHOULD BE** decoratored
- * again to make them work.
- * - Param-level decorators store metadata in the controller, so there's **NO
- * NEED** to decorate the params again, just ensure not to change the order of
- * the params.
- *
- * ### Rest Parameters
- *
- * Rest params in each route are for better extendability, without them there
- * can be no extra params when overloading the route.
- */
 export interface RestController<
   Entity = any,
   CreateDto = Entity,

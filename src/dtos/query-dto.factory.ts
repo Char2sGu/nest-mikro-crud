@@ -11,7 +11,7 @@ export class QueryDtoFactory extends AbstractFactory<QueryDto> {
     super();
 
     type Interface = QueryDto;
-    this.product = class ListQueryDto implements Interface {
+    this.product = class QueryDto implements Interface {
       limit? = options.limit?.default;
       offset? = options.offset?.default;
     };

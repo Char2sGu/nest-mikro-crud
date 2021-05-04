@@ -41,8 +41,9 @@ export class RestControllerFactory<
   RestController<Entity, CreateDto, UpdateDto, LookupField, CustomArgs>
 > {
   readonly options;
-  readonly product;
   readonly serviceOptions;
+  readonly lookupType: typeof Number | typeof String;
+  readonly product;
 
   constructor(
     options: RestControllerFactoryOptions<
@@ -61,6 +62,12 @@ export class RestControllerFactory<
       REST_SERVICE_OPTIONS_METADATA_KEY,
       this.options.restServiceClass
     ) as RestServiceFactoryOptions<Entity, CreateDto, UpdateDto, LookupField>;
+
+    this.lookupType = Reflect.getMetadata(
+      TS_TYPE_METADATA_KEY,
+      this.serviceOptions.entityClass.prototype,
+      this.serviceOptions.lookupField
+    );
 
     this.product = this.createRawClass();
     this.defineInjectionsMetadata();
@@ -153,21 +160,15 @@ export class RestControllerFactory<
   protected defineRoutesTypesMetadata() {
     const {
       dtoClasses: { create: createDto, update: updateDto },
-      entityClass,
-      lookupField,
     } = this.serviceOptions;
-    const lookupType = Reflect.getMetadata(
-      TS_TYPE_METADATA_KEY,
-      entityClass.prototype,
-      lookupField
-    );
+
     const extra = this.options.customArgs.map(([type]) => type);
     this.defineParamTypesMetadata("list", this.options.listQueryDto, ...extra)
       .defineParamTypesMetadata("create", createDto, ...extra)
-      .defineParamTypesMetadata("retrieve", lookupType, ...extra)
-      .defineParamTypesMetadata("replace", lookupType, createDto, ...extra)
-      .defineParamTypesMetadata("update", lookupType, updateDto, ...extra)
-      .defineParamTypesMetadata("destroy", lookupType, ...extra);
+      .defineParamTypesMetadata("retrieve", this.lookupType, ...extra)
+      .defineParamTypesMetadata("replace", this.lookupType, createDto, ...extra)
+      .defineParamTypesMetadata("update", this.lookupType, updateDto, ...extra)
+      .defineParamTypesMetadata("destroy", this.lookupType, ...extra);
   }
 
   protected applyRoutesDecorators() {

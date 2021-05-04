@@ -112,6 +112,10 @@ describe(RestControllerFactory.name, () => {
     expect(factory.serviceOptions).toBe(testServiceOptions);
   });
 
+  it("should expose the lookup type", () => {
+    expect(factory.lookupType).toBe(Number);
+  });
+
   describe("should create the controller class", () => {
     const d = buildKeyChecker<RestController>();
     let controller: RestController;

@@ -6,8 +6,7 @@
   "scripts": {
     "test": "jest",
     "prebuild": "rimraf lib",
-    "build": "tsc -b",
-    "prepublishOnly": "npm run build || exit 1"
+    "build": "tsc -b"
   },
   "repository": {
     "type": "git",

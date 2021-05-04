@@ -97,12 +97,18 @@ describe(RestControllerFactory.name, () => {
     factory = new RestControllerFactory(options);
   });
 
-  it("should fill default values of the passed options and expose it", () => {
+  it("should process the passed options and expose it", () => {
     expect(QueryDtoFactory).toHaveBeenCalled();
     expect(factory.options.queryDto).toBeDefined();
     expect(factory.options.lookupParam).toBeDefined();
     expect(factory.options.customArgs).toBeDefined();
     expect(factory.options.catchEntityNotFound).toBeDefined();
+    expect(factory.options.validationPipeOptions).toBeDefined();
+    expect(factory.options.validationPipeOptions.transform).toBe(true);
+    expect(
+      factory.options.validationPipeOptions.transformOptions
+        ?.exposeDefaultValues
+    ).toBe(true);
   });
 
   it("should expose the service's options", () => {

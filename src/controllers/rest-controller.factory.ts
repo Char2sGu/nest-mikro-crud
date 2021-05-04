@@ -14,7 +14,6 @@ import {
   UsePipes,
   ValidationPipe,
 } from "@nestjs/common";
-import { plainToClass } from "class-transformer";
 import { AbstractFactory } from "../abstract.factory";
 import {
   REST_SERVICE_OPTIONS_METADATA_KEY,
@@ -74,7 +73,9 @@ export class RestControllerFactory<
     this.defineInjectionsMetadata();
     this.defineRoutesTypesMetadata();
     this.applyRoutesDecorators();
-    this.applyClassDecorators(UsePipes(ValidationPipe));
+    this.applyClassDecorators(
+      UsePipes(new ValidationPipe(options.validationPipeOptions))
+    );
     if (options.catchEntityNotFound)
       this.applyClassDecorators(UseFilters(EntityNotFoundErrorFilter));
     this.applyMethodDecorators("destroy", HttpCode(204));
@@ -93,6 +94,14 @@ export class RestControllerFactory<
     options.lookupParam = options.lookupParam ?? "lookup";
     options.customArgs = options.customArgs ?? [];
     options.catchEntityNotFound = options.catchEntityNotFound ?? true;
+    options.validationPipeOptions = {
+      ...options.validationPipeOptions,
+      transform: true,
+      transformOptions: {
+        ...options.validationPipeOptions?.transformOptions,
+        exposeDefaultValues: true,
+      },
+    };
     return options as Required<typeof options>;
   }
 
@@ -100,8 +109,6 @@ export class RestControllerFactory<
    * Create a no-metadata controller class
    */
   protected createRawClass() {
-    const options = this.options;
-
     type Interface = RestController<
       Entity,
       CreateDto,
@@ -113,10 +120,6 @@ export class RestControllerFactory<
       readonly service!: Interface["service"];
 
       async list(...[queries, ...args]: Parameters<Interface["list"]>) {
-        queries = plainToClass(options.queryDto, queries, {
-          exposeDefaultValues: true,
-        });
-        // The query dto may be customized with some extra fields.
         const { limit, offset } = queries;
         const entities = await this.service.list({ limit, offset }, ...args);
         return Promise.all(

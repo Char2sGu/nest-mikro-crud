@@ -1,3 +1,4 @@
+import { ValidationPipeOptions } from "@nestjs/common";
 import { ClassConstructor } from "class-transformer";
 import { QueryDto } from "../dtos";
 import { LookupFields, RestService } from "../services";
@@ -39,4 +40,9 @@ export interface RestControllerFactoryOptions<
    * and throw NestJS's EntityNotFoundException instead
    */
   catchEntityNotFound?: boolean;
+  /**
+   * - `transform` will be forced to be `true`
+   * - `transformOptions.exposeDefaultValues` will be forced to be `true`
+   */
+  validationPipeOptions?: ValidationPipeOptions;
 }

@@ -112,12 +112,12 @@ export class RestControllerFactory<
     return class RestController implements Interface {
       readonly service!: Interface["service"];
 
-      async list(...[query, ...args]: Parameters<Interface["list"]>) {
-        query = plainToClass(options.queryDto, query, {
+      async list(...[queries, ...args]: Parameters<Interface["list"]>) {
+        queries = plainToClass(options.queryDto, queries, {
           exposeDefaultValues: true,
         });
         // The query dto may be customized with some extra fields.
-        const { limit, offset } = query;
+        const { limit, offset } = queries;
         const entities = await this.service.list({ limit, offset }, ...args);
         return Promise.all(
           entities.map((entity) => this.service.transform(entity, ...args))

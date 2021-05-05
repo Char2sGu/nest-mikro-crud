@@ -12,6 +12,7 @@ import {
 } from "@nestjs/common";
 import { ClassConstructor } from "class-transformer";
 import {
+  QueryDto,
   QueryDtoFactory,
   Resolved,
   RestController,
@@ -68,6 +69,10 @@ describe(RestControllerFactory.name, () => {
     destroy: jest.fn(async () => entity),
     transform: jest.fn(async (v) => v),
     getQueryConditions: jest.fn(async () => ({})),
+    getRelationOptions: jest.fn(async () => ({
+      relations: [],
+      loadRelationIds: { relations: [] },
+    })),
   };
   const TestService = jest.fn(() => testService);
 
@@ -125,6 +130,7 @@ describe(RestControllerFactory.name, () => {
   describe("should create the controller class", () => {
     const d = buildKeyChecker<RestController>();
     let controller: RestController;
+    let commonQueries: QueryDto = { expand: [] };
 
     beforeEach(() => {
       controller = new factory.product();
@@ -133,20 +139,20 @@ describe(RestControllerFactory.name, () => {
     });
 
     describe.each`
-      rawOptions                     | rest
-      ${{ limit: "1", offset: "1" }} | ${["extra"]}
+      queries                                          | rest
+      ${{ limit: "1", offset: "1", ...commonQueries }} | ${["extra"]}
     `(
-      d(".list($rawOptions, ...$rest)"),
-      ({ rawOptions, rest }: { rawOptions: {}; rest: [] }) => {
+      d(".list($queries, ...$rest)"),
+      ({ queries, rest }: { queries: any; rest: [] }) => {
         let ret: Resolved<ReturnType<typeof controller.list>>;
 
         beforeEach(async () => {
-          ret = await controller.list(rawOptions, ...rest);
+          ret = await controller.list(queries, ...rest);
         });
 
         it("should query the entities", () => {
           expect(testService.list).toHaveBeenCalledTimes(1);
-          expect(testService.list).toHaveBeenCalledWith(rawOptions, ...rest);
+          expect(testService.list).toHaveBeenCalledWith(queries, ...rest);
         });
 
         it("should transform the entities", () => {
@@ -169,12 +175,16 @@ describe(RestControllerFactory.name, () => {
         let ret: Resolved<ReturnType<typeof controller.create>>;
 
         beforeEach(async () => {
-          ret = await controller.create({}, dto, ...rest);
+          ret = await controller.create(commonQueries, dto, ...rest);
         });
 
         it("should create an entity", () => {
           expect(testService.create).toHaveBeenCalledTimes(1);
-          expect(testService.create).toHaveBeenCalledWith({}, dto, ...rest);
+          expect(testService.create).toHaveBeenCalledWith(
+            commonQueries,
+            dto,
+            ...rest
+          );
         });
 
         it("should transform the entity", () => {
@@ -197,14 +207,14 @@ describe(RestControllerFactory.name, () => {
         let ret: Resolved<ReturnType<typeof controller.retrieve>>;
 
         beforeEach(async () => {
-          ret = await controller.retrieve(lookup, {}, ...rest);
+          ret = await controller.retrieve(lookup, commonQueries, ...rest);
         });
 
         it("should retrieve the entity", () => {
           expect(testService.retrieve).toHaveBeenCalledTimes(1);
           expect(testService.retrieve).toHaveBeenCalledWith(
             lookup,
-            {},
+            commonQueries,
             ...rest
           );
         });
@@ -229,14 +239,14 @@ describe(RestControllerFactory.name, () => {
         let ret: Resolved<ReturnType<typeof controller.replace>>;
 
         beforeEach(async () => {
-          ret = await controller.replace(lookup, {}, dto, ...rest);
+          ret = await controller.replace(lookup, commonQueries, dto, ...rest);
         });
 
         it("should replace the entity", () => {
           expect(testService.replace).toHaveBeenCalledTimes(1);
           expect(testService.replace).toHaveBeenCalledWith(
             lookup,
-            {},
+            commonQueries,
             dto,
             ...rest
           );
@@ -262,14 +272,14 @@ describe(RestControllerFactory.name, () => {
         let ret: Resolved<ReturnType<typeof controller.update>>;
 
         beforeEach(async () => {
-          ret = await controller.update(lookup, {}, dto, ...rest);
+          ret = await controller.update(lookup, commonQueries, dto, ...rest);
         });
 
         it("should update the entity", () => {
           expect(testService.update).toHaveBeenCalledTimes(1);
           expect(testService.update).toHaveBeenCalledWith(
             lookup,
-            {},
+            commonQueries,
             dto,
             ...rest
           );
@@ -290,17 +300,21 @@ describe(RestControllerFactory.name, () => {
       $lookup | rest
       ${1}    | ${["rest-destroy"]}
     `(
-      d(".destroy($lookup, {}, ...$rest)"),
+      d(".destroy($lookup, {...}, ...$rest)"),
       ({ lookup, rest }: { lookup: number; rest: [] }) => {
         let ret: Resolved<ReturnType<typeof controller.destroy>>;
 
         beforeEach(async () => {
-          ret = await controller.destroy(lookup, {}, ...rest);
+          ret = await controller.destroy(lookup, commonQueries, ...rest);
         });
 
         it("should delete the entity", () => {
           expect(testService.destroy).toHaveBeenCalledTimes(1);
-          expect(testService.destroy).toHaveBeenCalledWith(lookup, {}, ...rest);
+          expect(testService.destroy).toHaveBeenCalledWith(
+            lookup,
+            commonQueries,
+            ...rest
+          );
         });
 
         it("should return nothing", () => {

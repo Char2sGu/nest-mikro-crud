@@ -1,4 +1,9 @@
-import { FindConditions, Repository } from "typeorm";
+import {
+  FindConditions,
+  FindManyOptions,
+  FindOneOptions,
+  Repository,
+} from "typeorm";
 import { QueryDto } from "../dtos";
 import { LookupFields } from "./lookup-fields.type";
 
@@ -11,37 +16,37 @@ export interface RestService<
 > {
   readonly repository: Repository<Entity>;
 
-  list(queries: QueryDto, ...args: CustomArgs): Promise<Entity[]>;
+  list(queries: QueryDto<Entity>, ...args: CustomArgs): Promise<Entity[]>;
 
   create(
-    queries: QueryDto,
+    queries: QueryDto<Entity>,
     dto: CreateDto,
     ...args: CustomArgs
   ): Promise<Entity>;
 
   retrieve(
     lookup: Entity[LookupField],
-    queries: QueryDto,
+    queries: QueryDto<Entity>,
     ...args: CustomArgs
   ): Promise<Entity>;
 
   replace(
     lookup: Entity[LookupField],
-    queries: QueryDto,
+    queries: QueryDto<Entity>,
     dto: CreateDto,
     ...args: CustomArgs
   ): Promise<Entity>;
 
   update(
     lookup: Entity[LookupField],
-    queries: QueryDto,
+    queries: QueryDto<Entity>,
     dto: UpdateDto,
     ...args: CustomArgs
   ): Promise<Entity>;
 
   destroy(
     lookup: Entity[LookupField],
-    queries: QueryDto,
+    queries: QueryDto<Entity>,
     ...args: CustomArgs
   ): Promise<Entity>;
 
@@ -60,4 +65,9 @@ export interface RestService<
     lookup?: Entity[LookupField],
     ...args: CustomArgs
   ): Promise<FindConditions<Entity>>;
+
+  getRelationOptions(
+    queries: QueryDto<Entity>,
+    ...args: CustomArgs
+  ): Promise<FindOneOptions<Entity> | FindManyOptions<Entity>>;
 }

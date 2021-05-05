@@ -5,5 +5,8 @@ export class CreateParentEntityDto {
   name!: string;
 
   @IsInt()
-  child!: number;
+  child1!: number;
+
+  @IsInt()
+  child2!: number;
 }

@@ -6,7 +6,8 @@ import {
   OneToOne,
   PrimaryGeneratedColumn,
 } from "typeorm";
-import { ChildEntity } from "./child.entity";
+import { Child1Entity } from "./child1.entity";
+import { Child2Entity } from "./child2.entity";
 
 @Entity()
 export class ParentEntity {
@@ -17,7 +18,11 @@ export class ParentEntity {
   @Column()
   name!: string;
 
-  @OneToOne((type) => ChildEntity, (child) => child.parent, { cascade: true })
+  @OneToOne((type) => Child1Entity, (child) => child.parent, { cascade: true })
   @JoinColumn()
-  child!: ChildEntity;
+  child1!: Child1Entity;
+
+  @OneToOne((type) => Child2Entity, (child) => child.parent, { cascade: true })
+  @JoinColumn()
+  child2!: Child2Entity;
 }

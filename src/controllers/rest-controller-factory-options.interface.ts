@@ -24,7 +24,7 @@ export interface RestControllerFactoryOptions<
   /**
    * Use specific dto for more advanced settings of the query params.
    */
-  queryDto?: ClassConstructor<QueryDto>;
+  queryDto?: ClassConstructor<QueryDto<Entity>>;
   /**
    * Custom the rest arguments which will be passed in every method
    * of both the controller and the service, allowing you to get more

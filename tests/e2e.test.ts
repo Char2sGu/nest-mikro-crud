@@ -15,7 +15,7 @@ import {
   UpdateChildEntityDto,
   UpdateParentEntityDto,
 } from "./dtos";
-import { ChildEntity, ParentEntity } from "./entities";
+import { Child1Entity, Child2Entity, ParentEntity } from "./entities";
 import { getRequester, getTypeOrmModules } from "./utils";
 
 @Injectable()
@@ -32,8 +32,9 @@ class TestService extends new RestServiceFactory({
 class TestController extends new RestControllerFactory({
   restServiceClass: TestService,
   routes: ["list", "retrieve", "create", "replace", "update", "destroy"],
-  queryDto: new QueryDtoFactory({
+  queryDto: new QueryDtoFactory<ParentEntity>({
     limit: { max: 2, default: 1 },
+    expand: { in: ["child2"] },
   }).product,
 }).product {}
 
@@ -41,7 +42,8 @@ function assertSerializedEntity(entity: ParentEntity, id?: number) {
   expect(typeof entity.id).toBe("number");
   if (id) expect(entity.id).toBe(id);
   expect(entity.name).toBeUndefined();
-  expect(typeof entity.child).toBe("number");
+  expect(typeof entity.child1).toBe("number");
+  expect(entity.child2).toBeInstanceOf(Object);
 }
 
 function assertErrorDetails(body: any) {
@@ -53,14 +55,17 @@ function assertErrorDetails(body: any) {
 describe("E2E", () => {
   let app: NestApplication;
   let parentRepository: Repository<ParentEntity>;
-  let childRepository: Repository<ChildEntity>;
+  let child1Repository: Repository<Child1Entity>;
+  let child2Repository: Repository<Child1Entity>;
   let requester: ReturnType<typeof getRequester>;
 
   let entities: ParentEntity[];
 
+  let commonQueries: {};
+
   beforeEach(async () => {
     const module = await Test.createTestingModule({
-      imports: [...getTypeOrmModules(ParentEntity, ChildEntity)],
+      imports: [...getTypeOrmModules(ParentEntity, Child1Entity, Child2Entity)],
       controllers: [TestController],
       providers: [TestService],
     }).compile();
@@ -68,7 +73,8 @@ describe("E2E", () => {
     app = module.createNestApplication();
     await app.init();
     parentRepository = module.get(getRepositoryToken(ParentEntity));
-    childRepository = module.get(getRepositoryToken(ChildEntity));
+    child1Repository = module.get(getRepositoryToken(Child1Entity));
+    child2Repository = module.get(getRepositoryToken(Child2Entity));
     requester = getRequester(app);
 
     entities = [];
@@ -76,9 +82,12 @@ describe("E2E", () => {
       entities.push(
         await parentRepository.save({
           name: "parent",
-          child: { name: "child" },
+          child1: { name: "child1" },
+          child2: { name: "child2" },
         })
       );
+
+    commonQueries = { "expand[]": ["child2"] };
   });
 
   afterEach(async () => {
@@ -98,7 +107,9 @@ describe("E2E", () => {
       let body: ParentEntity[];
 
       beforeEach(async () => {
-        response = await requester.get("/").query({ limit, offset });
+        response = await requester
+          .get("/")
+          .query({ limit, offset, ...commonQueries });
         ({ body } = response);
       });
 
@@ -138,9 +149,10 @@ describe("E2E", () => {
 
     beforeEach(async () => {
       childDto = { name: "child" };
-      parentDto = { name: "parent", child: 4 };
-      await childRepository.save(childDto);
-      response = await requester.post("/").send(parentDto);
+      parentDto = { name: "parent", child1: 4, child2: 4 };
+      await child1Repository.save(childDto);
+      await child2Repository.save(childDto);
+      response = await requester.post("/").query(commonQueries).send(parentDto);
     });
 
     it("should return 201", () => {
@@ -166,7 +178,7 @@ describe("E2E", () => {
     let response: Response;
 
     beforeEach(async () => {
-      response = await requester.post("/").send(dto);
+      response = await requester.post("/").query(commonQueries).send(dto);
     });
 
     it("should return 400", () => {
@@ -178,7 +190,7 @@ describe("E2E", () => {
     let response: Response;
 
     beforeEach(async () => {
-      response = await requester.get("/1/");
+      response = await requester.get("/1/").query(commonQueries);
     });
 
     it("should return 200", () => {
@@ -198,7 +210,7 @@ describe("E2E", () => {
     let response: Response;
 
     beforeEach(async () => {
-      response = await requester.get(`/${lookup}/`);
+      response = await requester.get(`/${lookup}/`).query(commonQueries);
     });
 
     it(`should return ${code}`, () => {
@@ -211,8 +223,8 @@ describe("E2E", () => {
     let response: Response;
 
     beforeEach(async () => {
-      dto = { name: "updated", child: 1 };
-      response = await requester.put("/1/").send(dto);
+      dto = { name: "updated", child1: 1, child2: 1 };
+      response = await requester.put("/1/").send(dto).query(commonQueries);
     });
 
     it("should return 200", () => {
@@ -237,7 +249,7 @@ describe("E2E", () => {
     let response: Response;
 
     beforeEach(async () => {
-      response = await requester.put("/1/").send(dto);
+      response = await requester.put("/1/").send(dto).query(commonQueries);
     });
 
     it("should return 400", () => {
@@ -254,8 +266,11 @@ describe("E2E", () => {
     let response: Response;
 
     beforeEach(async () => {
-      dto = { name: "updated", child: 1 };
-      response = await requester.put(`/${lookup}/`).send(dto);
+      dto = { name: "updated", child1: 1, child2: 1 };
+      response = await requester
+        .put(`/${lookup}/`)
+        .send(dto)
+        .query(commonQueries);
     });
 
     it(`should return ${code}`, () => {
@@ -269,7 +284,7 @@ describe("E2E", () => {
 
     beforeEach(async () => {
       dto = { name: "updated" };
-      response = await requester.patch("/1/").send(dto);
+      response = await requester.patch("/1/").send(dto).query(commonQueries);
     });
 
     it("should return 200", () => {
@@ -293,7 +308,7 @@ describe("E2E", () => {
     let response: Response;
 
     beforeEach(async () => {
-      response = await requester.patch("/1/").send(dto);
+      response = await requester.patch("/1/").send(dto).query(commonQueries);
     });
 
     it("should return 400", () => {
@@ -311,7 +326,10 @@ describe("E2E", () => {
 
     beforeEach(async () => {
       dto = { name: "updated" };
-      response = await requester.patch(`/${lookup}/`).send(dto);
+      response = await requester
+        .patch(`/${lookup}/`)
+        .send(dto)
+        .query(commonQueries);
     });
 
     it(`should return ${code}`, () => {
@@ -323,7 +341,7 @@ describe("E2E", () => {
     let response: Response;
 
     beforeEach(async () => {
-      response = await requester.delete("/1/");
+      response = await requester.delete("/1/").query(commonQueries);
     });
 
     it("should return 204", () => {
@@ -343,7 +361,7 @@ describe("E2E", () => {
     let response: Response;
 
     beforeEach(async () => {
-      response = await requester.delete(`/${lookup}/`);
+      response = await requester.delete(`/${lookup}/`).query(commonQueries);
     });
 
     it(`should return ${code}`, () => {

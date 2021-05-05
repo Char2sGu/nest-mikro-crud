@@ -3,6 +3,7 @@ import { plainToClass } from "class-transformer";
 import { FindConditions } from "typeorm";
 import { AbstractFactory } from "../abstract.factory";
 import { REST_SERVICE_OPTIONS_METADATA_KEY } from "../constants";
+import { Resolved } from "../utils";
 import { LookupFields } from "./lookup-fields.type";
 import { RestServiceFactoryOptions } from "./rest-service-factory-options.interface";
 import { RestService } from "./rest-service.interface";
@@ -57,15 +58,19 @@ export class RestServiceFactory<
           where: await this.getQueryConditions(undefined, ...args),
           take: queries.limit,
           skip: queries.offset,
-          loadRelationIds: true,
+          ...(await this.getRelationOptions(queries, ...args)),
         });
       }
 
       async create(
         ...[queries, dto, ...args]: Parameters<Interface["create"]>
       ) {
-        const entity = this.repository.create(dto);
-        return await this.repository.save(entity);
+        const entity = await this.repository.save(dto);
+        return await this.retrieve(
+          entity[options.lookupField],
+          queries,
+          ...args
+        );
       }
 
       async retrieve(
@@ -73,7 +78,7 @@ export class RestServiceFactory<
       ) {
         return await this.repository.findOneOrFail({
           where: await this.getQueryConditions(lookup, ...args),
-          loadRelationIds: true,
+          ...(await this.getRelationOptions(queries, ...args)),
         });
       }
 
@@ -82,7 +87,12 @@ export class RestServiceFactory<
       ) {
         const rawEntity = await this.retrieve(lookup, queries, ...args);
         const updatedEntity = this.repository.merge(rawEntity, dto);
-        return await this.repository.save(updatedEntity);
+        await this.repository.save(updatedEntity);
+        return await this.retrieve(
+          updatedEntity[options.lookupField],
+          queries,
+          ...args
+        );
       }
 
       async update(
@@ -90,7 +100,12 @@ export class RestServiceFactory<
       ) {
         const rawEntity = await this.retrieve(lookup, queries, ...args);
         const updatedEntity = this.repository.merge(rawEntity, dto);
-        return await this.repository.save(updatedEntity);
+        await this.repository.save(updatedEntity);
+        return await this.retrieve(
+          updatedEntity[options.lookupField],
+          queries,
+          ...args
+        );
       }
 
       async destroy(
@@ -112,6 +127,22 @@ export class RestServiceFactory<
               [options.lookupField]: lookup,
             } as unknown)
           : {}) as FindConditions<Entity>;
+      }
+
+      async getRelationOptions(
+        ...[queries, ...args]: Parameters<Interface["getRelationOptions"]>
+      ) {
+        const allRelationPaths = this.repository.metadata.relations.map(
+          (relation) => relation.propertyPath
+        );
+        return {
+          relations: queries.expand,
+          loadRelationIds: {
+            relations: allRelationPaths.filter(
+              (v) => !queries.expand.includes(v as any)
+            ),
+          },
+        };
       }
     };
   }

@@ -4,13 +4,11 @@ Graceful flexible builder for RESTful APIs with TypeORM.
 
 # Features
 
-- Super fast to build RESTful APIs
-- Strongly typed
-- Super flexible, methods can be easily overriden for wonderful implements
-- Extremely simple to apply additional decorators
-- Metadata fully defined
-- Asynchronous everywhere
-- Validation Included
+- Super easy and fast to build RESTful APIs
+- Extremly strongly typed
+- Well-designed code structure for high flexibility and extensibility
+- Helper methods allow to apply extra decorators easily
+- Nesting support
 
 # Tutorial
 
@@ -31,8 +29,10 @@ class OurService extends new RestServiceFactory({
 ```
 
 - `entityClass` specifies the entity of the api endpoint, the repository will be auto-injected to `.repository` using the default connection, unless you specified `repoConnection` as another connection name
-- `dtoClasses` is only used for generic type inferation in the service
+- `dtoClasses` is only used for generic type inferation in the service, **NOTE** that `replace` actions use the `create` DTO.
 - `lookupField` is the key of the field who will be used to lookup the entity, generally it is specified to `"id"` or other fields with a unique constraint
+
+The options passed to the factory will be defined as metadata of the service using the symbol key `REST_SERVICE_OPTIONS_METADATA_KEY`, the key can be imported from the package directly.
 
 ## Creating the Controller
 
@@ -57,18 +57,23 @@ Here it is the simplest controller, this controller provides the following API e
 | Update   | PATCH  | /:lookup/                            | 200,400,404 | Entity   |
 | Destroy  | DELETE | /:lookup/                            | 204,404     | void     |
 
-Also, the service will be auto-injected, so there is nothing more to do inside the class.
+Also, the service will be auto-injected, so there is nothing more to do inside the class in simplest cases.
 
-Here is something you may want to know if you are going to implement complex things: In the controllers created by the factory, data validation is forced to be enabled using the `ValidationPipe`, based on the DTOs specified in the service. `ParseIntPipe` is used to parse the lookup param to a number when the type of the `lookupField` specified in the service is `number`. We have a filter `EntityNotFoundErrorFilter` to catch TypeORM's `EntityNotFoundError` and throw Nest's `NotFoundException` instead, you could disable this behavior by specifing the option `catchEntityNotFound` in the controller factory.
+- Data validation is forced to be enabled using the `ValidationPipe`, based on the DTOs specified in the service, you can custom the pipe's behavior by passing your own options to the `validationPipeOptions` option, but **NOTE** that a few options will be ignored.
+- `ParseIntPipe` is used to parse the lookup param to a number when the type of the `lookupField` specified in the service is `number`.
+- We have a filter `EntityNotFoundErrorFilter` to catch TypeORM's `EntityNotFoundError` and throw Nest's `NotFoundException` instead, you could disable this behavior by specifing the option `catchEntityNotFound` in the controller factory.
+- By default, the url param of the lookup value is just `"lookup"`, you can custom it by passing your own param name to the `lookupParam` option if needed.
 
-## Advanced Limit and Offset Settings
+## Advanced Query Params Settings
 
-The default list query DTO does not restrict anything, you could pass your own query DTO to the controller's `listQueryDto` option, we also provide `ListQueryDtoFactory` for you to build simple list query DTOs.
+There is a query DTO used to validate the query params of all the routes, the default query DTO have unlimited `limit` and `offset`, there is also a `QueryDtoFactory` provided for you to custom the DTO.
+
+You could also pass your own DTO or extend the factory for more wonderful implementations.
 
 ```ts
 class OurController extends new RestControllerFactory({
   // ...
-  listQueryDto: new ListQueryDtoFactory({
+  queryDto: new QueryDtoFactory({
     limit: { max: 100, default: 50 },
     offset: { max: 10000 },
   }).product,
@@ -192,16 +197,29 @@ class OurService /*extends ...*/ {
 }
 ```
 
-## Output Relation Fields
+## Nested Relation Fields
 
-Nested output has not supported yet...
+The query param `expand` specifies which paths will be expanded as a nested field, and the others will be outputted as a primary key. Don't worry about type safe of the paths, the paths have been strongly typed.
 
-Currently, all the relations will be output as primary keys.
-
+```ts
+class OurController extends new RestControllerFactory({
+  // ...
+  queryDto: new QueryDtoFactory<OurEntity>({
+    // ...
+    expand: { in: ["child", "nested.child"] },
+    // ...
+  }).product,
+  // ...
+}).product {}
 ```
-{
-  "id": 1,
-  "relationField": 1
+
+You can custom the relation options by overriding the `getRelationOptions` of the service.
+
+```ts
+class OurService /*extends ...*/ {
+  async getRelationOptions(queries: QueryDto) {
+    return { loadRelationIds: true }; // disable nesting
+  }
 }
 ```
 

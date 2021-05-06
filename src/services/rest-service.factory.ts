@@ -3,7 +3,6 @@ import { plainToClass } from "class-transformer";
 import { FindConditions } from "typeorm";
 import { AbstractFactory } from "../abstract.factory";
 import { REST_SERVICE_OPTIONS_METADATA_KEY } from "../constants";
-import { Resolved } from "../utils";
 import { LookupFields } from "./lookup-fields.type";
 import { RestServiceFactoryOptions } from "./rest-service-factory-options.interface";
 import { RestService } from "./rest-service.interface";

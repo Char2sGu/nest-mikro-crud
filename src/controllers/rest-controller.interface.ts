@@ -16,37 +16,37 @@ export interface RestController<
     CustomArgs
   >;
 
-  list(queries: QueryDto<Entity>, ...args: CustomArgs): Promise<Entity[]>;
+  list(queries: QueryDto<Entity>, ...args: CustomArgs): Promise<unknown>;
 
   create(
     queries: QueryDto<Entity>,
     dto: CreateDto,
     ...args: CustomArgs
-  ): Promise<Entity>;
+  ): Promise<unknown>;
 
   retrieve(
     lookup: Entity[LookupField],
     queries: QueryDto<Entity>,
     ...args: CustomArgs
-  ): Promise<Entity>;
+  ): Promise<unknown>;
 
   replace(
     lookup: Entity[LookupField],
     queries: QueryDto<Entity>,
     dto: CreateDto,
     ...args: CustomArgs
-  ): Promise<Entity>;
+  ): Promise<unknown>;
 
   update(
     lookup: Entity[LookupField],
     queries: QueryDto<Entity>,
     dto: UpdateDto,
     ...args: CustomArgs
-  ): Promise<Entity>;
+  ): Promise<unknown>;
 
   destroy(
     lookup: Entity[LookupField],
     queries: QueryDto<Entity>,
     ...args: CustomArgs
-  ): Promise<void>;
+  ): Promise<unknown>;
 }

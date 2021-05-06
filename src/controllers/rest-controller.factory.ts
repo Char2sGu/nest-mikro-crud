@@ -118,7 +118,9 @@ export class RestControllerFactory<
     return class RestController implements Interface {
       readonly service!: Interface["service"];
 
-      async list(...[queries, ...args]: Parameters<Interface["list"]>) {
+      async list(
+        ...[queries, ...args]: Parameters<Interface["list"]>
+      ): Promise<unknown> {
         const entities = await this.service.list(queries, ...args);
         return Promise.all(
           entities.map((entity) => this.service.transform(entity, ...args))
@@ -127,21 +129,21 @@ export class RestControllerFactory<
 
       async create(
         ...[queries, dto, ...args]: Parameters<Interface["create"]>
-      ) {
+      ): Promise<unknown> {
         const entity = await this.service.create(queries, dto, ...args);
         return await this.service.transform(entity, ...args);
       }
 
       async retrieve(
         ...[lookup, queries, ...args]: Parameters<Interface["retrieve"]>
-      ) {
+      ): Promise<unknown> {
         const entity = await this.service.retrieve(lookup, queries, ...args);
         return await this.service.transform(entity, ...args);
       }
 
       async replace(
         ...[lookup, queries, dto, ...args]: Parameters<Interface["replace"]>
-      ) {
+      ): Promise<unknown> {
         const entity = await this.service.replace(
           lookup,
           queries,
@@ -153,15 +155,16 @@ export class RestControllerFactory<
 
       async update(
         ...[lookup, queries, dto, ...args]: Parameters<Interface["update"]>
-      ) {
+      ): Promise<unknown> {
         const entity = await this.service.update(lookup, queries, dto, ...args);
         return await this.service.transform(entity, ...args);
       }
 
       async destroy(
         ...[lookup, queries, ...args]: Parameters<Interface["destroy"]>
-      ) {
+      ): Promise<unknown> {
         await this.service.destroy(lookup, queries, ...args);
+        return;
       }
     };
   }

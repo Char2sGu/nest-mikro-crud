@@ -173,6 +173,21 @@ class OurController extends new RestControllerFactory({
 ).product {}
 ```
 
+## Customizing the Data Structure of List Action
+
+The service's `.finalizeList()` method is called every time before sending the response, after transforming the entities. By default, it takes the transformed entities and the queries and return the entities directly. Change this behavior by overriding it:
+
+```ts
+class OurService /*extends ...*/ {
+  async finalizeList(entities: OurEntity[], queries: QueryDto<OurEntity>) {
+    return {
+      total: await this.repository.count(),
+      results: entities,
+    };
+  }
+}
+```
+
 ## Transforming Entities before Responding
 
 The method `.transform()` in the service may help you. By default, it takes an entity, call [class-transformer](https://github.com/typestack/class-transformer)'s `plainToClass()` and then return it, that means you could use class-transformer's `Exclude()` decorator to prevent some fields to appear in the response.

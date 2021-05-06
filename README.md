@@ -256,3 +256,9 @@ class OurController /*extends ...*/ {
   }
 }
 ```
+
+## Reusability
+
+To reuse your wonderful overridings, the best solution is to extend the built-in factory and perform your overriding in the factory's protected `.createRawClass()` method, you can look for more details in the source code.
+
+**DONT** use mixins because the base class may be changed to a different one so the metadata defined in the factory will be lost.

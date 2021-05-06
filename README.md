@@ -168,7 +168,7 @@ class OurController extends new RestControllerFactory({
     /*<decorators for the 1st param>*/
   ],
   [
-    /*<decorators for the 2st param>*/
+    /*<decorators for the 2nd param>*/
   ]
 ).product {}
 ```

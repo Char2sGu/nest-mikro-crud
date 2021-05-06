@@ -70,4 +70,17 @@ export interface RestService<
     queries: QueryDto<Entity>,
     ...args: CustomArgs
   ): Promise<FindOneOptions<Entity> | FindManyOptions<Entity>>;
+
+  /**
+   * Will be called before responding the `list` result. By default it returns the
+   * entities directly, override it to change its behavior.
+   * @param entities
+   * @param queries
+   * @param args
+   */
+  finalizeList(
+    entities: Entity[],
+    queries: QueryDto<Entity>,
+    ...args: CustomArgs
+  ): Promise<unknown>;
 }

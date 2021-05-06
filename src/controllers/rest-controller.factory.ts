@@ -122,9 +122,10 @@ export class RestControllerFactory<
         ...[queries, ...args]: Parameters<Interface["list"]>
       ): Promise<unknown> {
         const entities = await this.service.list(queries, ...args);
-        return Promise.all(
+        const transformed = await Promise.all(
           entities.map((entity) => this.service.transform(entity, ...args))
         );
+        return await this.service.finalizeList(transformed, queries, ...args);
       }
 
       async create(

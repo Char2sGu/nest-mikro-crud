@@ -73,6 +73,7 @@ describe(RestControllerFactory.name, () => {
       relations: [],
       loadRelationIds: { relations: [] },
     })),
+    finalizeList: jest.fn(async (v) => v),
   };
   const TestService = jest.fn(() => testService);
 
@@ -158,6 +159,15 @@ describe(RestControllerFactory.name, () => {
         it("should transform the entities", () => {
           expect(testService.transform).toHaveBeenCalledTimes(entities.length);
           expect(testService.transform).toHaveBeenCalledWith(entity, ...rest);
+        });
+
+        it("should paginate the entities", () => {
+          expect(testService.finalizeList).toHaveBeenCalledTimes(1);
+          expect(testService.finalizeList).toHaveBeenCalledWith(
+            entities,
+            queries,
+            ...rest
+          );
         });
 
         it("should return the entities", () => {

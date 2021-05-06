@@ -241,6 +241,18 @@ describe(RestServiceFactory.name, () => {
       });
     });
 
+    describe(d(".finalizeList()"), () => {
+      let ret: Resolved<ReturnType<RestService["finalizeList"]>>;
+
+      beforeEach(async () => {
+        ret = await service.finalizeList([entity], queries);
+      });
+
+      it("should return the entities", () => {
+        expect(ret).toEqual([entity]);
+      });
+    });
+
     describe.each`
       lookup       | expected
       ${undefined} | ${{}}

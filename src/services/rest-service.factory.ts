@@ -143,6 +143,12 @@ export class RestServiceFactory<
           },
         };
       }
+
+      async finalizeList(
+        ...[entities, queries, ...args]: Parameters<Interface["finalizeList"]>
+      ): Promise<unknown> {
+        return entities;
+      }
     };
   }
 

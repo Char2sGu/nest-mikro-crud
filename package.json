@@ -1,6 +1,6 @@
 {
   "name": "nest-restful",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Graceful flexible builder for RESTful APIs with TypeORM.",
   "main": "lib/index.js",
   "scripts": {

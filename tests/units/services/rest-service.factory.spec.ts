@@ -229,6 +229,30 @@ describe(RestServiceFactory.name, () => {
       });
     });
 
+    describe(d(".count"), () => {
+      let ret: Resolved<ReturnType<RestService["count"]>>;
+
+      beforeEach(async () => {
+        m(repository.count).mockResolvedValueOnce(1);
+        jest.spyOn(service, "getQueryConditions").mockResolvedValueOnce({});
+        ret = await service.count();
+      });
+
+      it("should get the query conditions", () => {
+        expect(service.getQueryConditions).toHaveBeenCalledTimes(1);
+        expect(service.getQueryConditions).toHaveBeenCalledWith(undefined);
+      });
+
+      it("should get the count", () => {
+        expect(repository.count).toHaveBeenCalledTimes(1);
+        expect(repository.count).toHaveBeenCalledWith({ where: {} });
+      });
+
+      it("should return the count", () => {
+        expect(ret).toBe(1);
+      });
+    });
+
     describe(d(".transform()"), () => {
       let ret: Resolved<ReturnType<RestService["transform"]>>;
 
@@ -245,11 +269,20 @@ describe(RestServiceFactory.name, () => {
       let ret: Resolved<ReturnType<RestService["finalizeList"]>>;
 
       beforeEach(async () => {
+        jest.spyOn(service, "count").mockResolvedValueOnce(1);
         ret = await service.finalizeList([entity], queries);
       });
 
-      it("should return the entities", () => {
-        expect(ret).toEqual([entity]);
+      it("should return the data schema with the entities", () => {
+        expect(ret).toEqual({
+          total: 1,
+          results: [entity],
+        });
+      });
+
+      it("should get the entity count", () => {
+        expect(service.count).toHaveBeenCalledTimes(1);
+        expect(service.count).toHaveBeenCalledWith();
       });
     });
 

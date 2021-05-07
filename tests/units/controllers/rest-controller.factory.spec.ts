@@ -67,6 +67,7 @@ describe(RestControllerFactory.name, () => {
     replace: jest.fn(async () => entity),
     update: jest.fn(async () => entity),
     destroy: jest.fn(async () => entity),
+    count: jest.fn(async () => entities.length),
     transform: jest.fn(async (v) => v),
     getQueryConditions: jest.fn(async () => ({})),
     getRelationOptions: jest.fn(async () => ({

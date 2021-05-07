@@ -50,6 +50,8 @@ export interface RestService<
     ...args: CustomArgs
   ): Promise<Entity>;
 
+  count(...args: CustomArgs): Promise<number>;
+
   /**
    * Transform the entity before sending the response.
    *

@@ -104,7 +104,7 @@ describe("E2E", () => {
     "/?limit=$limit&offset=$offset (GET)",
     ({ limit, offset, count, firstId }) => {
       let response: Response;
-      let body: ParentEntity[];
+      let body: { total: number; results: ParentEntity[] };
 
       beforeEach(async () => {
         response = await requester
@@ -117,10 +117,12 @@ describe("E2E", () => {
         expect(response.status).toBe(200);
       });
 
-      it(`should serialize and return ${count} entities`, () => {
-        expect(body).toBeInstanceOf(Array);
-        expect(body).toHaveLength(count);
-        assertSerializedEntity(body[0], firstId);
+      it(`should serialize and return the response with ${count} entities`, () => {
+        expect(body.total).toBeDefined();
+        expect(body.total).toBe(3);
+        expect(body.results).toBeInstanceOf(Array);
+        expect(body.results).toHaveLength(count);
+        assertSerializedEntity(body.results[0], firstId);
       });
     }
   );

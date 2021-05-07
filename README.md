@@ -175,15 +175,12 @@ class OurController extends new RestControllerFactory({
 
 ## Customizing the Data Structure of List Action
 
-The service's `.finalizeList()` method is called every time before sending the response, after transforming the entities. By default, it takes the transformed entities and the queries and return the entities directly. Change this behavior by overriding it:
+The service's `.finalizeList()` method is called every time before sending the response, after transforming the entities. By default, it takes the transformed entities and return a simple schema like this `{ total: 1342, results: [{ id: 1 }] }`. Change this behavior by overriding it:
 
 ```ts
 class OurService /*extends ...*/ {
   async finalizeList(entities: OurEntity[], queries: QueryDto<OurEntity>) {
-    return {
-      total: await this.repository.count(),
-      results: entities,
-    };
+    return entities;
   }
 }
 ```

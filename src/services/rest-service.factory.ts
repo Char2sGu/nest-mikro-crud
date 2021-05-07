@@ -114,6 +114,12 @@ export class RestServiceFactory<
         return await this.repository.remove(entity);
       }
 
+      async count(...args: Parameters<Interface["count"]>) {
+        return await this.repository.count({
+          where: await this.getQueryConditions(undefined, ...args),
+        });
+      }
+
       async transform(entities: Entity, ...args: any[]) {
         return plainToClass(options.entityClass, entities);
       }
@@ -147,7 +153,10 @@ export class RestServiceFactory<
       async finalizeList(
         ...[entities, queries, ...args]: Parameters<Interface["finalizeList"]>
       ): Promise<unknown> {
-        return entities;
+        return {
+          total: await this.count(...args),
+          results: entities,
+        };
       }
     };
   }

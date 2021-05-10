@@ -20,28 +20,26 @@ export class QueryDtoFactory<Entity> extends AbstractFactory<QueryDto<Entity>> {
     const commonDecorators = [IsOptional()];
     const numericDecorators = [IsNumber(), Type(), Min(1)];
 
-    this.defineTypeMetadata("limit", Number);
-    this.applyPropertyDecorators(
-      "limit",
-      ...commonDecorators,
-      ...numericDecorators,
-      ...(options.limit?.max ? [Max(options.limit.max)] : [])
-    );
-
-    this.defineTypeMetadata("offset", Number);
-    this.applyPropertyDecorators(
-      "offset",
-      ...commonDecorators,
-      ...numericDecorators,
-      ...(options.offset?.max ? [Max(options.offset.max)] : [])
-    );
-
-    this.defineTypeMetadata("expand", Array);
-    this.applyPropertyDecorators(
-      "expand",
-      ...commonDecorators,
-      Type((type) => String),
-      IsIn(options.expand?.in ?? [], { each: true })
-    );
+    this.defineTypeMetadata("limit", Number)
+      .applyPropertyDecorators(
+        "limit",
+        ...commonDecorators,
+        ...numericDecorators,
+        ...(options.limit?.max ? [Max(options.limit.max)] : [])
+      )
+      .defineTypeMetadata("offset", Number)
+      .applyPropertyDecorators(
+        "offset",
+        ...commonDecorators,
+        ...numericDecorators,
+        ...(options.offset?.max ? [Max(options.offset.max)] : [])
+      )
+      .defineTypeMetadata("expand", Array)
+      .applyPropertyDecorators(
+        "expand",
+        ...commonDecorators,
+        Type((type) => String),
+        IsIn(options.expand?.in ?? [], { each: true })
+      );
   }
 }

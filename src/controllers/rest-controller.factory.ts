@@ -21,7 +21,11 @@ import {
 } from "../constants";
 import { QueryDtoFactory } from "../dtos";
 import { EntityNotFoundErrorFilter } from "../filters";
-import { LookupFields, RestServiceFactoryOptions } from "../services";
+import {
+  LookupFields,
+  RestService,
+  RestServiceFactoryOptions,
+} from "../services";
 import { RestControllerFactoryOptions } from "./rest-controller-factory-options.interface";
 import { RestController } from "./rest-controller.interface";
 
@@ -35,9 +39,16 @@ export class RestControllerFactory<
   CreateDto = Entity,
   UpdateDto = CreateDto,
   LookupField extends LookupFields<Entity> = LookupFields<Entity>,
-  CustomArgs extends any[] = any[]
+  CustomArgs extends any[] = any[],
+  Service extends RestService<
+    Entity,
+    CreateDto,
+    UpdateDto,
+    LookupField,
+    CustomArgs
+  > = RestService<Entity, CreateDto, UpdateDto, LookupField, CustomArgs>
 > extends AbstractFactory<
-  RestController<Entity, CreateDto, UpdateDto, LookupField, CustomArgs>
+  RestController<Entity, CreateDto, UpdateDto, LookupField, CustomArgs, Service>
 > {
   readonly options;
   readonly serviceOptions;
@@ -50,7 +61,8 @@ export class RestControllerFactory<
       CreateDto,
       UpdateDto,
       LookupField,
-      CustomArgs
+      CustomArgs,
+      Service
     >
   ) {
     super();
@@ -113,7 +125,8 @@ export class RestControllerFactory<
       CreateDto,
       UpdateDto,
       LookupField,
-      CustomArgs
+      CustomArgs,
+      Service
     >;
     return class RestController implements Interface {
       readonly service!: Interface["service"];

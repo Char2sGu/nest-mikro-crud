@@ -6,15 +6,16 @@ export interface RestController<
   CreateDto = Entity,
   UpdateDto = CreateDto,
   LookupField extends LookupFields<Entity> = LookupFields<Entity>,
-  CustomArgs extends any[] = any[]
-> {
-  readonly service: RestService<
+  CustomArgs extends any[] = any[],
+  Service extends RestService<
     Entity,
     CreateDto,
     UpdateDto,
     LookupField,
     CustomArgs
-  >;
+  > = RestService<Entity, CreateDto, UpdateDto, LookupField, CustomArgs>
+> {
+  readonly service: Service;
 
   list(queries: QueryDto<Entity>, ...args: CustomArgs): Promise<unknown>;
 

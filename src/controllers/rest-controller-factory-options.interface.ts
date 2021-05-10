@@ -9,14 +9,19 @@ export interface RestControllerFactoryOptions<
   CreateDto = Entity,
   UpdateDto = CreateDto,
   LookupField extends LookupFields<Entity> = LookupFields<Entity>,
-  CustomArgs extends any[] = any[]
+  CustomArgs extends any[] = any[],
+  Service extends RestService<
+    Entity,
+    CreateDto,
+    UpdateDto,
+    LookupField,
+    CustomArgs
+  > = RestService<Entity, CreateDto, UpdateDto, LookupField, CustomArgs>
 > {
   /**
    * The service will be auto-injected for db CRUD actions.
    */
-  restServiceClass: ClassConstructor<
-    RestService<Entity, CreateDto, UpdateDto, LookupField, CustomArgs>
-  >;
+  restServiceClass: ClassConstructor<Service>;
   /**
    * Specify which routes should be enabled.
    */

@@ -172,7 +172,8 @@ export class RestControllerFactory<
 
   protected defineInjectionsMetadata() {
     const target = this.product.prototype;
-    Inject(this.options.restServiceClass)(target, "service");
+    const serviceKey: keyof RestController = "service";
+    Inject(this.options.restServiceClass)(target, serviceKey);
   }
 
   protected defineRoutesTypesMetadata() {

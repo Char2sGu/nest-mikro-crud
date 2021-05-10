@@ -164,9 +164,10 @@ export class RestServiceFactory<
   }
 
   protected defineInjectionsMetadata() {
+    const repositoryKey: keyof RestService = "repository";
     InjectRepository(this.options.entityClass, this.options.repoConnection)(
       this.product.prototype,
-      "repository"
+      repositoryKey
     );
   }
 }

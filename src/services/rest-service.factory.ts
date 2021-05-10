@@ -120,8 +120,10 @@ export class RestServiceFactory<
         });
       }
 
-      async transform(entities: Entity, ...args: any[]) {
-        return plainToClass(options.entityClass, entities);
+      async transform(
+        ...[entity, ...args]: Parameters<Interface["transform"]>
+      ) {
+        return plainToClass(options.entityClass, entity);
       }
 
       async getQueryConditions(

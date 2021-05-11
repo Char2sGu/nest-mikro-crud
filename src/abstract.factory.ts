@@ -21,11 +21,20 @@ export abstract class AbstractFactory<T> {
 
   defineParamTypesMetadata(
     target: MethodNames<T>,
-    ...types: ClassConstructor<unknown>[]
+    ...types: (ClassConstructor<unknown> | "keep")[]
   ): this {
+    const primitive: ClassConstructor<unknown>[] =
+      Reflect.getMetadata(
+        TS_PARAM_TYPES_METADATA_KEY,
+        this.product.prototype,
+        target
+      ) ?? [];
+    const actualTypes = types.map((type, index) =>
+      type == "keep" ? primitive[index] : type
+    );
     Reflect.defineMetadata(
       TS_PARAM_TYPES_METADATA_KEY,
-      types,
+      actualTypes,
       this.product.prototype,
       target
     );

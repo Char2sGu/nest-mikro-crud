@@ -11,10 +11,9 @@ export class RestServiceFactory<
   Entity = any,
   CreateDto = Entity,
   UpdateDto = CreateDto,
-  LookupField extends LookupFields<Entity> = LookupFields<Entity>,
-  CustomArgs extends any[] = any[]
+  LookupField extends LookupFields<Entity> = LookupFields<Entity>
 > extends AbstractFactory<
-  RestService<Entity, CreateDto, UpdateDto, LookupField, CustomArgs>
+  RestService<Entity, CreateDto, UpdateDto, LookupField>
 > {
   readonly product;
 
@@ -23,8 +22,7 @@ export class RestServiceFactory<
       Entity,
       CreateDto,
       UpdateDto,
-      LookupField,
-      CustomArgs
+      LookupField
     >
   ) {
     super();
@@ -42,93 +40,102 @@ export class RestServiceFactory<
   protected createRawClass() {
     const options = this.options;
 
-    type Interface = RestService<
-      Entity,
-      CreateDto,
-      UpdateDto,
-      LookupField,
-      CustomArgs
-    >;
+    type Interface = RestService<Entity, CreateDto, UpdateDto, LookupField>;
     return class RestService implements Interface {
       readonly repository!: Interface["repository"];
 
-      async list(...[queries, ...args]: Parameters<Interface["list"]>) {
+      async list({
+        limit,
+        offset,
+        expand,
+        ...args
+      }: Parameters<Interface["list"]>[0]) {
         return await this.repository.find({
-          where: await this.getQueryConditions(undefined, ...args),
-          take: queries.limit,
-          skip: queries.offset,
-          ...(await this.getRelationOptions(queries, ...args)),
+          where: await this.getQueryConditions({ ...args }),
+          take: limit,
+          skip: offset,
+          ...(await this.getRelationOptions({ expand, ...args })),
         });
       }
 
-      async create(
-        ...[queries, dto, ...args]: Parameters<Interface["create"]>
-      ) {
-        const entity = await this.repository.save(dto);
-        return await this.retrieve(
-          entity[options.lookupField],
-          queries,
-          ...args
-        );
+      async create({
+        data,
+        expand,
+        ...args
+      }: Parameters<Interface["create"]>[0]) {
+        const entity = await this.repository.save(data);
+        return await this.retrieve({
+          lookup: entity[options.lookupField],
+          expand,
+          ...args,
+        });
       }
 
-      async retrieve(
-        ...[lookup, queries, ...args]: Parameters<Interface["retrieve"]>
-      ) {
+      async retrieve({
+        lookup,
+        expand,
+        ...args
+      }: Parameters<Interface["retrieve"]>[0]) {
         return await this.repository.findOneOrFail({
-          where: await this.getQueryConditions(lookup, ...args),
-          ...(await this.getRelationOptions(queries, ...args)),
+          where: await this.getQueryConditions({ lookup, ...args }),
+          ...(await this.getRelationOptions({ expand, ...args })),
         });
       }
 
-      async replace(
-        ...[lookup, queries, dto, ...args]: Parameters<Interface["replace"]>
-      ) {
-        const rawEntity = await this.retrieve(lookup, queries, ...args);
-        const updatedEntity = this.repository.merge(rawEntity, dto);
+      async replace({
+        lookup,
+        data,
+        expand,
+        ...args
+      }: Parameters<Interface["replace"]>[0]) {
+        const rawEntity = await this.retrieve({ lookup, expand, ...args });
+        const updatedEntity = this.repository.merge(rawEntity, data);
         await this.repository.save(updatedEntity);
-        return await this.retrieve(
-          updatedEntity[options.lookupField],
-          queries,
-          ...args
-        );
+        return await this.retrieve({
+          lookup: updatedEntity[options.lookupField],
+          expand,
+          ...args,
+        });
       }
 
-      async update(
-        ...[lookup, queries, dto, ...args]: Parameters<Interface["update"]>
-      ) {
-        const rawEntity = await this.retrieve(lookup, queries, ...args);
-        const updatedEntity = this.repository.merge(rawEntity, dto);
+      async update({
+        lookup,
+        data,
+        expand,
+        ...args
+      }: Parameters<Interface["update"]>[0]) {
+        const rawEntity = await this.retrieve({ lookup, expand, ...args });
+        const updatedEntity = this.repository.merge(rawEntity, data);
         await this.repository.save(updatedEntity);
-        return await this.retrieve(
-          updatedEntity[options.lookupField],
-          queries,
-          ...args
-        );
+        return await this.retrieve({
+          lookup: updatedEntity[options.lookupField],
+          expand,
+          ...args,
+        });
       }
 
-      async destroy(
-        ...[lookup, queries, ...args]: Parameters<Interface["destroy"]>
-      ) {
-        const entity = await this.retrieve(lookup, queries, ...args);
+      async destroy({ lookup, ...args }: Parameters<Interface["destroy"]>[0]) {
+        const entity = await this.retrieve({ lookup, ...args });
         return await this.repository.remove(entity);
       }
 
-      async count(...args: Parameters<Interface["count"]>) {
+      async count({ ...args }: Parameters<Interface["count"]>[0]) {
         return await this.repository.count({
-          where: await this.getQueryConditions(undefined, ...args),
+          where: await this.getQueryConditions({ ...args }),
         });
       }
 
-      async transform(
-        ...[entity, ...args]: Parameters<Interface["transform"]>
-      ) {
+      async transform({
+        entity,
+        ...args
+      }: Parameters<Interface["transform"]>[0]) {
         return plainToClass(options.entityClass, entity);
       }
 
-      async getQueryConditions(
-        ...[lookup, ...args]: Parameters<Interface["getQueryConditions"]>
-      ) {
+      async getQueryConditions({
+        lookup,
+        ...args
+      }: Parameters<Interface["getQueryConditions"]>[0]) {
         return (lookup != null
           ? ({
               [options.lookupField]: lookup,
@@ -136,27 +143,29 @@ export class RestServiceFactory<
           : {}) as FindConditions<Entity>;
       }
 
-      async getRelationOptions(
-        ...[queries, ...args]: Parameters<Interface["getRelationOptions"]>
-      ) {
+      async getRelationOptions({
+        expand = [],
+        ...args
+      }: Parameters<Interface["getRelationOptions"]>[0]) {
         const allRelationPaths = this.repository.metadata.relations.map(
           (relation) => relation.propertyPath
         );
         return {
-          relations: queries.expand,
+          relations: expand,
           loadRelationIds: {
             relations: allRelationPaths.filter(
-              (v) => !queries.expand.includes(v as any)
+              (v) => !expand.includes(v as any)
             ),
           },
         };
       }
 
-      async finalizeList(
-        ...[entities, queries, ...args]: Parameters<Interface["finalizeList"]>
-      ): Promise<unknown> {
+      async finalizeList({
+        entities,
+        ...args
+      }: Parameters<Interface["finalizeList"]>[0]): Promise<unknown> {
         return {
-          total: await this.count(...args),
+          total: await this.count({ ...args }),
           results: entities,
         };
       }

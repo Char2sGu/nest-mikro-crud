@@ -1,7 +1,5 @@
-import { Exclude, plainToClass } from "class-transformer";
-import { async } from "rxjs";
+import { Exclude } from "class-transformer";
 import {
-  QueryDto,
   Resolved,
   RestService,
   RestServiceFactory,
@@ -37,17 +35,17 @@ describe(RestServiceFactory.name, () => {
   describe(d(".product"), () => {
     const d = buildKeyChecker<RestService>();
 
+    const extraArgs = { extra: "arg" };
+
     let repository: Repository<TestEntity>;
-    let service: RestService<TestEntity>;
+    let service: RestService<TestEntity, TestEntity, TestEntity, "id">;
     let entity: TestEntity;
-    let queries: QueryDto;
 
     beforeEach(() => {
       repository = new Repository();
       service = new factory.product();
       // @ts-expect-error - manual injection
       service.repository = repository;
-      queries = { limit: 1, offset: 2, expand: [] };
       entity = new TestEntity();
       entity.id = 1;
       m(repository.create).mockImplementation((v) => v as any);
@@ -73,7 +71,12 @@ describe(RestServiceFactory.name, () => {
           relations: [],
           loadRelationIds: { relations: [] },
         });
-        ret = await service.list(queries);
+        ret = await service.list({
+          limit: 1,
+          offset: 2,
+          expand: [],
+          ...extraArgs,
+        });
       });
 
       it("should return an array of entities", () => {
@@ -83,23 +86,21 @@ describe(RestServiceFactory.name, () => {
 
       it("should get the query conditions", () => {
         expect(service.getQueryConditions).toHaveBeenCalledTimes(1);
-        expect(service.getQueryConditions).toHaveBeenCalledWith(undefined);
+        expect(service.getQueryConditions).toHaveBeenCalledWith({
+          ...extraArgs,
+        });
       });
 
       it("should get the relation options", () => {
         expect(service.getRelationOptions).toHaveBeenCalledTimes(1);
-        expect(service.getRelationOptions).toHaveBeenCalledWith(queries);
+        expect(service.getRelationOptions).toHaveBeenCalledWith({
+          expand: [],
+          ...extraArgs,
+        });
       });
 
       it("should execute the query", () => {
         expect(repository.find).toHaveBeenCalledTimes(1);
-        expect(repository.find).toHaveBeenCalledWith({
-          where: {},
-          take: 1,
-          skip: 2,
-          relations: [],
-          loadRelationIds: { relations: [] },
-        });
       });
     });
 
@@ -108,12 +109,20 @@ describe(RestServiceFactory.name, () => {
 
       beforeEach(async () => {
         jest.spyOn(service, "retrieve").mockResolvedValueOnce(entity);
-        ret = await service.create(queries, entity);
+        ret = await service.create({
+          data: entity,
+          expand: [],
+          ...extraArgs,
+        });
       });
 
       it("should retrieve the created entity", () => {
         expect(service.retrieve).toHaveBeenCalledTimes(1);
-        expect(service.retrieve).toHaveBeenCalledWith(1, queries);
+        expect(service.retrieve).toHaveBeenCalledWith({
+          lookup: 1,
+          expand: [],
+          ...extraArgs,
+        });
       });
 
       it("should return an entity", () => {
@@ -136,7 +145,11 @@ describe(RestServiceFactory.name, () => {
           relations: [],
           loadRelationIds: { relations: [] },
         });
-        ret = await service.retrieve(1, queries);
+        ret = await service.retrieve({
+          lookup: 1,
+          expand: [],
+          ...extraArgs,
+        });
       });
 
       it("should return an entity", () => {
@@ -145,15 +158,16 @@ describe(RestServiceFactory.name, () => {
 
       it("should should find the entity", async () => {
         expect(service.getQueryConditions).toHaveBeenCalledTimes(1);
-        expect(service.getQueryConditions).toHaveBeenCalledWith(1);
-        expect(service.getRelationOptions).toHaveBeenCalledTimes(1);
-        expect(service.getRelationOptions).toHaveBeenCalledWith(queries);
-        expect(repository.findOneOrFail).toHaveBeenCalledTimes(1);
-        expect(repository.findOneOrFail).toHaveBeenCalledWith({
-          where: {},
-          relations: [],
-          loadRelationIds: { relations: [] },
+        expect(service.getQueryConditions).toHaveBeenCalledWith({
+          lookup: 1,
+          ...extraArgs,
         });
+        expect(service.getRelationOptions).toHaveBeenCalledTimes(1);
+        expect(service.getRelationOptions).toHaveBeenCalledWith({
+          expand: [],
+          ...extraArgs,
+        });
+        expect(repository.findOneOrFail).toHaveBeenCalledTimes(1);
       });
     });
 
@@ -163,12 +177,22 @@ describe(RestServiceFactory.name, () => {
       beforeEach(async () => {
         jest.spyOn(service, "retrieve").mockResolvedValue(entity);
         m(repository.merge).mockReturnValueOnce(entity);
-        ret = await service.replace(1, queries, entity);
+        ret = await service.replace({
+          lookup: 1,
+          data: entity,
+          expand: [],
+          ...extraArgs,
+        });
       });
 
       it("should retrieve the entity", () => {
         expect(service.retrieve).toHaveBeenCalledTimes(2);
-        expect(service.retrieve).toHaveBeenCalledWith(1, queries);
+        for (let i = 1; i <= 2; i++)
+          expect(service.retrieve).toHaveBeenNthCalledWith(i, {
+            lookup: 1,
+            expand: [],
+            ...extraArgs,
+          });
       });
 
       it("should save the entity", () => {
@@ -187,12 +211,22 @@ describe(RestServiceFactory.name, () => {
       beforeEach(async () => {
         jest.spyOn(service, "retrieve").mockResolvedValue(entity);
         m(repository.merge).mockReturnValueOnce(entity);
-        ret = await service.update(1, queries, entity);
+        ret = await service.update({
+          lookup: 1,
+          data: entity,
+          expand: [],
+          ...extraArgs,
+        });
       });
 
       it("should retrieve the entity", () => {
         expect(service.retrieve).toHaveBeenCalledTimes(2);
-        expect(service.retrieve).toHaveBeenCalledWith(1, queries);
+        for (let i = 1; i <= 2; i++)
+          expect(service.retrieve).toHaveBeenNthCalledWith(i, {
+            lookup: 1,
+            expand: [],
+            ...extraArgs,
+          });
       });
 
       it("should save the entity", () => {
@@ -211,12 +245,18 @@ describe(RestServiceFactory.name, () => {
       beforeEach(async () => {
         jest.spyOn(service, "retrieve").mockResolvedValue(entity);
         m(repository.remove).mockResolvedValueOnce(entity);
-        ret = await service.destroy(1, queries);
+        ret = await service.destroy({
+          lookup: 1,
+          ...extraArgs,
+        });
       });
 
       it("should retrieve the entity", () => {
         expect(service.retrieve).toHaveBeenCalledTimes(1);
-        expect(service.retrieve).toHaveBeenCalledWith(1, queries);
+        expect(service.retrieve).toHaveBeenCalledWith({
+          lookup: 1,
+          ...extraArgs,
+        });
       });
 
       it("should remove the entity", () => {
@@ -235,17 +275,18 @@ describe(RestServiceFactory.name, () => {
       beforeEach(async () => {
         m(repository.count).mockResolvedValueOnce(1);
         jest.spyOn(service, "getQueryConditions").mockResolvedValueOnce({});
-        ret = await service.count();
+        ret = await service.count({ ...extraArgs });
       });
 
       it("should get the query conditions", () => {
         expect(service.getQueryConditions).toHaveBeenCalledTimes(1);
-        expect(service.getQueryConditions).toHaveBeenCalledWith(undefined);
+        expect(service.getQueryConditions).toHaveBeenCalledWith({
+          ...extraArgs,
+        });
       });
 
       it("should get the count", () => {
         expect(repository.count).toHaveBeenCalledTimes(1);
-        expect(repository.count).toHaveBeenCalledWith({ where: {} });
       });
 
       it("should return the count", () => {
@@ -257,7 +298,10 @@ describe(RestServiceFactory.name, () => {
       let ret: Resolved<ReturnType<RestService["transform"]>>;
 
       beforeEach(async () => {
-        ret = await service.transform(entity);
+        ret = await service.transform({
+          entity,
+          ...extraArgs,
+        });
       });
 
       it("should return a transformed entity", async () => {
@@ -265,36 +309,15 @@ describe(RestServiceFactory.name, () => {
       });
     });
 
-    describe(d(".finalizeList()"), () => {
-      let ret: Resolved<ReturnType<RestService["finalizeList"]>>;
-
-      beforeEach(async () => {
-        jest.spyOn(service, "count").mockResolvedValueOnce(1);
-        ret = await service.finalizeList([entity], queries);
-      });
-
-      it("should return the data schema with the entities", () => {
-        expect(ret).toEqual({
-          total: 1,
-          results: [entity],
-        });
-      });
-
-      it("should get the entity count", () => {
-        expect(service.count).toHaveBeenCalledTimes(1);
-        expect(service.count).toHaveBeenCalledWith();
-      });
-    });
-
     describe.each`
       lookup       | expected
       ${undefined} | ${{}}
       ${0}         | ${{ id: 0 }}
-    `(d(".getQueryConditions($lookup)"), ({ lookup, expected }) => {
+    `(d(".getQueryConditions({ lookup: $lookup })"), ({ lookup, expected }) => {
       let ret: Resolved<ReturnType<RestService["getQueryConditions"]>>;
 
       beforeEach(async () => {
-        ret = await service.getQueryConditions(lookup);
+        ret = await service.getQueryConditions({ lookup, ...extraArgs });
       });
 
       it(`should return ${expected}`, async () => {
@@ -306,7 +329,7 @@ describe(RestServiceFactory.name, () => {
       expand   | all                | expected
       ${["1"]} | ${["1", "2", "3"]} | ${[["1"], ["2", "3"]]}
     `(
-      d(".getRelationOptions($expand) all:$all"),
+      d(".getRelationOptions({ expand: $expand }) all:$all"),
       ({ expand, all, expected }) => {
         let ret: Resolved<ReturnType<RestService["getRelationOptions"]>>;
 
@@ -315,7 +338,7 @@ describe(RestServiceFactory.name, () => {
           repository.metadata = {
             relations: all.map((v: string) => ({ propertyPath: v })),
           } as any;
-          ret = await service.getRelationOptions({ expand });
+          ret = await service.getRelationOptions({ expand, ...extraArgs });
         });
 
         it(`should return relations: [${expected[0]}] and relaiton ids: [${expected[1]}]`, () => {
@@ -324,5 +347,29 @@ describe(RestServiceFactory.name, () => {
         });
       }
     );
+
+    describe(d(".finalizeList()"), () => {
+      let ret: Resolved<ReturnType<RestService["finalizeList"]>>;
+
+      beforeEach(async () => {
+        jest.spyOn(service, "count").mockResolvedValueOnce(1);
+        ret = await service.finalizeList({
+          entities: [entity],
+          ...extraArgs,
+        });
+      });
+
+      it("should return the data schema with the entities", () => {
+        expect(ret).toEqual({
+          total: 1,
+          results: [entity],
+        });
+      });
+
+      it("should get the entity count", () => {
+        expect(service.count).toHaveBeenCalledTimes(1);
+        expect(service.count).toHaveBeenCalledWith({ ...extraArgs });
+      });
+    });
   });
 });

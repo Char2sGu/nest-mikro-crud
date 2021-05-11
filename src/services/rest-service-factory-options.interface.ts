@@ -5,8 +5,7 @@ export interface RestServiceFactoryOptions<
   Entity = any,
   CreateDto = Entity,
   UpdateDto = CreateDto,
-  LookupField extends LookupFields<Entity> = LookupFields<Entity>,
-  CustomArgs extends any[] = any[]
+  LookupField extends LookupFields<Entity> = LookupFields<Entity>
 > {
   /**
    * The entity's constructor whose repository will be auto-injected.
@@ -28,8 +27,4 @@ export interface RestServiceFactoryOptions<
    * Choose the field used for entity lookup.
    */
   lookupField: LookupField;
-  /**
-   * Helper to infer custom args' types.
-   */
-  customArgs?: (...args: CustomArgs) => any;
 }

@@ -6,48 +6,42 @@ export interface RestController<
   CreateDto = Entity,
   UpdateDto = CreateDto,
   LookupField extends LookupFields<Entity> = LookupFields<Entity>,
-  CustomArgs extends any[] = any[],
   Service extends RestService<
     Entity,
     CreateDto,
     UpdateDto,
-    LookupField,
-    CustomArgs
-  > = RestService<Entity, CreateDto, UpdateDto, LookupField, CustomArgs>
+    LookupField
+  > = RestService<Entity, CreateDto, UpdateDto, LookupField>
 > {
   readonly service: Service;
 
-  list(queries: QueryDto<Entity>, ...args: CustomArgs): Promise<unknown>;
+  list(queries: QueryDto<Entity>, ...args: any[]): Promise<unknown>;
 
   create(
     queries: QueryDto<Entity>,
-    dto: CreateDto,
-    ...args: CustomArgs
+    data: CreateDto,
+    ...args: any[]
   ): Promise<unknown>;
 
   retrieve(
     lookup: Entity[LookupField],
     queries: QueryDto<Entity>,
-    ...args: CustomArgs
+    ...args: any[]
   ): Promise<unknown>;
 
   replace(
     lookup: Entity[LookupField],
     queries: QueryDto<Entity>,
-    dto: CreateDto,
-    ...args: CustomArgs
+    data: CreateDto,
+    ...args: any[]
   ): Promise<unknown>;
 
   update(
     lookup: Entity[LookupField],
     queries: QueryDto<Entity>,
-    dto: UpdateDto,
-    ...args: CustomArgs
+    data: UpdateDto,
+    ...args: any[]
   ): Promise<unknown>;
 
-  destroy(
-    lookup: Entity[LookupField],
-    queries: QueryDto<Entity>,
-    ...args: CustomArgs
-  ): Promise<unknown>;
+  destroy(lookup: Entity[LookupField], ...args: any[]): Promise<unknown>;
 }

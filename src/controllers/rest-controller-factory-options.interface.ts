@@ -9,14 +9,12 @@ export interface RestControllerFactoryOptions<
   CreateDto = Entity,
   UpdateDto = CreateDto,
   LookupField extends LookupFields<Entity> = LookupFields<Entity>,
-  CustomArgs extends any[] = any[],
   Service extends RestService<
     Entity,
     CreateDto,
     UpdateDto,
-    LookupField,
-    CustomArgs
-  > = RestService<Entity, CreateDto, UpdateDto, LookupField, CustomArgs>
+    LookupField
+  > = RestService<Entity, CreateDto, UpdateDto, LookupField>
 > {
   /**
    * The service will be auto-injected for db CRUD actions.
@@ -30,12 +28,6 @@ export interface RestControllerFactoryOptions<
    * Use specific dto for more advanced settings of the query params.
    */
   queryDto?: ClassConstructor<QueryDto<Entity>>;
-  /**
-   * Custom the rest arguments which will be passed in every method
-   * of both the controller and the service, allowing you to get more
-   * context data.
-   */
-  customArgs?: [ClassConstructor<any>, ParameterDecorator[]][];
   /**
    * Specify the parameter name for entity lookup in the URL
    */

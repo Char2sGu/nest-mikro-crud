@@ -39,16 +39,14 @@ export class RestControllerFactory<
   CreateDto = Entity,
   UpdateDto = CreateDto,
   LookupField extends LookupFields<Entity> = LookupFields<Entity>,
-  CustomArgs extends any[] = any[],
   Service extends RestService<
     Entity,
     CreateDto,
     UpdateDto,
-    LookupField,
-    CustomArgs
-  > = RestService<Entity, CreateDto, UpdateDto, LookupField, CustomArgs>
+    LookupField
+  > = RestService<Entity, CreateDto, UpdateDto, LookupField>
 > extends AbstractFactory<
-  RestController<Entity, CreateDto, UpdateDto, LookupField, CustomArgs, Service>
+  RestController<Entity, CreateDto, UpdateDto, LookupField, Service>
 > {
   readonly options;
   readonly serviceOptions;
@@ -61,7 +59,6 @@ export class RestControllerFactory<
       CreateDto,
       UpdateDto,
       LookupField,
-      CustomArgs,
       Service
     >
   ) {
@@ -97,13 +94,11 @@ export class RestControllerFactory<
       Entity,
       CreateDto,
       UpdateDto,
-      LookupField,
-      CustomArgs
+      LookupField
     >
   ) {
     options.queryDto = options.queryDto ?? new QueryDtoFactory({}).product;
     options.lookupParam = options.lookupParam ?? "lookup";
-    options.customArgs = options.customArgs ?? [];
     options.catchEntityNotFound = options.catchEntityNotFound ?? true;
     options.validationPipeOptions = {
       ...options.validationPipeOptions,
@@ -125,59 +120,53 @@ export class RestControllerFactory<
       CreateDto,
       UpdateDto,
       LookupField,
-      CustomArgs,
       Service
     >;
     return class RestController implements Interface {
       readonly service!: Interface["service"];
 
       async list(
-        ...[queries, ...args]: Parameters<Interface["list"]>
+        ...[{ limit, offset, expand }]: Parameters<Interface["list"]>
       ): Promise<unknown> {
-        const entities = await this.service.list(queries, ...args);
+        const entities = await this.service.list({ limit, offset, expand });
         const transformed = await Promise.all(
-          entities.map((entity) => this.service.transform(entity, ...args))
+          entities.map((entity) => this.service.transform({ entity }))
         );
-        return await this.service.finalizeList(transformed, queries, ...args);
+        return await this.service.finalizeList({ entities: transformed });
       }
 
       async create(
-        ...[queries, dto, ...args]: Parameters<Interface["create"]>
+        ...[{ expand }, data]: Parameters<Interface["create"]>
       ): Promise<unknown> {
-        const entity = await this.service.create(queries, dto, ...args);
-        return await this.service.transform(entity, ...args);
+        const entity = await this.service.create({ data, expand });
+        return await this.service.transform({ entity });
       }
 
       async retrieve(
-        ...[lookup, queries, ...args]: Parameters<Interface["retrieve"]>
+        ...[lookup, { expand }]: Parameters<Interface["retrieve"]>
       ): Promise<unknown> {
-        const entity = await this.service.retrieve(lookup, queries, ...args);
-        return await this.service.transform(entity, ...args);
+        const entity = await this.service.retrieve({ lookup, expand });
+        return await this.service.transform({ entity });
       }
 
       async replace(
-        ...[lookup, queries, dto, ...args]: Parameters<Interface["replace"]>
+        ...[lookup, { expand }, data]: Parameters<Interface["replace"]>
       ): Promise<unknown> {
-        const entity = await this.service.replace(
-          lookup,
-          queries,
-          dto,
-          ...args
-        );
-        return await this.service.transform(entity, ...args);
+        const entity = await this.service.replace({ lookup, data, expand });
+        return await this.service.transform({ entity });
       }
 
       async update(
-        ...[lookup, queries, dto, ...args]: Parameters<Interface["update"]>
+        ...[lookup, { expand }, data]: Parameters<Interface["update"]>
       ): Promise<unknown> {
-        const entity = await this.service.update(lookup, queries, dto, ...args);
-        return await this.service.transform(entity, ...args);
+        const entity = await this.service.update({ lookup, data, expand });
+        return await this.service.transform({ entity });
       }
 
       async destroy(
-        ...[lookup, queries, ...args]: Parameters<Interface["destroy"]>
+        ...[lookup]: Parameters<Interface["destroy"]>
       ): Promise<unknown> {
-        await this.service.destroy(lookup, queries, ...args);
+        await this.service.destroy({ lookup });
         return;
       }
     };
@@ -195,26 +184,13 @@ export class RestControllerFactory<
       dtoClasses: { create: createDto, update: updateDto },
     } = this.serviceOptions;
     const queryDto = this.options.queryDto;
-    const extra = this.options.customArgs.map(([type]) => type);
 
-    this.defineParamTypesMetadata("list", queryDto, ...extra)
-      .defineParamTypesMetadata("create", queryDto, createDto, ...extra)
-      .defineParamTypesMetadata("retrieve", lookupType, queryDto, ...extra)
-      .defineParamTypesMetadata(
-        "replace",
-        lookupType,
-        queryDto,
-        createDto,
-        ...extra
-      )
-      .defineParamTypesMetadata(
-        "update",
-        lookupType,
-        queryDto,
-        updateDto,
-        ...extra
-      )
-      .defineParamTypesMetadata("destroy", lookupType, queryDto, ...extra);
+    this.defineParamTypesMetadata("list", queryDto)
+      .defineParamTypesMetadata("create", queryDto, createDto)
+      .defineParamTypesMetadata("retrieve", lookupType, queryDto)
+      .defineParamTypesMetadata("replace", lookupType, queryDto, createDto)
+      .defineParamTypesMetadata("update", lookupType, queryDto, updateDto)
+      .defineParamTypesMetadata("destroy", lookupType);
   }
 
   protected applyRoutesDecorators() {
@@ -227,46 +203,22 @@ export class RestControllerFactory<
     const AllQueries = Query();
     const Dto = Body();
 
-    const extra = this.options.customArgs.map(([, decoraotrs]) => decoraotrs);
-
     this.applyMethodDecorators("list", Get())
-      .applyParamDecoratorSets("list", [AllQueries], ...extra)
+      .applyParamDecoratorSets("list", [AllQueries])
 
       .applyMethodDecorators("create", Post())
-      .applyParamDecoratorSets("create", [AllQueries], [Dto], ...extra)
+      .applyParamDecoratorSets("create", [AllQueries], [Dto])
 
       .applyMethodDecorators("retrieve", Get(path))
-      .applyParamDecoratorSets(
-        "retrieve",
-        [LookupParam],
-        [AllQueries],
-        ...extra
-      )
+      .applyParamDecoratorSets("retrieve", [LookupParam], [AllQueries])
 
       .applyMethodDecorators("replace", Put(path))
-      .applyParamDecoratorSets(
-        "replace",
-        [LookupParam],
-        [AllQueries],
-        [Dto],
-        ...extra
-      )
+      .applyParamDecoratorSets("replace", [LookupParam], [AllQueries], [Dto])
 
       .applyMethodDecorators("update", Patch(path))
-      .applyParamDecoratorSets(
-        "update",
-        [LookupParam],
-        [AllQueries],
-        [Dto],
-        ...extra
-      )
+      .applyParamDecoratorSets("update", [LookupParam], [AllQueries], [Dto])
 
       .applyMethodDecorators("destroy", Delete(path))
-      .applyParamDecoratorSets(
-        "destroy",
-        [LookupParam],
-        [AllQueries],
-        ...extra
-      );
+      .applyParamDecoratorSets("destroy", [LookupParam]);
   }
 }

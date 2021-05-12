@@ -82,9 +82,9 @@ export class RestControllerFactory<
     this.defineRoutesTypesMetadata();
     this.applyRoutesDecorators();
     this.applyClassDecorators(
-      UsePipes(new ValidationPipe(options.validationPipeOptions))
+      UsePipes(new ValidationPipe(this.options.validationPipeOptions))
     );
-    if (options.catchEntityNotFound)
+    if (this.options.catchEntityNotFound)
       this.applyClassDecorators(UseFilters(EntityNotFoundErrorFilter));
     this.applyMethodDecorators("destroy", HttpCode(204));
   }
@@ -97,18 +97,27 @@ export class RestControllerFactory<
       LookupField
     >
   ) {
-    options.queryDto = options.queryDto ?? new QueryDtoFactory({}).product;
-    options.lookupParam = options.lookupParam ?? "lookup";
-    options.catchEntityNotFound = options.catchEntityNotFound ?? true;
-    options.validationPipeOptions = {
-      ...options.validationPipeOptions,
-      transform: true,
-      transformOptions: {
-        ...options.validationPipeOptions?.transformOptions,
-        exposeDefaultValues: true,
+    const {
+      queryDto = new QueryDtoFactory({}).product,
+      lookupParam = "lookup",
+      catchEntityNotFound = true,
+      validationPipeOptions = {},
+    } = options;
+
+    return {
+      ...options,
+      queryDto,
+      lookupParam,
+      catchEntityNotFound,
+      validationPipeOptions: {
+        ...validationPipeOptions,
+        transform: true,
+        transformOptions: {
+          ...validationPipeOptions.transformOptions,
+          exposeDefaultValues: true,
+        },
       },
     };
-    return options as Required<typeof options>;
   }
 
   /**

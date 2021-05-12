@@ -79,14 +79,12 @@ export class RestControllerFactory<
 
     this.product = this.createRawClass();
     this.defineInjectionsMetadata();
-    this.defineActionsTypesMetadata();
-    this.applyActionsDecorators();
+    this.completeActions();
     this.applyClassDecorators(
       UsePipes(new ValidationPipe(this.options.validationPipeOptions))
     );
     if (this.options.catchEntityNotFound)
       this.applyClassDecorators(UseFilters(EntityNotFoundErrorFilter));
-    this.applyMethodDecorators("destroy", HttpCode(204));
   }
 
   protected processOptions(
@@ -187,47 +185,45 @@ export class RestControllerFactory<
     Inject(this.options.restServiceClass)(target, serviceKey);
   }
 
-  protected defineActionsTypesMetadata() {
+  protected completeActions() {
     const lookupType = this.lookupType;
+
     const {
       dtoClasses: { create: createDto, update: updateDto },
     } = this.serviceOptions;
-    const queryDto = this.options.queryDto;
+    const { queryDto } = this.options;
 
-    this.defineParamTypesMetadata("list", queryDto)
-      .defineParamTypesMetadata("create", queryDto, createDto)
-      .defineParamTypesMetadata("retrieve", lookupType, queryDto)
-      .defineParamTypesMetadata("replace", lookupType, queryDto, createDto)
-      .defineParamTypesMetadata("update", lookupType, queryDto, updateDto)
-      .defineParamTypesMetadata("destroy", lookupType);
-  }
-
-  protected applyActionsDecorators() {
     const path = `:${this.options.lookupParam}`;
 
-    const LookupParam = Param(
+    const Lookup = Param(
       this.options.lookupParam,
       ...(this.lookupType == Number ? [ParseIntPipe] : [])
     );
-    const AllQueries = Query();
-    const Dto = Body();
+    const Queries = Query();
+    const Data = Body();
 
     this.applyMethodDecorators("list", Get())
-      .applyParamDecoratorSets("list", [AllQueries])
+      .defineParamTypesMetadata("list", queryDto)
+      .applyParamDecoratorSets("list", [Queries])
 
       .applyMethodDecorators("create", Post())
-      .applyParamDecoratorSets("create", [AllQueries], [Dto])
+      .defineParamTypesMetadata("create", queryDto, createDto)
+      .applyParamDecoratorSets("create", [Queries], [Data])
 
       .applyMethodDecorators("retrieve", Get(path))
-      .applyParamDecoratorSets("retrieve", [LookupParam], [AllQueries])
+      .defineParamTypesMetadata("retrieve", lookupType, queryDto)
+      .applyParamDecoratorSets("retrieve", [Lookup], [Queries])
 
       .applyMethodDecorators("replace", Put(path))
-      .applyParamDecoratorSets("replace", [LookupParam], [AllQueries], [Dto])
+      .defineParamTypesMetadata("replace", lookupType, queryDto, createDto)
+      .applyParamDecoratorSets("replace", [Lookup], [Queries], [Data])
 
       .applyMethodDecorators("update", Patch(path))
-      .applyParamDecoratorSets("update", [LookupParam], [AllQueries], [Dto])
+      .defineParamTypesMetadata("update", lookupType, queryDto, updateDto)
+      .applyParamDecoratorSets("update", [Lookup], [Queries], [Data])
 
-      .applyMethodDecorators("destroy", Delete(path))
-      .applyParamDecoratorSets("destroy", [LookupParam]);
+      .applyMethodDecorators("destroy", Delete(path), HttpCode(204))
+      .defineParamTypesMetadata("destroy", lookupType)
+      .applyParamDecoratorSets("destroy", [Lookup]);
   }
 }

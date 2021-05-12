@@ -21,7 +21,7 @@ import {
   RestService,
   RestServiceFactoryOptions,
   REST_SERVICE_OPTIONS_METADATA_KEY,
-  RouteNames,
+  ActionNames,
 } from "src";
 import { buildKeyChecker, m } from "tests/utils";
 import { Repository } from "typeorm";
@@ -80,7 +80,7 @@ describe(RestControllerFactory.name, () => {
 
   const options: RestControllerFactoryOptions = {
     restServiceClass: TestService,
-    routes: ["list", "create", "retrieve", "replace", "update", "destroy"],
+    actions: ["list", "create", "retrieve", "replace", "update", "destroy"],
   };
 
   let factory: RestControllerFactory;
@@ -361,7 +361,7 @@ describe(RestControllerFactory.name, () => {
     ${"update"}   | ${Patch}   | ${true}    | ${0}
     ${"destroy"}  | ${Delete}  | ${true}    | ${0}
   `(
-    "should apply route decorators for the route $name",
+    "should apply action decorators for the action $name",
     ({
       name,
       decorators,
@@ -404,12 +404,12 @@ describe(RestControllerFactory.name, () => {
     ${"update"}   | ${[[Param], [Query], [Body]]}
     ${"destroy"}  | ${[[Param]]}
   `(
-    "should apply the param decorators for the route $name",
+    "should apply the param decorators for the action $name",
     ({
       name,
       decoratorBuilderSets,
     }: {
-      name: RouteNames;
+      name: ActionNames;
       decoratorBuilderSets: (() => ParameterDecorator)[][];
     }) => {
       const decoratorSets = decoratorBuilderSets.map((builders) =>

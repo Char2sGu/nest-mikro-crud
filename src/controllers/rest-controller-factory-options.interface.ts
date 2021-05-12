@@ -2,7 +2,7 @@ import { ValidationPipeOptions } from "@nestjs/common";
 import { ClassConstructor } from "class-transformer";
 import { QueryDto } from "../dtos";
 import { LookupFields, RestService } from "../services";
-import { RouteNames } from "./route-names.types";
+import { ActionNames } from "./action-names.types";
 
 export interface RestControllerFactoryOptions<
   Entity = any,
@@ -21,9 +21,9 @@ export interface RestControllerFactoryOptions<
    */
   restServiceClass: ClassConstructor<Service>;
   /**
-   * Specify which routes should be enabled.
+   * Specify which actions should be enabled.
    */
-  routes: RouteNames[];
+  actions: ActionNames[];
   /**
    * Use specific dto for more advanced settings of the query params.
    */

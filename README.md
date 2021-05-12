@@ -42,7 +42,7 @@ There is also a `RestControllerFactory` for you to create controllers.
 @Controller()
 class OurController extends new RestControllerFactory({
   restServiceClass: OurService,
-  routes: ["list", "create", "retrieve", "replace", "update", "destroy"],
+  actions: ["list", "create", "retrieve", "replace", "update", "destroy"],
 }).product {}
 ```
 
@@ -66,7 +66,7 @@ Also, the service will be auto-injected, so there is nothing more to do inside t
 
 ## Advanced Query Params Settings
 
-There is a query DTO used to validate the query params of all the routes, the default query DTO have unlimited `limit` and `offset`, there is also a `QueryDtoFactory` provided for you to custom the DTO.
+There is a query DTO used to validate the query params of all the actions, the default query DTO have unlimited `limit` and `offset`, there is also a `QueryDtoFactory` provided for you to custom the DTO.
 
 You could also pass your own DTO or extend the factory for more wonderful implementations.
 
@@ -237,10 +237,10 @@ class OurService /*extends ...*/ {
 
 ## Overriding Routing Methods
 
-Here is something you should know before overriding the route methods, or something confusing may happen to you.
+Here is something you should know before overriding the action methods, or something confusing may happen to you.
 
 - Nest's controller decorators store metadata in constructors, and when getting metadata, it will look up the value in the prototype chain, so there is no need to decorate the class again when extending another class.
-- Nest's route method decorators store metadata in route methods directly, when looking metadata, it will look up the value directly from the method, but if we override a method, the method will be a different one, so all the metadata will be lost, we need to apply route method decorators again.
+- Nest's action method decorators store metadata in action methods directly, when looking metadata, it will look up the value directly from the method, but if we override a method, the method will be a different one, so all the metadata will be lost, we need to apply action method decorators again.
 - Nest's param decorators store metadata in the constructors, as said before, there is no need to apply param decorators again.
 
 So here is the example:

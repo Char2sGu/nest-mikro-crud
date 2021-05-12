@@ -31,7 +31,7 @@ class TestService extends new RestServiceFactory({
 @Controller()
 class TestController extends new RestControllerFactory({
   restServiceClass: TestService,
-  routes: ["list", "retrieve", "create", "replace", "update", "destroy"],
+  actions: ["list", "retrieve", "create", "replace", "update", "destroy"],
   queryDto: new QueryDtoFactory<ParentEntity>({
     limit: { max: 2, default: 1 },
     expand: { in: ["child2"] },

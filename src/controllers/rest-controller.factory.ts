@@ -79,8 +79,8 @@ export class RestControllerFactory<
 
     this.product = this.createRawClass();
     this.defineInjectionsMetadata();
-    this.defineRoutesTypesMetadata();
-    this.applyRoutesDecorators();
+    this.defineActionsTypesMetadata();
+    this.applyActionsDecorators();
     this.applyClassDecorators(
       UsePipes(new ValidationPipe(this.options.validationPipeOptions))
     );
@@ -187,7 +187,7 @@ export class RestControllerFactory<
     Inject(this.options.restServiceClass)(target, serviceKey);
   }
 
-  protected defineRoutesTypesMetadata() {
+  protected defineActionsTypesMetadata() {
     const lookupType = this.lookupType;
     const {
       dtoClasses: { create: createDto, update: updateDto },
@@ -202,7 +202,7 @@ export class RestControllerFactory<
       .defineParamTypesMetadata("destroy", lookupType);
   }
 
-  protected applyRoutesDecorators() {
+  protected applyActionsDecorators() {
     const path = `:${this.options.lookupParam}`;
 
     const LookupParam = Param(

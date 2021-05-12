@@ -136,11 +136,13 @@ export class RestServiceFactory<
         lookup,
         ...args
       }: Parameters<Interface["getQueryConditions"]>[0]) {
-        return (lookup != null
-          ? ({
-              [options.lookupField]: lookup,
-            } as unknown)
-          : {}) as FindConditions<Entity>;
+        return (
+          lookup != null
+            ? ({
+                [options.lookupField]: lookup,
+              } as unknown)
+            : {}
+        ) as FindConditions<Entity>;
       }
 
       async getRelationOptions({

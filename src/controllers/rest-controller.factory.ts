@@ -14,6 +14,7 @@ import {
   UsePipes,
   ValidationPipe,
 } from "@nestjs/common";
+import { ClassConstructor } from "class-transformer";
 import { AbstractFactory } from "../abstract.factory";
 import {
   REST_SERVICE_OPTIONS_METADATA_KEY,
@@ -26,6 +27,7 @@ import {
   RestService,
   RestServiceFactoryOptions,
 } from "../services";
+import { ActionNames } from "./action-names.types";
 import { RestControllerFactoryOptions } from "./rest-controller-factory-options.interface";
 import { RestController } from "./rest-controller.interface";
 
@@ -184,7 +186,6 @@ export class RestControllerFactory<
     const serviceKey: keyof RestController = "service";
     Inject(this.options.restServiceClass)(target, serviceKey);
   }
-
   protected completeActions() {
     const lookupType = this.lookupType;
 
@@ -202,28 +203,34 @@ export class RestControllerFactory<
     const Queries = Query();
     const Data = Body();
 
-    this.applyMethodDecorators("list", Get())
-      .defineParamTypesMetadata("list", queryDto)
-      .applyParamDecoratorSets("list", [Queries])
+    const table: Record<
+      ActionNames,
+      [MethodDecorator[], ClassConstructor<unknown>[], ParameterDecorator[][]]
+    > = {
+      list: [[Get()], [queryDto], [[Queries]]],
+      create: [[Post()], [queryDto, createDto], [[Queries], [Data]]],
+      retrieve: [[Get(path)], [lookupType, queryDto], [[Lookup], [Queries]]],
+      replace: [
+        [Put(path)],
+        [lookupType, queryDto, createDto],
+        [[Lookup], [Queries], [Data]],
+      ],
+      update: [
+        [Patch(path)],
+        [lookupType, queryDto, updateDto],
+        [[Lookup], [Queries], [Data]],
+      ],
+      destroy: [[Delete(path), HttpCode(204)], [lookupType], [[Lookup]]],
+    };
 
-      .applyMethodDecorators("create", Post())
-      .defineParamTypesMetadata("create", queryDto, createDto)
-      .applyParamDecoratorSets("create", [Queries], [Data])
-
-      .applyMethodDecorators("retrieve", Get(path))
-      .defineParamTypesMetadata("retrieve", lookupType, queryDto)
-      .applyParamDecoratorSets("retrieve", [Lookup], [Queries])
-
-      .applyMethodDecorators("replace", Put(path))
-      .defineParamTypesMetadata("replace", lookupType, queryDto, createDto)
-      .applyParamDecoratorSets("replace", [Lookup], [Queries], [Data])
-
-      .applyMethodDecorators("update", Patch(path))
-      .defineParamTypesMetadata("update", lookupType, queryDto, updateDto)
-      .applyParamDecoratorSets("update", [Lookup], [Queries], [Data])
-
-      .applyMethodDecorators("destroy", Delete(path), HttpCode(204))
-      .defineParamTypesMetadata("destroy", lookupType)
-      .applyParamDecoratorSets("destroy", [Lookup]);
+    for (const [
+      k,
+      [methodDecorators, paramTypes, paramDecoratorSets],
+    ] of Object.entries(table)) {
+      const name = k as ActionNames;
+      this.applyMethodDecorators(name, ...methodDecorators)
+        .defineParamTypesMetadata(name, ...paramTypes)
+        .applyParamDecoratorSets(name, ...paramDecoratorSets);
+    }
   }
 }

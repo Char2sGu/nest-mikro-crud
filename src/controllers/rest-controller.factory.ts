@@ -227,6 +227,7 @@ export class RestControllerFactory<
     const serviceKey: keyof RestController = "service";
     Inject(this.options.restServiceClass)(target, serviceKey);
   }
+
   protected completeActions() {
     const lookupType = this.lookupType;
 

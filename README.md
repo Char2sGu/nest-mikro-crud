@@ -4,11 +4,9 @@ Graceful flexible builder for RESTful APIs with TypeORM.
 
 # Features
 
-- Super easy and fast to build RESTful APIs
-- Extremly strongly typed
-- Well-designed code structure for high flexibility and extensibility
-- Helper methods allow to apply extra decorators easily
-- Nesting support
+- Super easy and fast to build RESTful CRUD APIs
+- Fully strongly typed
+- High flexibility and extensibility
 
 # Tutorial
 

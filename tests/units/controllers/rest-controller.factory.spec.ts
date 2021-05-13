@@ -5,25 +5,24 @@ import {
   Resolved,
   RestController,
   RestControllerFactory,
-  RestControllerFactoryOptions,
   RestService,
   RestServiceFactoryOptions,
   REST_SERVICE_OPTIONS_METADATA_KEY,
 } from "src";
 import { buildKeyChecker, m } from "tests/utils";
-import { Repository } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Repository } from "typeorm";
 
 jest.mock("@nestjs/common", () => ({
   ...jest.requireActual("@nestjs/common"),
-  Body: jest.fn(() => jest.fn()),
-  Delete: jest.fn(() => jest.fn()),
-  Get: jest.fn(() => jest.fn()),
-  Inject: jest.fn(() => jest.fn()),
-  Param: jest.fn(() => jest.fn()),
-  Patch: jest.fn(() => jest.fn()),
-  Post: jest.fn(() => jest.fn()),
-  Put: jest.fn(() => jest.fn()),
-  Query: jest.fn(() => jest.fn()),
+  Body: jest.fn().mockReturnValue(jest.fn()),
+  Delete: jest.fn().mockReturnValue(jest.fn()),
+  Get: jest.fn().mockReturnValue(jest.fn()),
+  Inject: jest.fn().mockReturnValue(jest.fn()),
+  Param: jest.fn().mockReturnValue(jest.fn()),
+  Patch: jest.fn().mockReturnValue(jest.fn()),
+  Post: jest.fn().mockReturnValue(jest.fn()),
+  Put: jest.fn().mockReturnValue(jest.fn()),
+  Query: jest.fn().mockReturnValue(jest.fn()),
 }));
 jest.mock("src/dtos/query-dto.factory", () => ({
   QueryDtoFactory: jest.fn(() => ({
@@ -31,22 +30,25 @@ jest.mock("src/dtos/query-dto.factory", () => ({
   })),
 }));
 
-describe.skip(RestControllerFactory.name, () => {
+describe(RestControllerFactory.name, () => {
   const d = buildKeyChecker<RestControllerFactory>();
 
+  @Entity()
   class TestEntity {
+    @PrimaryGeneratedColumn()
     id!: number;
-    field!: number;
   }
+
+  const entity: TestEntity = Object.create(TestEntity.prototype, {
+    id: { value: 1 },
+  });
+  const entities = [entity];
 
   const testServiceOptions: RestServiceFactoryOptions<TestEntity> = {
     entityClass: TestEntity,
     dtoClasses: { create: TestEntity, update: TestEntity },
-    lookupField: "field",
+    lookupField: "id",
   };
-
-  const entity = { k: "v" };
-  const entities = [entity];
 
   const testService: RestService = {
     repository: new Repository(),
@@ -66,31 +68,25 @@ describe.skip(RestControllerFactory.name, () => {
     finalizeList: jest.fn(async (v) => v.entities),
   };
   const TestService = jest.fn(() => testService);
+  Reflect.defineMetadata(
+    REST_SERVICE_OPTIONS_METADATA_KEY,
+    testServiceOptions,
+    TestService
+  );
 
   let factory: RestControllerFactory;
 
   beforeEach(() => {
-    jest
-      .spyOn(Reflect, "getMetadata")
-      .mockReturnValueOnce(testServiceOptions) // get service's options
-      .mockReturnValueOnce(Number); // get entity's lookup field type
-    jest.spyOn(Reflect, "defineMetadata");
-    jest
-      .spyOn(RestControllerFactory.prototype, "applyMethodDecorators")
-      .mockReturnThis();
-    jest
-      .spyOn(RestControllerFactory.prototype, "applyParamDecoratorSets")
-      .mockReturnThis();
-    jest
-      .spyOn(RestControllerFactory.prototype, "defineParamTypesMetadata")
-      .mockReturnThis();
     factory = new RestControllerFactory({
       restServiceClass: TestService,
       actions: ["list", "create", "retrieve", "replace", "update", "destroy"],
+      contextOptions: {
+        ctx: { type: String, decorators: [jest.fn()] },
+      },
     });
   });
 
-  it("should process the passed options and expose it", () => {
+  it("should process the options and expose it", () => {
     expect(QueryDtoFactory).toHaveBeenCalled();
     expect(factory.options.queryDto).toBeDefined();
     expect(factory.options.lookupParam).toBeDefined();
@@ -105,10 +101,6 @@ describe.skip(RestControllerFactory.name, () => {
   });
 
   it("should expose the service's options", () => {
-    expect(Reflect.getMetadata).toHaveBeenCalledWith(
-      REST_SERVICE_OPTIONS_METADATA_KEY,
-      TestService
-    );
     expect(factory.serviceOptions).toBe(testServiceOptions);
   });
 
@@ -122,7 +114,6 @@ describe.skip(RestControllerFactory.name, () => {
     const context = { ctx: "yes" };
 
     let controller: RestController;
-    let commonQueries: QueryDto = { expand: [] };
 
     beforeEach(() => {
       controller = new factory.product();
@@ -131,28 +122,34 @@ describe.skip(RestControllerFactory.name, () => {
       jest.spyOn(controller, "prepareContext").mockResolvedValue(context);
     });
 
-    describe.each`
-      queries
-      ${{ limit: 1, offset: 1, ...commonQueries }}
-    `(d(".list($queries)"), ({ queries }: { queries: any }) => {
+    describe(d(".list()"), () => {
       let ret: Resolved<ReturnType<typeof controller.list>>;
 
       beforeEach(async () => {
-        ret = await controller.list(queries);
+        ret = await controller.list(
+          {
+            limit: 1,
+            offset: 2,
+            expand: [],
+          },
+          null
+        );
+      });
+
+      it("should get the context", () => {
+        expect(controller.prepareContext).toHaveBeenCalledWith([null]);
       });
 
       it("should query the entities", () => {
-        expect(testService.list).toHaveBeenCalledTimes(1);
         expect(testService.list).toHaveBeenCalledWith({
           limit: 1,
-          offset: 1,
+          offset: 2,
           expand: [],
           ...context,
         });
       });
 
       it("should transform the entities", () => {
-        expect(testService.transform).toHaveBeenCalledTimes(entities.length);
         expect(testService.transform).toHaveBeenCalledWith({
           entity,
           ...context,
@@ -160,7 +157,6 @@ describe.skip(RestControllerFactory.name, () => {
       });
 
       it("should paginate the entities", () => {
-        expect(testService.finalizeList).toHaveBeenCalledTimes(1);
         expect(testService.finalizeList).toHaveBeenCalledWith({
           entities,
           ...context,
@@ -172,59 +168,64 @@ describe.skip(RestControllerFactory.name, () => {
       });
     });
 
-    describe.each`
-      data
-      ${{ im: "data" }}
-    `(d(".create(, $data)"), ({ data }: { data: {} }) => {
+    describe(d(".create()"), () => {
       let ret: Resolved<ReturnType<typeof controller.create>>;
 
       beforeEach(async () => {
-        ret = await controller.create(commonQueries, data);
+        ret = await controller.create({ expand: [] }, entity, null);
+      });
+
+      it("should get the context", () => {
+        expect(controller.prepareContext).toHaveBeenCalledWith([null]);
       });
 
       it("should create an entity", () => {
-        expect(testService.create).toHaveBeenCalledTimes(1);
         expect(testService.create).toHaveBeenCalledWith({
-          data,
+          data: entity,
+          ...context,
+        });
+      });
+
+      it("should retrieve the entity", () => {
+        expect(testService.retrieve).toHaveBeenCalledWith({
+          lookup: entity.id,
           expand: [],
           ...context,
         });
       });
 
       it("should transform the entity", () => {
-        expect(testService.transform).toHaveBeenCalledTimes(1);
         expect(testService.transform).toHaveBeenCalledWith({
           entity,
           ...context,
         });
       });
 
-      it("should return the entity", () => {
-        expect(ret).toEqual(entity);
+      it("should return an entity", () => {
+        expect(ret).toBeInstanceOf(TestEntity);
       });
     });
 
-    describe.each`
-      lookup
-      ${1}
-    `(d(".retrieve($lookup)"), ({ lookup }: { lookup: number }) => {
+    describe(d(".retrieve()"), () => {
       let ret: Resolved<ReturnType<typeof controller.retrieve>>;
 
       beforeEach(async () => {
-        ret = await controller.retrieve(lookup, commonQueries);
+        ret = await controller.retrieve(1, { expand: [] }, null);
+      });
+
+      it("should get the context", () => {
+        expect(controller.prepareContext).toHaveBeenCalledWith([null]);
       });
 
       it("should retrieve the entity", () => {
-        expect(testService.retrieve).toHaveBeenCalledTimes(1);
         expect(testService.retrieve).toHaveBeenCalledWith({
-          lookup,
+          lookup: 1,
           expand: [],
           ...context,
         });
       });
 
       it("should transform the entitiy", () => {
-        expect(testService.transform).toHaveBeenCalledTimes(1);
         expect(testService.transform).toHaveBeenCalledWith({
           entity,
           ...context,
@@ -236,92 +237,113 @@ describe.skip(RestControllerFactory.name, () => {
       });
     });
 
-    describe.each`
-      lookup | data
-      ${1}   | ${{ replace: "data" }}
-    `(
-      d(".replace($lookup, , $data)"),
-      ({ lookup, data }: { lookup: number; data: {} }) => {
-        let ret: Resolved<ReturnType<typeof controller.replace>>;
+    describe(d(".replace()"), () => {
+      let ret: Resolved<ReturnType<typeof controller.replace>>;
 
-        beforeEach(async () => {
-          ret = await controller.replace(lookup, commonQueries, data);
+      beforeEach(async () => {
+        ret = await controller.replace(1, { expand: [] }, entity, null);
+      });
+
+      it("should get the context", () => {
+        expect(controller.prepareContext).toHaveBeenCalledWith([null]);
+      });
+
+      it("should retrieve the entity", () => {
+        expect(testService.retrieve).toHaveBeenCalledWith({
+          lookup: 1,
+          ...context,
         });
-
-        it("should replace the entity", () => {
-          expect(testService.replace).toHaveBeenCalledTimes(1);
-          expect(testService.replace).toHaveBeenCalledWith({
-            lookup,
-            data,
-            expand: [],
-            ...context,
-          });
+        expect(testService.retrieve).toHaveBeenCalledWith({
+          lookup: 1,
+          expand: [],
+          ...context,
         });
+      });
 
-        it("should transform the entity", () => {
-          expect(testService.transform).toHaveBeenCalledTimes(1);
-          expect(testService.transform).toHaveBeenCalledWith({
-            entity,
-            ...context,
-          });
+      it("should replace the entity", () => {
+        expect(testService.replace).toHaveBeenCalledWith({
+          entity,
+          data: entity,
+          ...context,
         });
+      });
 
-        it("should return the entity", () => {
-          expect(ret).toEqual(entity);
+      it("should transform the entity", () => {
+        expect(testService.transform).toHaveBeenCalledWith({
+          entity,
+          ...context,
         });
-      }
-    );
+      });
 
-    describe.each`
-      lookup | data
-      ${1}   | ${{ update: "data" }}
-    `(
-      d(".update($lookup, , $data,)"),
-      ({ lookup, data }: { lookup: number; data: {} }) => {
-        let ret: Resolved<ReturnType<typeof controller.update>>;
+      it("should return the entity", () => {
+        expect(ret).toEqual(entity);
+      });
+    });
 
-        beforeEach(async () => {
-          ret = await controller.update(lookup, commonQueries, data);
+    describe(d(".update()"), () => {
+      let ret: Resolved<ReturnType<typeof controller.update>>;
+
+      beforeEach(async () => {
+        ret = await controller.update(1, { expand: [] }, entity, null);
+      });
+
+      it("should get the context", () => {
+        expect(controller.prepareContext).toHaveBeenCalledWith([null]);
+      });
+
+      it("should retrieve the entity", () => {
+        expect(testService.retrieve).toHaveBeenCalledWith({
+          lookup: 1,
+          ...context,
         });
-
-        it("should update the entity", () => {
-          expect(testService.update).toHaveBeenCalledTimes(1);
-          expect(testService.update).toHaveBeenCalledWith({
-            lookup,
-            data,
-            expand: [],
-            ...context,
-          });
+        expect(testService.retrieve).toHaveBeenCalledWith({
+          lookup: 1,
+          expand: [],
+          ...context,
         });
+      });
 
-        it("should transform the entity", () => {
-          expect(testService.transform).toHaveBeenCalledTimes(1);
-          expect(testService.transform).toHaveBeenCalledWith({
-            entity,
-            ...context,
-          });
+      it("should update the entity", () => {
+        expect(testService.update).toHaveBeenCalledWith({
+          entity,
+          data: entity,
+          ...context,
         });
+      });
 
-        it("should return the entity", () => {
-          expect(ret).toEqual(entity);
+      it("should transform the entity", () => {
+        expect(testService.transform).toHaveBeenCalledWith({
+          entity,
+          ...context,
         });
-      }
-    );
+      });
 
-    describe.each`
-      $lookup
-      ${1}
-    `(d(".destroy($lookup)"), ({ lookup }: { lookup: number }) => {
+      it("should return the entity", () => {
+        expect(ret).toEqual(entity);
+      });
+    });
+
+    describe(d(".destroy()"), () => {
       let ret: Resolved<ReturnType<typeof controller.destroy>>;
 
       beforeEach(async () => {
-        ret = await controller.destroy(lookup);
+        ret = await controller.destroy(1, null);
+      });
+
+      it("should get the context", () => {
+        expect(controller.prepareContext).toHaveBeenCalledWith([null]);
+      });
+
+      it("should retrieve the entity", () => {
+        expect(testService.retrieve).toHaveBeenCalledWith({
+          lookup: 1,
+          ...context,
+        });
       });
 
       it("should delete the entity", () => {
-        expect(testService.destroy).toHaveBeenCalledTimes(1);
         expect(testService.destroy).toHaveBeenCalledWith({
-          lookup,
+          entity,
           ...context,
         });
       });
@@ -335,24 +357,18 @@ describe.skip(RestControllerFactory.name, () => {
       let ret: Resolved<ReturnType<typeof controller.prepareContext>>;
 
       beforeEach(async () => {
-        factory.options.contextOptions.test = {
-          type: String,
-          decorators: [jest.fn()],
-        };
         m(controller.prepareContext).mockRestore();
-        ret = await controller.prepareContext([1]);
+        ret = await controller.prepareContext(["ctx"]);
       });
 
       it("should return the context", () => {
-        expect(ret).toEqual({ test: 1 });
+        expect(ret).toEqual({ ctx: "ctx" });
       });
     });
   });
 
   it("should apply dependency injection of the service", () => {
-    expect(Inject).toHaveBeenCalledTimes(1);
     expect(Inject).toHaveBeenCalledWith(TestService);
-    expect(m(Inject).mock.results[0].value).toHaveBeenCalledTimes(1);
     expect(m(Inject).mock.results[0].value).toHaveBeenCalledWith(
       factory.product.prototype,
       "service"

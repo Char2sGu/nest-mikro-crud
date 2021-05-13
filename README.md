@@ -85,8 +85,8 @@ The method `.getQueryConditions()` in the service is useful in this case, and mo
 
 ```ts
 class OurService /*extends ...*/ {
-  async getQueryConditions(lookup: number) {
-    const conditions = await super.getQueryConditions(lookup);
+  async getQueryConditions({ lookup }: { lookup: number }) {
+    const conditions = await super.getQueryConditions({ lookup });
     return { ...conditions, isActive: true };
   }
 }
@@ -94,41 +94,26 @@ class OurService /*extends ...*/ {
 
 **NOTE**: the type of the parem `lookup` may be either `number` or `string`, depending the `lookupField` you specified. For forcing more complex query conditions, see [Getting More Context Data](#getting-more-context-data)
 
-## Getting More Context Data
+## Custom Context Data
 
-By default, only a few context data is passed to the service method, so what we can implement is greatly limited. So the option `customArgs` is here to help. Custom arguments are the arguments passed in each method of both the service and the controller as rest arguments.This option exists in both the service factory and the controller factory, having different uses.
-
-In the service factory, it is only a type helper function for generic type inferation of the rest arguments.
-
-```ts
-class OurService extends new RestServiceFactory({
-  // ...
-  customArgs: (user: User, method: string) => null,
-  // ...
-}).product {}
-```
-
-In the controller factory, it is a list of param type and param decorators tuples. The param type will be defined as the param's type in its metadata, the param decorators will be applied to the param.
+By default, only a few context data is passed to the service method, so what we can implement is greatly limited. So the option `contextOptions` is here to help, it provides a way to get any context data through [custom decorators](https://docs.nestjs.com/custom-decorators).
 
 ```ts
 class OurController extends new RestControllerFactory({
   // ...
-  customArgs: [
-    [User, [RequestUser()]],
-    [String, [Method()]],
-  ],
+  contextOptions: {
+    user: { type: User, decorators: [ReqUser()] },
+  },
   // ...
 }).product {}
 ```
 
-**NOTE**: The `RequestUser()` and `Method()` here are [custom decorators](https://docs.nestjs.com/custom-decorators), `RequestUser()` gets the user from the request and `Method()` gets the request's method.
-
-With custom arguments, we could force more complex query conditions easily.
+We could then force more complex query conditions easily.
 
 ```ts
 class OurService /*extends ...*/ {
-  async getQueryConditions(lookup: number, user: User, method: string) {
-    const conditions = await super.getQueryConditions();
+  async getQueryConditions({ lookup, user }: { lookup: number; user: User }) {
+    const conditions = await super.getQueryConditions({ lookup });
     return { ...conditions, owner: user, isActive: true };
   }
 }
@@ -177,7 +162,7 @@ The service's `.finalizeList()` method is called every time before sending the r
 
 ```ts
 class OurService /*extends ...*/ {
-  async finalizeList(entities: OurEntity[], queries: QueryDto<OurEntity>) {
+  async finalizeList({ entities }: { entities: OurEntity[] }) {
     return entities;
   }
 }
@@ -201,7 +186,7 @@ You could also change its behavior and do anything with the entity by overriding
 
 ```ts
 class OurService /*extends ...*/ {
-  async transform(entity: OurEntity) {
+  async transform({ entity }: { entity: OurEntity }) {
     return entity; // disable transforming
   }
 }
@@ -227,7 +212,7 @@ You can custom the relation options by overriding the `getRelationOptions` of th
 
 ```ts
 class OurService /*extends ...*/ {
-  async getRelationOptions(queries: QueryDto) {
+  async getRelationOptions({ expand }: { expand: RelationPaths<OurEntity>[] }) {
     return { loadRelationIds: true }; // disable nesting
   }
 }

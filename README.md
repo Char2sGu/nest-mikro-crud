@@ -231,8 +231,27 @@ So here is the example:
 ```ts
 class OurController /*extends ...*/ {
   @Patch(":lookup")
-  async update(lookup: number, dto: UpdateOurEntityDto) {
+  async update(lookup: number, data: UpdateOurEntityDto) {
     // ...
+  }
+}
+```
+
+## Object Level Permission
+
+```ts
+class OurService /*extends ...*/ {
+  async update({
+    entity,
+    data,
+    user,
+  }: {
+    entity: OurEntity;
+    data: CreateOurEntityDto;
+    user: User;
+  }) {
+    if (entity.owner != user) throw new ForbiddenException();
+    return await super.update({ entity, data });
   }
 }
 ```

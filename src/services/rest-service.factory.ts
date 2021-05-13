@@ -38,7 +38,7 @@ export class RestServiceFactory<
   }
 
   protected createRawClass() {
-    const options = this.options;
+    const { lookupField, entityClass } = this.options;
 
     type Interface = RestService<Entity, CreateDto, UpdateDto, LookupField>;
     return class RestService implements Interface {
@@ -58,17 +58,8 @@ export class RestServiceFactory<
         });
       }
 
-      async create({
-        data,
-        expand,
-        ...args
-      }: Parameters<Interface["create"]>[0]) {
-        const entity = await this.repository.save(data);
-        return await this.retrieve({
-          lookup: entity[options.lookupField],
-          expand,
-          ...args,
-        });
+      async create({ data, ...args }: Parameters<Interface["create"]>[0]) {
+        return await this.repository.save(data);
       }
 
       async retrieve({
@@ -83,39 +74,24 @@ export class RestServiceFactory<
       }
 
       async replace({
-        lookup,
+        entity,
         data,
-        expand,
         ...args
       }: Parameters<Interface["replace"]>[0]) {
-        const rawEntity = await this.retrieve({ lookup, expand, ...args });
-        const updatedEntity = this.repository.merge(rawEntity, data);
-        await this.repository.save(updatedEntity);
-        return await this.retrieve({
-          lookup: updatedEntity[options.lookupField],
-          expand,
-          ...args,
-        });
+        const updatedEntity = this.repository.merge(entity, data);
+        return await this.repository.save(updatedEntity);
       }
 
       async update({
-        lookup,
+        entity,
         data,
-        expand,
         ...args
       }: Parameters<Interface["update"]>[0]) {
-        const rawEntity = await this.retrieve({ lookup, expand, ...args });
-        const updatedEntity = this.repository.merge(rawEntity, data);
-        await this.repository.save(updatedEntity);
-        return await this.retrieve({
-          lookup: updatedEntity[options.lookupField],
-          expand,
-          ...args,
-        });
+        const updatedEntity = this.repository.merge(entity, data);
+        return await this.repository.save(updatedEntity);
       }
 
-      async destroy({ lookup, ...args }: Parameters<Interface["destroy"]>[0]) {
-        const entity = await this.retrieve({ lookup, ...args });
+      async destroy({ entity, ...args }: Parameters<Interface["destroy"]>[0]) {
         return await this.repository.remove(entity);
       }
 
@@ -129,7 +105,7 @@ export class RestServiceFactory<
         entity,
         ...args
       }: Parameters<Interface["transform"]>[0]) {
-        return plainToClass(options.entityClass, entity);
+        return plainToClass(entityClass, entity);
       }
 
       async getQueryConditions({
@@ -139,7 +115,7 @@ export class RestServiceFactory<
         return (
           lookup != null
             ? ({
-                [options.lookupField]: lookup,
+                [lookupField]: lookup,
               } as unknown)
             : {}
         ) as FindConditions<Entity>;

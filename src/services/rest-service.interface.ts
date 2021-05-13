@@ -21,29 +21,18 @@ export interface RestService<
     expand?: RelationPaths<Entity>[];
   }): Promise<Entity[]>;
 
-  create(args: {
-    data: CreateDto;
-    expand?: RelationPaths<Entity>[];
-  }): Promise<Entity>;
+  create(args: { data: CreateDto }): Promise<Entity>;
 
   retrieve(args: {
     lookup: Entity[LookupField];
     expand?: RelationPaths<Entity>[];
   }): Promise<Entity>;
 
-  replace(args: {
-    lookup: Entity[LookupField];
-    data: CreateDto;
-    expand?: RelationPaths<Entity>[];
-  }): Promise<Entity>;
+  replace(args: { entity: Entity; data: CreateDto }): Promise<Entity>;
 
-  update(args: {
-    lookup: Entity[LookupField];
-    data: UpdateDto;
-    expand?: RelationPaths<Entity>[];
-  }): Promise<Entity>;
+  update(args: { entity: Entity; data: UpdateDto }): Promise<Entity>;
 
-  destroy(args: { lookup: Entity[LookupField] }): Promise<Entity>;
+  destroy(args: { entity: Entity }): Promise<Entity>;
 
   count(args: {}): Promise<number>;
 

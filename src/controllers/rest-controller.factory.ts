@@ -134,6 +134,7 @@ export class RestControllerFactory<
    */
   protected createRawClass() {
     const { contextOptions } = this.options;
+    const { lookupField } = this.serviceOptions;
 
     type Interface = RestController<
       Entity,
@@ -148,20 +149,18 @@ export class RestControllerFactory<
       async list(
         ...[{ limit, offset, expand }, ...args]: Parameters<Interface["list"]>
       ): Promise<unknown> {
-        const context = await this.prepareContext(args);
+        const ctx = await this.prepareContext(args);
         const entities = await this.service.list({
-          ...context,
+          ...ctx,
           limit,
           offset,
           expand,
         });
         const transformed = await Promise.all(
-          entities.map((entity) =>
-            this.service.transform({ ...context, entity })
-          )
+          entities.map((entity) => this.service.transform({ ...ctx, entity }))
         );
         return await this.service.finalizeList({
-          ...context,
+          ...ctx,
           entities: transformed,
         });
       }
@@ -169,54 +168,49 @@ export class RestControllerFactory<
       async create(
         ...[{ expand }, data, ...args]: Parameters<Interface["create"]>
       ): Promise<unknown> {
-        const context = await this.prepareContext(args);
-        const entity = await this.service.create({ ...context, data, expand });
-        return await this.service.transform({ ...context, entity });
+        const ctx = await this.prepareContext(args);
+        let entity = await this.service.create({ ...ctx, data });
+        const lookup = entity[lookupField];
+        entity = await this.service.retrieve({ ...ctx, lookup, expand });
+        return await this.service.transform({ ...ctx, entity });
       }
 
       async retrieve(
         ...[lookup, { expand }, ...args]: Parameters<Interface["retrieve"]>
       ): Promise<unknown> {
-        const context = await this.prepareContext(args);
-        const entity = await this.service.retrieve({
-          ...context,
-          lookup,
-          expand,
-        });
-        return await this.service.transform({ ...context, entity });
+        const ctx = await this.prepareContext(args);
+        const entity = await this.service.retrieve({ ...ctx, lookup, expand });
+        return await this.service.transform({ ...ctx, entity });
       }
 
       async replace(
         ...[lookup, { expand }, data, ...args]: Parameters<Interface["replace"]>
       ): Promise<unknown> {
-        const context = await this.prepareContext(args);
-        const entity = await this.service.replace({
-          ...context,
-          lookup,
-          data,
-          expand,
-        });
-        return await this.service.transform({ ...context, entity });
+        const ctx = await this.prepareContext(args);
+        let entity: Entity;
+        entity = await this.service.retrieve({ ...ctx, lookup });
+        await this.service.replace({ ...ctx, entity, data });
+        entity = await this.service.retrieve({ ...ctx, lookup, expand });
+        return await this.service.transform({ ...ctx, entity });
       }
 
       async update(
         ...[lookup, { expand }, data, ...args]: Parameters<Interface["update"]>
       ): Promise<unknown> {
-        const context = await this.prepareContext(args);
-        const entity = await this.service.update({
-          ...context,
-          lookup,
-          data,
-          expand,
-        });
-        return await this.service.transform({ ...context, entity });
+        const ctx = await this.prepareContext(args);
+        let entity: Entity;
+        entity = await this.service.retrieve({ ...ctx, lookup });
+        await this.service.update({ ...ctx, entity, data });
+        entity = await this.service.retrieve({ ...ctx, lookup, expand });
+        return await this.service.transform({ ...ctx, entity });
       }
 
       async destroy(
         ...[lookup, ...args]: Parameters<Interface["destroy"]>
       ): Promise<unknown> {
-        const context = await this.prepareContext(args);
-        await this.service.destroy({ ...context, lookup });
+        const ctx = await this.prepareContext(args);
+        const entity = await this.service.retrieve({ ...ctx, lookup });
+        await this.service.destroy({ ...ctx, entity });
         return;
       }
 

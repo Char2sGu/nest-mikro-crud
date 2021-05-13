@@ -102,6 +102,7 @@ export class RestControllerFactory<
       lookupParam = "lookup",
       catchEntityNotFound = true,
       validationPipeOptions = {},
+      contextOptions = {},
     } = options;
 
     return {
@@ -117,6 +118,14 @@ export class RestControllerFactory<
           exposeDefaultValues: true,
         },
       },
+      contextOptions: Object.fromEntries(
+        Object.entries(contextOptions).map(
+          ([name, { type = Object, decorators }]) => [
+            name,
+            { type, decorators },
+          ]
+        )
+      ),
     };
   }
 
@@ -124,6 +133,8 @@ export class RestControllerFactory<
    * Create a no-metadata controller class
    */
   protected createRawClass() {
+    const { contextOptions } = this.options;
+
     type Interface = RestController<
       Entity,
       CreateDto,
@@ -135,48 +146,84 @@ export class RestControllerFactory<
       readonly service!: Interface["service"];
 
       async list(
-        ...[{ limit, offset, expand }]: Parameters<Interface["list"]>
+        ...[{ limit, offset, expand }, ...args]: Parameters<Interface["list"]>
       ): Promise<unknown> {
-        const entities = await this.service.list({ limit, offset, expand });
+        const context = await this.prepareContext(args);
+        const entities = await this.service.list({
+          ...context,
+          limit,
+          offset,
+          expand,
+        });
         const transformed = await Promise.all(
-          entities.map((entity) => this.service.transform({ entity }))
+          entities.map((entity) =>
+            this.service.transform({ ...context, entity })
+          )
         );
-        return await this.service.finalizeList({ entities: transformed });
+        return await this.service.finalizeList({
+          ...context,
+          entities: transformed,
+        });
       }
 
       async create(
-        ...[{ expand }, data]: Parameters<Interface["create"]>
+        ...[{ expand }, data, ...args]: Parameters<Interface["create"]>
       ): Promise<unknown> {
-        const entity = await this.service.create({ data, expand });
-        return await this.service.transform({ entity });
+        const context = await this.prepareContext(args);
+        const entity = await this.service.create({ ...context, data, expand });
+        return await this.service.transform({ ...context, entity });
       }
 
       async retrieve(
-        ...[lookup, { expand }]: Parameters<Interface["retrieve"]>
+        ...[lookup, { expand }, ...args]: Parameters<Interface["retrieve"]>
       ): Promise<unknown> {
-        const entity = await this.service.retrieve({ lookup, expand });
-        return await this.service.transform({ entity });
+        const context = await this.prepareContext(args);
+        const entity = await this.service.retrieve({
+          ...context,
+          lookup,
+          expand,
+        });
+        return await this.service.transform({ ...context, entity });
       }
 
       async replace(
-        ...[lookup, { expand }, data]: Parameters<Interface["replace"]>
+        ...[lookup, { expand }, data, ...args]: Parameters<Interface["replace"]>
       ): Promise<unknown> {
-        const entity = await this.service.replace({ lookup, data, expand });
-        return await this.service.transform({ entity });
+        const context = await this.prepareContext(args);
+        const entity = await this.service.replace({
+          ...context,
+          lookup,
+          data,
+          expand,
+        });
+        return await this.service.transform({ ...context, entity });
       }
 
       async update(
-        ...[lookup, { expand }, data]: Parameters<Interface["update"]>
+        ...[lookup, { expand }, data, ...args]: Parameters<Interface["update"]>
       ): Promise<unknown> {
-        const entity = await this.service.update({ lookup, data, expand });
-        return await this.service.transform({ entity });
+        const context = await this.prepareContext(args);
+        const entity = await this.service.update({
+          ...context,
+          lookup,
+          data,
+          expand,
+        });
+        return await this.service.transform({ ...context, entity });
       }
 
       async destroy(
-        ...[lookup]: Parameters<Interface["destroy"]>
+        ...[lookup, ...args]: Parameters<Interface["destroy"]>
       ): Promise<unknown> {
-        await this.service.destroy({ lookup });
+        const context = await this.prepareContext(args);
+        await this.service.destroy({ ...context, lookup });
         return;
+      }
+
+      async prepareContext(args: unknown[]) {
+        return Object.fromEntries(
+          Object.keys(contextOptions).map((name, index) => [name, args[index]])
+        );
       }
     };
   }
@@ -202,6 +249,15 @@ export class RestControllerFactory<
     );
     const Queries = Query();
     const Data = Body();
+
+    const contextTypes: ClassConstructor<unknown>[] = [];
+    const contextDecorators: ParameterDecorator[][] = [];
+    Object.values(this.options.contextOptions).forEach(
+      ({ type, decorators }) => {
+        contextTypes.push(type);
+        contextDecorators.push(decorators);
+      }
+    );
 
     const table: Record<
       ActionNames,
@@ -229,8 +285,12 @@ export class RestControllerFactory<
     ] of Object.entries(table)) {
       const name = k as ActionNames;
       this.applyMethodDecorators(name, ...methodDecorators)
-        .defineParamTypesMetadata(name, ...paramTypes)
-        .applyParamDecoratorSets(name, ...paramDecoratorSets);
+        .defineParamTypesMetadata(name, ...paramTypes, ...contextTypes)
+        .applyParamDecoratorSets(
+          name,
+          ...paramDecoratorSets,
+          ...contextDecorators
+        );
     }
   }
 }

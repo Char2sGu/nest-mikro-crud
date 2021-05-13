@@ -1,16 +1,4 @@
-import {
-  Body,
-  Delete,
-  Get,
-  Inject,
-  Param,
-  ParseIntPipe,
-  Patch,
-  Post,
-  Put,
-  Query,
-} from "@nestjs/common";
-import { ClassConstructor } from "class-transformer";
+import { Inject } from "@nestjs/common";
 import {
   QueryDto,
   QueryDtoFactory,
@@ -21,7 +9,6 @@ import {
   RestService,
   RestServiceFactoryOptions,
   REST_SERVICE_OPTIONS_METADATA_KEY,
-  ActionNames,
 } from "src";
 import { buildKeyChecker, m } from "tests/utils";
 import { Repository } from "typeorm";
@@ -45,6 +32,8 @@ jest.mock("src/dtos/query-dto.factory", () => ({
 }));
 
 describe(RestControllerFactory.name, () => {
+  const d = buildKeyChecker<RestControllerFactory>();
+
   class TestEntity {
     id!: number;
     field!: number;
@@ -78,11 +67,6 @@ describe(RestControllerFactory.name, () => {
   };
   const TestService = jest.fn(() => testService);
 
-  const options: RestControllerFactoryOptions = {
-    restServiceClass: TestService,
-    actions: ["list", "create", "retrieve", "replace", "update", "destroy"],
-  };
-
   let factory: RestControllerFactory;
 
   beforeEach(() => {
@@ -100,7 +84,10 @@ describe(RestControllerFactory.name, () => {
     jest
       .spyOn(RestControllerFactory.prototype, "defineParamTypesMetadata")
       .mockReturnThis();
-    factory = new RestControllerFactory(options);
+    factory = new RestControllerFactory({
+      restServiceClass: TestService,
+      actions: ["list", "create", "retrieve", "replace", "update", "destroy"],
+    });
   });
 
   it("should process the passed options and expose it", () => {
@@ -114,6 +101,7 @@ describe(RestControllerFactory.name, () => {
       factory.options.validationPipeOptions.transformOptions
         ?.exposeDefaultValues
     ).toBe(true);
+    expect(factory.options.contextOptions).toBeDefined();
   });
 
   it("should expose the service's options", () => {
@@ -128,8 +116,11 @@ describe(RestControllerFactory.name, () => {
     expect(factory.lookupType).toBe(Number);
   });
 
-  describe("should create the controller class", () => {
+  describe(d(".product"), () => {
     const d = buildKeyChecker<RestController>();
+
+    const context = { ctx: "yes" };
+
     let controller: RestController;
     let commonQueries: QueryDto = { expand: [] };
 
@@ -137,6 +128,7 @@ describe(RestControllerFactory.name, () => {
       controller = new factory.product();
       // @ts-expect-error - manual injection
       controller.service = new TestService();
+      jest.spyOn(controller, "prepareContext").mockResolvedValue(context);
     });
 
     describe.each`
@@ -155,18 +147,23 @@ describe(RestControllerFactory.name, () => {
           limit: 1,
           offset: 1,
           expand: [],
+          ...context,
         });
       });
 
       it("should transform the entities", () => {
         expect(testService.transform).toHaveBeenCalledTimes(entities.length);
-        expect(testService.transform).toHaveBeenCalledWith({ entity });
+        expect(testService.transform).toHaveBeenCalledWith({
+          entity,
+          ...context,
+        });
       });
 
       it("should paginate the entities", () => {
         expect(testService.finalizeList).toHaveBeenCalledTimes(1);
         expect(testService.finalizeList).toHaveBeenCalledWith({
           entities,
+          ...context,
         });
       });
 
@@ -187,12 +184,19 @@ describe(RestControllerFactory.name, () => {
 
       it("should create an entity", () => {
         expect(testService.create).toHaveBeenCalledTimes(1);
-        expect(testService.create).toHaveBeenCalledWith({ data, expand: [] });
+        expect(testService.create).toHaveBeenCalledWith({
+          data,
+          expand: [],
+          ...context,
+        });
       });
 
       it("should transform the entity", () => {
         expect(testService.transform).toHaveBeenCalledTimes(1);
-        expect(testService.transform).toHaveBeenCalledWith({ entity });
+        expect(testService.transform).toHaveBeenCalledWith({
+          entity,
+          ...context,
+        });
       });
 
       it("should return the entity", () => {
@@ -215,12 +219,16 @@ describe(RestControllerFactory.name, () => {
         expect(testService.retrieve).toHaveBeenCalledWith({
           lookup,
           expand: [],
+          ...context,
         });
       });
 
       it("should transform the entitiy", () => {
         expect(testService.transform).toHaveBeenCalledTimes(1);
-        expect(testService.transform).toHaveBeenCalledWith({ entity });
+        expect(testService.transform).toHaveBeenCalledWith({
+          entity,
+          ...context,
+        });
       });
 
       it("should return the entity", () => {
@@ -246,12 +254,16 @@ describe(RestControllerFactory.name, () => {
             lookup,
             data,
             expand: [],
+            ...context,
           });
         });
 
         it("should transform the entity", () => {
           expect(testService.transform).toHaveBeenCalledTimes(1);
-          expect(testService.transform).toHaveBeenCalledWith({ entity });
+          expect(testService.transform).toHaveBeenCalledWith({
+            entity,
+            ...context,
+          });
         });
 
         it("should return the entity", () => {
@@ -278,12 +290,16 @@ describe(RestControllerFactory.name, () => {
             lookup,
             data,
             expand: [],
+            ...context,
           });
         });
 
         it("should transform the entity", () => {
           expect(testService.transform).toHaveBeenCalledTimes(1);
-          expect(testService.transform).toHaveBeenCalledWith({ entity });
+          expect(testService.transform).toHaveBeenCalledWith({
+            entity,
+            ...context,
+          });
         });
 
         it("should return the entity", () => {
@@ -306,11 +322,29 @@ describe(RestControllerFactory.name, () => {
         expect(testService.destroy).toHaveBeenCalledTimes(1);
         expect(testService.destroy).toHaveBeenCalledWith({
           lookup,
+          ...context,
         });
       });
 
       it("should return nothing", () => {
         expect(ret).toBeUndefined();
+      });
+    });
+
+    describe(d(".prepareContext()"), () => {
+      let ret: Resolved<ReturnType<typeof controller.prepareContext>>;
+
+      beforeEach(async () => {
+        factory.options.contextOptions.test = {
+          type: String,
+          decorators: [jest.fn()],
+        };
+        m(controller.prepareContext).mockRestore();
+        ret = await controller.prepareContext([1]);
+      });
+
+      it("should return the context", () => {
+        expect(ret).toEqual({ test: 1 });
       });
     });
   });

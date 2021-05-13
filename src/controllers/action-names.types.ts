@@ -1,4 +1,10 @@
 import { ExtractKeys } from "../utils";
 import { RestController } from "./rest-controller.interface";
 
-export type ActionNames = ExtractKeys<RestController, (...args: any[]) => any>;
+export type ActionNames =
+  | "list"
+  | "create"
+  | "retrieve"
+  | "replace"
+  | "update"
+  | "destroy";

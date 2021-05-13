@@ -44,4 +44,10 @@ export interface RestController<
   ): Promise<unknown>;
 
   destroy(lookup: Entity[LookupField], ...args: any[]): Promise<unknown>;
+
+  /**
+   * Pack the args into an object which will pass to each method of the service
+   * accroding to context options.
+   */
+  prepareContext(args: unknown[]): Promise<Record<string, unknown>>;
 }

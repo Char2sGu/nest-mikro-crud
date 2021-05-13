@@ -1,4 +1,4 @@
-import { ValidationPipeOptions } from "@nestjs/common";
+import { UseGuards, ValidationPipeOptions } from "@nestjs/common";
 import { ClassConstructor } from "class-transformer";
 import { QueryDto } from "../dtos";
 import { LookupFields, RestService } from "../services";
@@ -42,4 +42,18 @@ export interface RestControllerFactoryOptions<
    * - `transformOptions.exposeDefaultValues` will be forced to be `true`
    */
   validationPipeOptions?: ValidationPipeOptions;
+  /**
+   * Custom additional context data.
+   *
+   * @example
+   * { user: { type: User, decorators: [ReqUser()] } }
+   * class YourService extends ... {
+   *   getQueryConditions({ user }) {
+   *   }
+   * }
+   */
+  contextOptions?: Record<
+    string,
+    { type?: ClassConstructor<unknown>; decorators: ParameterDecorator[] }
+  >;
 }

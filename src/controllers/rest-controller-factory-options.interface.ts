@@ -1,8 +1,9 @@
-import { UseGuards, ValidationPipeOptions } from "@nestjs/common";
+import { ValidationPipeOptions } from "@nestjs/common";
 import { ClassConstructor } from "class-transformer";
 import { QueryDto } from "../dtos";
-import { LookupFields, RestService } from "../services";
-import { ActionNames } from "./action-names.types";
+import { RestService } from "../services";
+import { LookupFields } from "../types";
+import { ActionNames } from "../types/action-names.types";
 
 export interface RestControllerFactoryOptions<
   Entity = any,

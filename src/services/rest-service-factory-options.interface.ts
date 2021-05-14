@@ -1,5 +1,5 @@
 import { ClassConstructor } from "class-transformer";
-import { LookupFields } from "./lookup-fields.type";
+import { LookupFields } from "../types";
 
 export interface RestServiceFactoryOptions<
   Entity = any,

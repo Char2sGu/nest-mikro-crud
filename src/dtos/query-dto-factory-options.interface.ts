@@ -1,4 +1,4 @@
-import { RelationPaths } from "./relation-paths.type";
+import { RelationPaths } from "../types";
 
 export interface QueryDtoFactoryOptions<Entity> {
   limit?: { max?: number; default?: number };

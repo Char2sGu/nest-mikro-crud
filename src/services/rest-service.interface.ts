@@ -4,8 +4,7 @@ import {
   FindOneOptions,
   Repository,
 } from "typeorm";
-import { RelationPaths } from "../dtos";
-import { LookupFields } from "./lookup-fields.type";
+import { LookupFields, RelationPaths } from "../types";
 
 export interface RestService<
   Entity = any,

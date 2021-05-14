@@ -22,12 +22,9 @@ import {
 } from "../constants";
 import { QueryDtoFactory } from "../dtos";
 import { EntityNotFoundErrorFilter } from "../filters";
-import {
-  LookupFields,
-  RestService,
-  RestServiceFactoryOptions,
-} from "../services";
-import { ActionNames } from "./action-names.types";
+import { RestService, RestServiceFactoryOptions } from "../services";
+import { LookupFields } from "../types";
+import { ActionNames } from "../types/action-names.types";
 import { RestControllerFactoryOptions } from "./rest-controller-factory-options.interface";
 import { RestController } from "./rest-controller.interface";
 

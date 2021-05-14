@@ -1,11 +1,12 @@
 import { QueryDto } from "../dtos";
-import { LookupFields, RestService } from "../services";
+import { RestService } from "../services";
+import { LookupableField } from "../types";
 
 export interface RestController<
   Entity = any,
   CreateDto = Entity,
   UpdateDto = CreateDto,
-  LookupField extends LookupFields<Entity> = LookupFields<Entity>,
+  LookupField extends LookupableField<Entity> = LookupableField<Entity>,
   Service extends RestService<
     Entity,
     CreateDto,

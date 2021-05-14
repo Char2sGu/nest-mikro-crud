@@ -1,6 +1,6 @@
 # Nest RESTful
 
-Graceful flexible builder for RESTful APIs with TypeORM.
+Easily build RESTful CRUD APIs
 
 # Features
 

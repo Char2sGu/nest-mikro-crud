@@ -1,7 +1,7 @@
 {
   "name": "nest-restful",
   "version": "0.3.4",
-  "description": "Graceful flexible builder for RESTful APIs with TypeORM.",
+  "description": "Flexible RESTful CRUD API builder",
   "main": "lib/index.js",
   "scripts": {
     "test": "jest",

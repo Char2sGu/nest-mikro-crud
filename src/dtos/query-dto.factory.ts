@@ -14,7 +14,7 @@ export class QueryDtoFactory<Entity> extends AbstractFactory<QueryDto<Entity>> {
     this.product = class QueryDto implements Interface {
       limit? = options.limit?.default;
       offset? = options.offset?.default;
-      expand = [];
+      expand = options.expand?.default ?? [];
     };
 
     const commonDecorators = [IsOptional()];

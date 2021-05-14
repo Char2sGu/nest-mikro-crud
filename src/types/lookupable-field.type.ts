@@ -1,6 +1,6 @@
 import { ExtractKeys } from "../utils";
 
-export type LookupFields<Entity> = Extract<
+export type LookupableField<Entity> = Extract<
   ExtractKeys<Entity, string | number>,
   string
 >;

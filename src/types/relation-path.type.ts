@@ -1,6 +1,6 @@
 import { ExtractNestedKeys } from "../utils";
 
-export type RelationPaths<Entity> = ExtractNestedKeys<
+export type RelationPath<Entity> = ExtractNestedKeys<
   Entity,
   Record<string, any>
 >;

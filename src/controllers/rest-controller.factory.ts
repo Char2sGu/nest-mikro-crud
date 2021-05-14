@@ -23,8 +23,7 @@ import {
 import { QueryDtoFactory } from "../dtos";
 import { EntityNotFoundErrorFilter } from "../filters";
 import { RestService, RestServiceFactoryOptions } from "../services";
-import { LookupFields } from "../types";
-import { ActionNames } from "../types/action-names.types";
+import { ActionName, LookupableField } from "../types";
 import { RestControllerFactoryOptions } from "./rest-controller-factory-options.interface";
 import { RestController } from "./rest-controller.interface";
 
@@ -53,7 +52,7 @@ export class RestControllerFactory<
   Entity = ServiceGenerics<Service>["Entity"],
   CreateDto = ServiceGenerics<Service>["CreateDto"],
   UpdateDto = ServiceGenerics<Service>["UpdateDto"],
-  LookupField extends LookupFields<Entity> = ServiceGenerics<Service>["LookupField"]
+  LookupField extends LookupableField<Entity> = ServiceGenerics<Service>["LookupField"]
 > extends AbstractFactory<
   RestController<Entity, CreateDto, UpdateDto, LookupField, Service>
 > {
@@ -263,7 +262,7 @@ export class RestControllerFactory<
     );
 
     const table: Record<
-      ActionNames,
+      ActionName,
       [MethodDecorator[], ClassConstructor<unknown>[], ParameterDecorator[][]]
     > = {
       list: [[Get()], [queryDto], [[Queries]]],
@@ -286,7 +285,7 @@ export class RestControllerFactory<
       k,
       [methodDecorators, paramTypes, paramDecoratorSets],
     ] of Object.entries(table)) {
-      const name = k as ActionNames;
+      const name = k as ActionName;
       this.applyMethodDecorators(name, ...methodDecorators)
         .defineParamTypesMetadata(name, ...paramTypes, ...contextTypes)
         .applyParamDecoratorSets(

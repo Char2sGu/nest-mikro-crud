@@ -4,27 +4,27 @@ import {
   FindOneOptions,
   Repository,
 } from "typeorm";
-import { LookupFields, RelationPaths } from "../types";
+import { LookupableField, RelationPath } from "../types";
 
 export interface RestService<
   Entity = any,
   CreateDto = Entity,
   UpdateDto = CreateDto,
-  LookupField extends LookupFields<Entity> = LookupFields<Entity>
+  LookupField extends LookupableField<Entity> = LookupableField<Entity>
 > {
   readonly repository: Repository<Entity>;
 
   list(args: {
     limit?: number;
     offset?: number;
-    expand?: RelationPaths<Entity>[];
+    expand?: RelationPath<Entity>[];
   }): Promise<Entity[]>;
 
   create(args: { data: CreateDto }): Promise<Entity>;
 
   retrieve(args: {
     lookup: Entity[LookupField];
-    expand?: RelationPaths<Entity>[];
+    expand?: RelationPath<Entity>[];
   }): Promise<Entity>;
 
   replace(args: { entity: Entity; data: CreateDto }): Promise<Entity>;
@@ -51,7 +51,7 @@ export interface RestService<
   }): Promise<FindConditions<Entity>>;
 
   getRelationOptions(args: {
-    expand?: RelationPaths<Entity>[];
+    expand?: RelationPath<Entity>[];
   }): Promise<FindOneOptions<Entity> | FindManyOptions<Entity>>;
 
   /**

@@ -3,7 +3,7 @@ import { plainToClass } from "class-transformer";
 import { FindConditions } from "typeorm";
 import { AbstractFactory } from "../abstract.factory";
 import { REST_SERVICE_OPTIONS_METADATA_KEY } from "../constants";
-import { LookupFields } from "../types";
+import { LookupableField } from "../types";
 import { RestServiceFactoryOptions } from "./rest-service-factory-options.interface";
 import { RestService } from "./rest-service.interface";
 
@@ -11,7 +11,7 @@ export class RestServiceFactory<
   Entity = any,
   CreateDto = Entity,
   UpdateDto = CreateDto,
-  LookupField extends LookupFields<Entity> = LookupFields<Entity>
+  LookupField extends LookupableField<Entity> = LookupableField<Entity>
 > extends AbstractFactory<
   RestService<Entity, CreateDto, UpdateDto, LookupField>
 > {

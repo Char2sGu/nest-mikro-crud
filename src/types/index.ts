@@ -1,3 +1,3 @@
-export * from "./action-names.types";
-export * from "./lookup-fields.type";
-export * from "./relation-paths.type";
+export * from "./action-name.type";
+export * from "./lookupable-field.type";
+export * from "./relation-path.type";

@@ -1,11 +1,11 @@
 import { ClassConstructor } from "class-transformer";
-import { LookupFields } from "../types";
+import { LookupableField } from "../types";
 
 export interface RestServiceFactoryOptions<
   Entity = any,
   CreateDto = Entity,
   UpdateDto = CreateDto,
-  LookupField extends LookupFields<Entity> = LookupFields<Entity>
+  LookupField extends LookupableField<Entity> = LookupableField<Entity>
 > {
   /**
    * The entity's constructor whose repository will be auto-injected.

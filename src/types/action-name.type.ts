@@ -1,4 +1,4 @@
-export type ActionNames =
+export type ActionName =
   | "list"
   | "create"
   | "retrieve"

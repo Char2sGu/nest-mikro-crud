@@ -2,14 +2,13 @@ import { ValidationPipeOptions } from "@nestjs/common";
 import { ClassConstructor } from "class-transformer";
 import { QueryDto } from "../dtos";
 import { RestService } from "../services";
-import { LookupFields } from "../types";
-import { ActionNames } from "../types/action-names.types";
+import { ActionName, LookupableField } from "../types";
 
 export interface RestControllerFactoryOptions<
   Entity = any,
   CreateDto = Entity,
   UpdateDto = CreateDto,
-  LookupField extends LookupFields<Entity> = LookupFields<Entity>,
+  LookupField extends LookupableField<Entity> = LookupableField<Entity>,
   Service extends RestService<
     Entity,
     CreateDto,
@@ -24,7 +23,7 @@ export interface RestControllerFactoryOptions<
   /**
    * Specify which actions should be enabled.
    */
-  actions: ActionNames[];
+  actions: ActionName[];
   /**
    * Use specific dto for more advanced settings of the query params.
    */

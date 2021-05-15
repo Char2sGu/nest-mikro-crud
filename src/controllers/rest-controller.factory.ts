@@ -31,22 +31,32 @@ import { ActionNames } from "./action-names.types";
 import { RestControllerFactoryOptions } from "./rest-controller-factory-options.interface";
 import { RestController } from "./rest-controller.interface";
 
-// TODO: Fix the issue below.
-/**
- * Strangely, literal generic types will be lost in nested type inferences and I've not
- * found any graceful solutions yet.
- */
+type ServiceGenerics<Service> = Service extends RestService<
+  infer Entity,
+  infer CreateDto,
+  infer UpdateDto,
+  infer LookupField
+>
+  ? {
+      Entity: Entity;
+      CreateDto: CreateDto;
+      UpdateDto: UpdateDto;
+      LookupField: LookupField;
+    }
+  : never;
+
+// TODO: make the generic type `LookupField` literal
 export class RestControllerFactory<
-  Entity = any,
-  CreateDto = Entity,
-  UpdateDto = CreateDto,
-  LookupField extends LookupFields<Entity> = LookupFields<Entity>,
   Service extends RestService<
     Entity,
     CreateDto,
     UpdateDto,
     LookupField
-  > = RestService<Entity, CreateDto, UpdateDto, LookupField>
+  > = RestService,
+  Entity = ServiceGenerics<Service>["Entity"],
+  CreateDto = ServiceGenerics<Service>["CreateDto"],
+  UpdateDto = ServiceGenerics<Service>["UpdateDto"],
+  LookupField extends LookupFields<Entity> = ServiceGenerics<Service>["LookupField"]
 > extends AbstractFactory<
   RestController<Entity, CreateDto, UpdateDto, LookupField, Service>
 > {
@@ -94,7 +104,8 @@ export class RestControllerFactory<
       Entity,
       CreateDto,
       UpdateDto,
-      LookupField
+      LookupField,
+      Service
     >
   ) {
     const {

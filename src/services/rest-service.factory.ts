@@ -47,7 +47,7 @@ export class RestServiceFactory<
       async list({
         limit,
         offset,
-        expand,
+        expand = [],
         ...args
       }: Parameters<Interface["list"]>[0]) {
         return await this.repository.find({
@@ -64,7 +64,7 @@ export class RestServiceFactory<
 
       async retrieve({
         lookup,
-        expand,
+        expand = [],
         ...args
       }: Parameters<Interface["retrieve"]>[0]) {
         return await this.repository.findOneOrFail({

@@ -51,7 +51,7 @@ export interface RestService<
   }): Promise<FindConditions<Entity>>;
 
   parseFieldExpansions(args: {
-    expand?: RelationPath<Entity>[];
+    expand: RelationPath<Entity>[];
   }): Promise<FindOneOptions<Entity> | FindManyOptions<Entity>>;
 
   /**

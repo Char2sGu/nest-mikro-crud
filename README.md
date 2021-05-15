@@ -208,11 +208,15 @@ class OurController extends new RestControllerFactory({
 }).product {}
 ```
 
-You can custom the relation options by overriding the `getRelationOptions` of the service.
+You can custom the relation options by overriding the `parseFieldExpansions` of the service.
 
 ```ts
 class OurService /*extends ...*/ {
-  async getRelationOptions({ expand }: { expand: RelationPaths<OurEntity>[] }) {
+  async parseFieldExpansions({
+    expand,
+  }: {
+    expand: RelationPaths<OurEntity>[];
+  }) {
     return { loadRelationIds: true }; // disable nesting
   }
 }

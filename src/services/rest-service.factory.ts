@@ -54,7 +54,7 @@ export class RestServiceFactory<
           where: await this.getQueryConditions({ ...args }),
           take: limit,
           skip: offset,
-          ...(await this.getRelationOptions({ expand, ...args })),
+          ...(await this.parseFieldExpansions({ expand, ...args })),
         });
       }
 
@@ -69,7 +69,7 @@ export class RestServiceFactory<
       }: Parameters<Interface["retrieve"]>[0]) {
         return await this.repository.findOneOrFail({
           where: await this.getQueryConditions({ lookup, ...args }),
-          ...(await this.getRelationOptions({ expand, ...args })),
+          ...(await this.parseFieldExpansions({ expand, ...args })),
         });
       }
 
@@ -121,10 +121,10 @@ export class RestServiceFactory<
         ) as FindConditions<Entity>;
       }
 
-      async getRelationOptions({
+      async parseFieldExpansions({
         expand = [],
         ...args
-      }: Parameters<Interface["getRelationOptions"]>[0]) {
+      }: Parameters<Interface["parseFieldExpansions"]>[0]) {
         expand = [...new Set(expand)];
         const allRelationPaths = this.repository.metadata.relations.map(
           (relation) => relation.propertyPath

@@ -61,7 +61,7 @@ describe(RestControllerFactory.name, () => {
     count: jest.fn(async () => entities.length),
     transform: jest.fn(async (v) => v.entity),
     getQueryConditions: jest.fn(async () => ({})),
-    getRelationOptions: jest.fn(async () => ({
+    parseFieldExpansions: jest.fn(async () => ({
       relations: [],
       loadRelationIds: { relations: [] },
     })),

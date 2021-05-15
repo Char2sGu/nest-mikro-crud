@@ -62,7 +62,7 @@ describe(RestServiceFactory.name, () => {
           .spyOn(service, "getQueryConditions")
           .mockResolvedValueOnce({ id: 1 });
         jest
-          .spyOn(service, "getRelationOptions")
+          .spyOn(service, "parseFieldExpansions")
           .mockResolvedValueOnce({ relations: [] });
         ret = await service.list({
           limit: 1,
@@ -84,7 +84,7 @@ describe(RestServiceFactory.name, () => {
       });
 
       it("should get the relation options", () => {
-        expect(service.getRelationOptions).toHaveBeenCalledWith({
+        expect(service.parseFieldExpansions).toHaveBeenCalledWith({
           expand: [],
           ...extraArgs,
         });
@@ -125,7 +125,7 @@ describe(RestServiceFactory.name, () => {
         jest
           .spyOn(service, "getQueryConditions")
           .mockResolvedValueOnce({ id: 1 });
-        jest.spyOn(service, "getRelationOptions").mockResolvedValueOnce({
+        jest.spyOn(service, "parseFieldExpansions").mockResolvedValueOnce({
           relations: [],
         });
         ret = await service.retrieve({
@@ -147,8 +147,8 @@ describe(RestServiceFactory.name, () => {
       });
 
       it("should get the relation options", () => {
-        expect(service.getRelationOptions).toHaveBeenCalledTimes(1);
-        expect(service.getRelationOptions).toHaveBeenCalledWith({
+        expect(service.parseFieldExpansions).toHaveBeenCalledTimes(1);
+        expect(service.parseFieldExpansions).toHaveBeenCalledWith({
           expand: [],
           ...extraArgs,
         });
@@ -289,16 +289,16 @@ describe(RestServiceFactory.name, () => {
       expand   | all                | expected
       ${["1"]} | ${["1", "2", "3"]} | ${[["1"], ["2", "3"]]}
     `(
-      d(".getRelationOptions({ expand: $expand }) all:$all"),
+      d(".parseFieldExpansions({ expand: $expand }) all:$all"),
       ({ expand, all, expected }) => {
-        let ret: Resolved<ReturnType<RestService["getRelationOptions"]>>;
+        let ret: Resolved<ReturnType<RestService["parseFieldExpansions"]>>;
 
         beforeEach(async () => {
           // @ts-expect-error - mock data
           repository.metadata = {
             relations: all.map((v: string) => ({ propertyPath: v })),
           } as any;
-          ret = await service.getRelationOptions({ expand, ...extraArgs });
+          ret = await service.parseFieldExpansions({ expand, ...extraArgs });
         });
 
         it(`should return relations: [${expected[0]}] and relaiton ids: [${expected[1]}]`, () => {

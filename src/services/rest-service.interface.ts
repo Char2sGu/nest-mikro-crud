@@ -50,7 +50,7 @@ export interface RestService<
     lookup?: Entity[LookupField];
   }): Promise<FindConditions<Entity>>;
 
-  getRelationOptions(args: {
+  parseFieldExpansions(args: {
     expand?: RelationPath<Entity>[];
   }): Promise<FindOneOptions<Entity> | FindManyOptions<Entity>>;
 

@@ -121,10 +121,12 @@ describe("E2E", () => {
     );
 
     describe.each`
-      limit        | offset
-      ${0}         | ${undefined}
-      ${undefined} | ${0}
-      ${4}         | ${undefined}
+      limit        | offset       | expand       | order
+      ${0}         | ${undefined} | ${undefined} | ${undefined}
+      ${undefined} | ${0}         | ${undefined} | ${undefined}
+      ${4}         | ${undefined} | ${undefined} | ${undefined}
+      ${undefined} | ${undefined} | ${"child2"}  | ${undefined}
+      ${undefined} | ${undefined} | ${"child2"}  | ${"id:desc"}
     `("/?limit=$limit&offset=$offset (GET)", (queries) => {
       let response: Response;
 

@@ -50,6 +50,7 @@ export class QueryDtoFactory<Entity> extends AbstractFactory<QueryDto<Entity>> {
       .applyPropertyDecorators(
         "order",
         ...commonDecorators,
+        IsArray(),
         Type((type) => String),
         IsIn(options.order?.in ?? [], { each: true })
       );

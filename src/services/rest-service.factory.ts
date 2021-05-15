@@ -1,9 +1,9 @@
 import { InjectRepository } from "@nestjs/typeorm";
 import { plainToClass } from "class-transformer";
-import { FindConditions } from "typeorm";
+import { FindConditions, FindManyOptions } from "typeorm";
 import { AbstractFactory } from "../abstract.factory";
 import { REST_SERVICE_OPTIONS_METADATA_KEY } from "../constants";
-import { LookupableField } from "../types";
+import { EntityField, LookupableField } from "../types";
 import { RestServiceFactoryOptions } from "./rest-service-factory-options.interface";
 import { RestService } from "./rest-service.interface";
 
@@ -48,12 +48,14 @@ export class RestServiceFactory<
         limit,
         offset,
         expand = [],
+        order = [],
         ...args
       }: Parameters<Interface["list"]>[0]) {
         return await this.repository.find({
           where: await this.getQueryConditions({ ...args }),
           take: limit,
           skip: offset,
+          order: await this.parseOrders({ order }),
           ...(await this.parseFieldExpansions({ expand, ...args })),
         });
       }
@@ -137,6 +139,18 @@ export class RestServiceFactory<
             ),
           },
         };
+      }
+
+      async parseOrders({ order }: Parameters<Interface["parseOrders"]>[0]) {
+        const orderOptions: FindManyOptions<Entity>["order"] = {};
+        order.forEach((raw) => {
+          const [field, order] = raw.split(":") as [
+            EntityField<Entity>,
+            "asc" | "desc"
+          ];
+          orderOptions[field] = order == "asc" ? "ASC" : "DESC";
+        });
+        return orderOptions;
       }
 
       async finalizeList({

@@ -15,6 +15,7 @@ export class QueryDtoFactory<Entity> extends AbstractFactory<QueryDto<Entity>> {
       limit? = options.limit?.default;
       offset? = options.offset?.default;
       expand? = options.expand?.default;
+      order? = options.order?.default;
     };
 
     const commonDecorators = [IsOptional()];
@@ -27,6 +28,7 @@ export class QueryDtoFactory<Entity> extends AbstractFactory<QueryDto<Entity>> {
         ...numericDecorators,
         ...(options.limit?.max ? [Max(options.limit.max)] : [])
       )
+
       .defineTypeMetadata("offset", Number)
       .applyPropertyDecorators(
         "offset",
@@ -34,6 +36,7 @@ export class QueryDtoFactory<Entity> extends AbstractFactory<QueryDto<Entity>> {
         ...numericDecorators,
         ...(options.offset?.max ? [Max(options.offset.max)] : [])
       )
+
       .defineTypeMetadata("expand", Array)
       .applyPropertyDecorators(
         "expand",
@@ -41,6 +44,14 @@ export class QueryDtoFactory<Entity> extends AbstractFactory<QueryDto<Entity>> {
         IsArray(),
         Type((type) => String),
         IsIn(options.expand?.in ?? [], { each: true })
+      )
+
+      .defineTypeMetadata("order", Array)
+      .applyPropertyDecorators(
+        "order",
+        ...commonDecorators,
+        Type((type) => String),
+        IsIn(options.order?.in ?? [], { each: true })
       );
   }
 }

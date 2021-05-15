@@ -4,7 +4,7 @@ import {
   FindOneOptions,
   Repository,
 } from "typeorm";
-import { LookupableField, RelationPath } from "../types";
+import { LookupableField, OrderQueryParam, RelationPath } from "../types";
 
 export interface RestService<
   Entity = any,
@@ -18,6 +18,7 @@ export interface RestService<
     limit?: number;
     offset?: number;
     expand?: RelationPath<Entity>[];
+    order?: OrderQueryParam<Entity>[];
   }): Promise<Entity[]>;
 
   create(args: { data: CreateDto }): Promise<Entity>;
@@ -53,6 +54,10 @@ export interface RestService<
   parseFieldExpansions(args: {
     expand: RelationPath<Entity>[];
   }): Promise<FindOneOptions<Entity> | FindManyOptions<Entity>>;
+
+  parseOrders(args: {
+    order: OrderQueryParam<Entity>[];
+  }): Promise<FindManyOptions<Entity>["order"]>;
 
   /**
    * Will be called before responding the `list` result. By default it returns the

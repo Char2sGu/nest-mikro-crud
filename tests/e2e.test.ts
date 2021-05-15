@@ -1,6 +1,7 @@
 import { Controller, Injectable, Provider, Type } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import { getRepositoryToken } from "@nestjs/typeorm";
+import { UnsubscriptionError } from "rxjs";
 import {
   QueryDtoFactory,
   RestControllerFactory,
@@ -77,6 +78,7 @@ describe("E2E", () => {
       queryDto: new QueryDtoFactory<ParentEntity>({
         limit: { max: 2, default: 1 },
         expand: { in: ["child2"] },
+        order: { in: ["id:desc"] },
       }).product,
     }).product {}
 
@@ -85,21 +87,22 @@ describe("E2E", () => {
     });
 
     describe.each`
-      limit        | offset       | count | firstId
-      ${undefined} | ${undefined} | ${1}  | ${1}
-      ${2}         | ${undefined} | ${2}  | ${1}
-      ${undefined} | ${1}         | ${1}  | ${2}
-      ${2}         | ${1}         | ${2}  | ${2}
+      limit        | offset       | order        | count | firstId
+      ${undefined} | ${undefined} | ${undefined} | ${1}  | ${1}
+      ${2}         | ${undefined} | ${undefined} | ${2}  | ${1}
+      ${undefined} | ${1}         | ${undefined} | ${1}  | ${2}
+      ${2}         | ${1}         | ${undefined} | ${2}  | ${2}
+      ${undefined} | ${undefined} | ${"id:desc"} | ${1}  | ${3}
     `(
       "/?limit=$limit&offset=$offset (GET)",
-      ({ limit, offset, count, firstId }) => {
+      ({ limit, offset, order, count, firstId }) => {
         let response: Response;
         let body: { total: number; results: ParentEntity[] };
 
         beforeEach(async () => {
           response = await requester
             .get("/")
-            .query({ limit, offset, ...commonQueries });
+            .query({ limit, offset, "order[]": order, ...commonQueries });
           ({ body } = response);
         });
 

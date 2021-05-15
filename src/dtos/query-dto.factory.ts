@@ -1,5 +1,5 @@
 import { Type } from "class-transformer";
-import { IsIn, IsNumber, IsOptional, Max, Min } from "class-validator";
+import { IsArray, IsIn, IsNumber, IsOptional, Max, Min } from "class-validator";
 import { AbstractFactory } from "../abstract.factory";
 import { QueryDtoFactoryOptions } from "./query-dto-factory-options.interface";
 import { QueryDto } from "./query-dto.interface";
@@ -38,6 +38,7 @@ export class QueryDtoFactory<Entity> extends AbstractFactory<QueryDto<Entity>> {
       .applyPropertyDecorators(
         "expand",
         ...commonDecorators,
+        IsArray(),
         Type((type) => String),
         IsIn(options.expand?.in ?? [], { each: true })
       );

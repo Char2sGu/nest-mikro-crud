@@ -95,6 +95,7 @@ describe(RestServiceFactory.name, () => {
           where: { id: 1 },
           take: 1,
           skip: 2,
+          order: {},
           relations: [],
         });
       });

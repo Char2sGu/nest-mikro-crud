@@ -53,7 +53,12 @@ export interface RestService<
 
   parseFieldExpansions(args: {
     expand: RelationPath<Entity>[];
-  }): Promise<FindOneOptions<Entity> | FindManyOptions<Entity>>;
+  }): Promise<
+    Pick<
+      FindOneOptions<Entity>,
+      "relations" | "loadRelationIds" | "loadEagerRelations"
+    >
+  >;
 
   parseOrders(args: {
     order: OrderQueryParam<Entity>[];

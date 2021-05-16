@@ -309,6 +309,22 @@ describe(RestServiceFactory.name, () => {
       }
     );
 
+    describe.each`
+      order             | expected
+      ${["field:asc"]}  | ${{ field: "ASC" }}
+      ${["field:desc"]} | ${{ field: "DESC" }}
+    `(d(".parseOrders({ order: $order })"), ({ order, expected }) => {
+      let ret: Resolved<ReturnType<RestService["parseOrders"]>>;
+
+      beforeEach(async () => {
+        ret = await service.parseOrders({ order });
+      });
+
+      it(`should return ${expected}`, () => {
+        expect(ret).toEqual(expected);
+      });
+    });
+
     describe(d(".finalizeList()"), () => {
       let ret: Resolved<ReturnType<RestService["finalizeList"]>>;
 

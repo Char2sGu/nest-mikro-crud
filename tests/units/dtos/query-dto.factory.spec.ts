@@ -1,14 +1,15 @@
 import { plainToClass } from "class-transformer";
-import { validate, validateOrReject } from "class-validator";
+import { validateOrReject } from "class-validator";
 import { QueryDtoFactory } from "src";
 import { ParentEntity } from "tests/entities";
 import { buildKeyChecker } from "tests/utils";
 
+const d = buildKeyChecker<typeof factory>();
+
+let factory: QueryDtoFactory<ParentEntity>;
+let instance: typeof factory.product.prototype;
+
 describe(QueryDtoFactory.name, () => {
-  const d = buildKeyChecker<typeof factory>();
-
-  let factory: QueryDtoFactory<ParentEntity>;
-
   beforeEach(() => {
     factory = new QueryDtoFactory<ParentEntity>({
       limit: { max: 2, default: 1 },
@@ -24,8 +25,6 @@ describe(QueryDtoFactory.name, () => {
 
   describe(d(".product"), () => {
     const d = buildKeyChecker<typeof factory.product.prototype>();
-
-    let instance: typeof factory.product.prototype;
 
     it("should assign default values when optional properties are not provided", () => {
       instance = plainToClass(factory.product, {});
@@ -70,5 +69,24 @@ describe(QueryDtoFactory.name, () => {
         ).rejects.toBeDefined();
       }
     );
+  });
+});
+
+describe(QueryDtoFactory.name, () => {
+  beforeEach(() => {
+    factory = new QueryDtoFactory<any>({
+      expand: { default: ["bbb"] },
+      order: { default: ["aaaa:asc"] },
+    });
+  });
+
+  describe(d(".product"), () => {
+    it("should exclude the disabled params", () => {
+      instance = plainToClass(factory.product, {
+        expand: ["123"],
+        order: ["abc"],
+      });
+      expect(instance).toEqual({ expand: ["bbb"], order: ["aaaa:asc"] });
+    });
   });
 });

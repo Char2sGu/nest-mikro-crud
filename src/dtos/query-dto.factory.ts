@@ -1,4 +1,4 @@
-import { Type } from "class-transformer";
+import { Exclude, Type } from "class-transformer";
 import { IsArray, IsIn, IsNumber, IsOptional, Max, Min } from "class-validator";
 import { AbstractFactory } from "../abstract.factory";
 import { OrderQueryParam } from "../types";
@@ -14,6 +14,7 @@ export class QueryDtoFactory<Entity> extends AbstractFactory<QueryDto<Entity>> {
     this.options = this.standardizeOptions(options);
     this.product = this.createRawClass();
     this.defineValidations();
+    this.excludeDisabled();
   }
 
   protected standardizeOptions(options: QueryDtoFactoryOptions<Entity>) {
@@ -91,5 +92,11 @@ export class QueryDtoFactory<Entity> extends AbstractFactory<QueryDto<Entity>> {
         IsArray(),
         IsIn(order.in, { each: true })
       );
+  }
+
+  protected excludeDisabled() {
+    const { expand, order } = this.options;
+    if (!expand.in.length) this.applyPropertyDecorators("expand", Exclude());
+    if (!order.in.length) this.applyPropertyDecorators("order", Exclude());
   }
 }

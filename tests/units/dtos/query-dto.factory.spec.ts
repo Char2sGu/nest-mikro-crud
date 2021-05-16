@@ -55,5 +55,20 @@ describe(QueryDtoFactory.name, () => {
         ).rejects.toBeDefined();
       }
     );
+
+    it.each`
+      name        | value
+      ${"limit"}  | ${1}
+      ${"offset"} | ${2}
+      ${"expand"} | ${["child1"]}
+      ${"order"}  | ${["child1:desc"]}
+    `(
+      "should pass the validation when $name is $value",
+      async ({ name, value }) => {
+        await expect(
+          validateOrReject(plainToClass(factory.product, { [name]: value }))
+        ).rejects.toBeDefined();
+      }
+    );
   });
 });

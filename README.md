@@ -46,14 +46,14 @@ class OurController extends new RestControllerFactory({
 
 Here it is the simplest controller, this controller provides the following API endpoints.
 
-| Action   | Method | URL                                  | Code        | Response |
-| -------- | ------ | ------------------------------------ | ----------- | -------- |
-| List     | GET    | /?limit=\<number\>&offset=\<number\> | 200,400     | Entity[] |
-| Create   | POST   | /                                    | 201,400     | Entity   |
-| Retrieve | GET    | /:lookup/                            | 200,404     | Entity   |
-| Replace  | PUT    | /:lookup/                            | 200,400,404 | Entity   |
-| Update   | PATCH  | /:lookup/                            | 200,400,404 | Entity   |
-| Destroy  | DELETE | /:lookup/                            | 204,404     | void     |
+| Action   | Method | URL                                  | Code        | Response                             |
+| -------- | ------ | ------------------------------------ | ----------- | ------------------------------------ |
+| List     | GET    | /?limit=\<number\>&offset=\<number\> | 200,400     | { total: number; results: Entity[] } |
+| Create   | POST   | /                                    | 201,400     | Entity                               |
+| Retrieve | GET    | /:lookup/                            | 200,404     | Entity                               |
+| Replace  | PUT    | /:lookup/                            | 200,400,404 | Entity                               |
+| Update   | PATCH  | /:lookup/                            | 200,400,404 | Entity                               |
+| Destroy  | DELETE | /:lookup/                            | 204,404     | void                                 |
 
 Also, the service will be auto-injected, so there is nothing more to do inside the class in simplest cases.
 

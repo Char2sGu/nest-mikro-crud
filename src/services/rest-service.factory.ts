@@ -124,7 +124,7 @@ export class RestServiceFactory<
       }
 
       async parseFieldExpansions({
-        expand = [],
+        expand,
         ...args
       }: Parameters<Interface["parseFieldExpansions"]>[0]) {
         expand = [...new Set(expand)];

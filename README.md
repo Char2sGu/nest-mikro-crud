@@ -2,6 +2,8 @@
 
 Easily build RESTful CRUD APIs
 
+**NOTE**: v0.x are unstable in-development versions, which means there may be breaking changes every time the minor version grows. See the commit history for detailed changes.
+
 # Features
 
 - Super easy and fast to build RESTful CRUD APIs

@@ -55,7 +55,7 @@ export class RestServiceFactory<
           where: await this.getQueryConditions({ ...args }),
           take: limit,
           skip: offset,
-          order: await this.parseOrders({ order }),
+          order: await this.parseOrders({ order, ...args }),
           ...(await this.parseFieldExpansions({ expand, ...args })),
         });
       }

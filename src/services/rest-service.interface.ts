@@ -14,6 +14,10 @@ export interface RestService<
 > {
   readonly repository: Repository<Entity>;
 
+  /**
+   * Top entry method of "list" action.
+   * @param args
+   */
   list(args: {
     limit?: number;
     offset?: number;
@@ -21,36 +25,59 @@ export interface RestService<
     order?: OrderQueryParam<Entity>[];
   }): Promise<Entity[]>;
 
+  /**
+   * Top entry method of "create" action.
+   * @param args
+   */
   create(args: { data: CreateDto }): Promise<Entity>;
 
+  /**
+   * Top entry method of "retrieve" action.
+   * @param args
+   */
   retrieve(args: {
     lookup: Entity[LookupField];
     expand?: RelationPath<Entity>[];
   }): Promise<Entity>;
 
+  /**
+   * Top entry method of "replace" action.
+   * @param args
+   */
   replace(args: { entity: Entity; data: CreateDto }): Promise<Entity>;
 
+  /**
+   * Top entry method of "update" action.
+   * @param args
+   */
   update(args: { entity: Entity; data: UpdateDto }): Promise<Entity>;
 
+  /**
+   * Top entry method of "destroy" action.
+   * @param args
+   */
   destroy(args: { entity: Entity }): Promise<Entity>;
 
   count(args: {}): Promise<number>;
 
   /**
-   * Transform the entity before sending the response.
-   *
-   * Interceptors are not used because overloading may change the data structure.
+   * Will be called in the controller to transform the entity
+   * before sending the response.
    */
   transform(args: { entity: Entity }): Promise<Entity>;
 
   /**
-   * Could be overrided to enforce some conditions.
+   * Entry method of getting query conditions.
    * @param lookup
    */
   getQueryConditions(args: {
     lookup?: Entity[LookupField];
   }): Promise<FindConditions<Entity>>;
 
+  /**
+   * Parse the "expand" query param into actual options.
+   * @param args
+   */
   parseFieldExpansions(args: {
     expand: RelationPath<Entity>[];
   }): Promise<
@@ -60,13 +87,17 @@ export interface RestService<
     >
   >;
 
+  /**
+   * Parse the "order" query param into actual options.
+   * @param args
+   */
   parseOrders(args: {
     order: OrderQueryParam<Entity>[];
   }): Promise<FindManyOptions<Entity>["order"]>;
 
   /**
-   * Will be called before responding the `list` result. By default it returns the
-   * entities directly, override it to change its behavior.
+   * Will be called before sending the response of "list" action to get the
+   * final response data.
    * @param entities
    * @param queries
    * @param args

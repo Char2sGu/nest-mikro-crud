@@ -124,7 +124,6 @@ describe(RestControllerFactory.name, () => {
       let ret: Resolved<ReturnType<typeof controller.prepareContext>>;
 
       beforeEach(async () => {
-        m(controller.prepareContext).mockRestore();
         ret = await controller.prepareContext(["ctx"]);
       });
 

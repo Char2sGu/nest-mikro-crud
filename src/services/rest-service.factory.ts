@@ -125,6 +125,7 @@ export class RestServiceFactory<
         expand = [],
         ...args
       }: Parameters<Interface["getRelationOptions"]>[0]) {
+        expand = [...new Set(expand)];
         const allRelationPaths = this.repository.metadata.relations.map(
           (relation) => relation.propertyPath
         );

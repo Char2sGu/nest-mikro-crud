@@ -2,9 +2,16 @@ import {
   FindConditions,
   FindManyOptions,
   FindOneOptions,
+  FindOperator,
   Repository,
 } from "typeorm";
-import { LookupableField, OrderQueryParam, RelationPath } from "../types";
+import {
+  FilterOperator,
+  FilterQueryParam,
+  LookupableField,
+  OrderQueryParam,
+  RelationPath,
+} from "../types";
 
 export interface RestService<
   Entity = any,
@@ -23,6 +30,7 @@ export interface RestService<
     offset?: number;
     expand?: RelationPath<Entity>[];
     order?: OrderQueryParam<Entity>[];
+    filter?: FilterQueryParam<Entity>[];
   }): Promise<Entity[]>;
 
   /**
@@ -94,6 +102,24 @@ export interface RestService<
   parseOrders(args: {
     order: OrderQueryParam<Entity>[];
   }): Promise<FindManyOptions<Entity>["order"]>;
+
+  /**
+   * Parse the "filter" query param into actual conditions.
+   * @param args
+   */
+  parseFilters(args: {
+    filter: FilterQueryParam<Entity>[];
+  }): Promise<FindConditions<Entity>>;
+
+  /**
+   * Parse a string operator and the value into the actual TypeORM
+   * operator.
+   * @param args
+   */
+  parseFilterOperator(args: {
+    operator: FilterOperator;
+    value: string;
+  }): Promise<FindOperator<unknown>>;
 
   /**
    * Will be called before sending the response of "list" action to get the

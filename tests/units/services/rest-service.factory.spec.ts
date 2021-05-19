@@ -8,12 +8,14 @@ import {
 import { CreateParentEntityDto, UpdateParentEntityDto } from "tests/dtos";
 import { ParentEntity } from "tests/entities";
 import { buildKeyChecker, m } from "tests/utils";
-import { Repository } from "typeorm";
+import { Equal, In, Repository } from "typeorm";
 
 jest.mock("@nestjs/typeorm", () => ({
   ...jest.requireActual("@nestjs/typeorm"),
   InjectRepository: jest.fn().mockReturnValue(jest.fn()),
 }));
+jest.mock("typeorm/find-options/operator/In");
+jest.mock("typeorm/find-options/operator/Equal");
 
 describe(RestServiceFactory.name, () => {
   const d = buildKeyChecker<RestServiceFactory>();
@@ -131,6 +133,29 @@ describe(RestServiceFactory.name, () => {
         expect(ret).toEqual(expected);
       });
     });
+
+    describe(d(".parseFilters()"), () => {
+      beforeEach(async () => {
+        jest.spyOn(service, "parseFilterOperator");
+      });
+    });
+
+    describe.each`
+      operator | value              | fn       | expected
+      ${"eq"}  | ${"value"}         | ${Equal} | ${["value"]}
+      ${"in"}  | ${"a,b, c,,d\\,e"} | ${In}    | ${[["a", "b", " c", "", "d,e"]]}
+    `(
+      d(".parseFilterOperator({ operator: $operator, value: $value })"),
+      ({ operator, value, fn, expected }) => {
+        beforeEach(async () => {
+          await service.parseFilterOperator({ operator, value });
+        });
+
+        it(`should call the find operator builder with ${expected}`, () => {
+          expect(fn).toHaveBeenCalledWith(...expected);
+        });
+      }
+    );
   });
 
   it("should define the options as metadata on the product", () => {

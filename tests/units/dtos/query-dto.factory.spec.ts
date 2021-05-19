@@ -16,6 +16,7 @@ describe(QueryDtoFactory.name, () => {
       offset: { max: 4, default: 3 },
       expand: { in: ["child1"], default: ["child2"] },
       order: { in: ["child1", "child1:asc"], default: ["id:desc"] },
+      filter: { in: ["child1"], default: ["id|eq:1"] },
     });
   });
 
@@ -32,6 +33,7 @@ describe(QueryDtoFactory.name, () => {
       expect(instance.offset).toBe(3);
       expect(instance.expand).toEqual(["child2"]);
       expect(instance.order).toEqual(["id:desc"]);
+      expect(instance.filter).toEqual(["id|eq:1"]);
     });
 
     it.each`
@@ -46,6 +48,11 @@ describe(QueryDtoFactory.name, () => {
       ${"expand"} | ${"notanarray"}
       ${"order"}  | ${["unknown"]}
       ${"order"}  | ${"notanarray"}
+      ${"filter"} | ${["illegal"]}
+      ${"filter"} | ${["   id|eq:1"]}
+      ${"filter"} | ${["iiii|eq:1"]}
+      ${"filter"} | ${["id|eqqq:1"]}
+      ${"filter"} | ${"notanarray"}
     `(
       "should throw an error when `$name` is $value",
       async ({ name, value }) => {
@@ -61,6 +68,7 @@ describe(QueryDtoFactory.name, () => {
       ${"offset"} | ${2}
       ${"expand"} | ${["child1"]}
       ${"order"}  | ${["child1:desc"]}
+      ${"filter"} | ${["id|eq:"]}
     `(
       "should pass the validation when $name is $value",
       async ({ name, value }) => {
@@ -77,6 +85,7 @@ describe(QueryDtoFactory.name, () => {
     factory = new QueryDtoFactory<any>({
       expand: { default: ["bbb"] },
       order: { default: ["aaaa:asc"] },
+      filter: { default: ["cc|eq:1"] },
     });
   });
 
@@ -85,8 +94,13 @@ describe(QueryDtoFactory.name, () => {
       instance = plainToClass(factory.product, {
         expand: ["123"],
         order: ["abc"],
+        filter: ["def"],
       });
-      expect(instance).toEqual({ expand: ["bbb"], order: ["aaaa:asc"] });
+      expect(instance).toEqual({
+        expand: ["bbb"],
+        order: ["aaaa:asc"],
+        filter: ["cc|eq:1"],
+      });
     });
   });
 });

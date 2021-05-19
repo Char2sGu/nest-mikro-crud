@@ -1,4 +1,9 @@
-import { EntityField, OrderQueryParam, RelationPath } from "../types";
+import {
+  EntityField,
+  FilterQueryParam,
+  OrderQueryParam,
+  RelationPath,
+} from "../types";
 
 export interface QueryDtoFactoryOptions<Entity> {
   limit?: Partial<Record<"max" | "default", number>>;
@@ -7,5 +12,9 @@ export interface QueryDtoFactoryOptions<Entity> {
   order?: {
     in?: (OrderQueryParam<Entity> | EntityField<Entity>)[];
     default?: OrderQueryParam<Entity>[];
+  };
+  filter?: {
+    in?: EntityField<Entity>[];
+    default?: FilterQueryParam<Entity>[];
   };
 }

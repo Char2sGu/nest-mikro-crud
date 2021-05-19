@@ -1,9 +1,21 @@
 import { InjectRepository } from "@nestjs/typeorm";
 import { plainToClass } from "class-transformer";
-import { FindConditions, FindManyOptions } from "typeorm";
+import {
+  Equal,
+  FindConditions,
+  FindManyOptions,
+  ILike,
+  In,
+  IsNull,
+  LessThan,
+  Like,
+  MoreThan,
+  MoreThanOrEqual,
+  Not,
+} from "typeorm";
 import { AbstractFactory } from "../abstract.factory";
 import { REST_SERVICE_OPTIONS_METADATA_KEY } from "../constants";
-import { EntityField, LookupableField } from "../types";
+import { EntityField, FilterOperator, LookupableField } from "../types";
 import { RestServiceFactoryOptions } from "./rest-service-factory-options.interface";
 import { RestService } from "./rest-service.interface";
 
@@ -49,10 +61,14 @@ export class RestServiceFactory<
         offset,
         expand = [],
         order = [],
+        filter = [],
         ...args
       }: Parameters<Interface["list"]>[0]) {
         return await this.repository.find({
-          where: await this.getQueryConditions({ ...args }),
+          where: {
+            ...(await this.parseFilters({ filter, ...args })),
+            ...(await this.getQueryConditions({ ...args })),
+          },
           take: limit,
           skip: offset,
           order: await this.parseOrders({ order, ...args }),
@@ -151,6 +167,71 @@ export class RestServiceFactory<
           orderOptions[field] = order == "asc" ? "ASC" : "DESC";
         });
         return orderOptions;
+      }
+
+      async parseFilters({
+        filter,
+        ...args
+      }: Parameters<Interface["parseFilters"]>[0]) {
+        const entries = await Promise.all(
+          filter.map(async (filter) => {
+            const regexp = /^(.*)\|(.+):(.*)$/;
+            const [, field, operator, value] = regexp.exec(filter)! as [
+              unknown,
+              EntityField<Entity>,
+              FilterOperator,
+              string
+            ] &
+              RegExpExecArray;
+            const findOperator = await this.parseFilterOperator({
+              operator,
+              value,
+            });
+            return [field, findOperator] as [typeof field, typeof findOperator];
+          })
+        );
+        return Object.fromEntries(entries) as FindConditions<Entity>;
+      }
+
+      async parseFilterOperator({
+        operator,
+        value,
+        ...args
+      }: Parameters<Interface["parseFilterOperator"]>[0]) {
+        switch (operator) {
+          case "contains":
+            return Like(`%${value}%`);
+          case "endswith":
+            return Like(`%${value}`);
+          case "eq":
+            return Equal(value);
+          case "gt":
+            return MoreThan(value);
+          case "gte":
+            return MoreThanOrEqual(value);
+          case "icontains":
+            return ILike(`%${value}%`);
+          case "iendswith":
+            return ILike(`%${value}`);
+          case "in":
+            return In(
+              value.split(/(?<!\\),/).map((v) => v.replace("\\,", ","))
+            );
+          case "isnull":
+            return ["true", "True", "1", "t", "T"].includes(value)
+              ? IsNull()
+              : Not(IsNull());
+          case "istartswith":
+            return ILike(`${value}%`);
+          case "lt":
+            return LessThan(value);
+          case "lte":
+            return LessThan(value);
+          case "ne":
+            return Not(value);
+          case "startswith":
+            return Like(`%${value}`);
+        }
       }
 
       async finalizeList({

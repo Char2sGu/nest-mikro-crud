@@ -66,6 +66,8 @@ describe(RestControllerFactory.name, () => {
       loadRelationIds: { relations: [] },
     })),
     parseOrders: jest.fn(async () => ({})),
+    parseFilters: jest.fn(async () => ({})),
+    parseFilterOperator: jest.fn(async () => null as any),
     finalizeList: jest.fn(async (v) => v.entities),
   };
   const TestService = jest.fn(() => testService);

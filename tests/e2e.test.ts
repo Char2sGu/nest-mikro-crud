@@ -87,6 +87,7 @@ describe("E2E", () => {
         limit: { max: 2, default: 1 },
         expand: { in: ["child1", "child2"] },
         order: { in: ["id:desc"] },
+        filter: { in: ["id"] },
       }).product,
     }).product {}
 
@@ -95,24 +96,31 @@ describe("E2E", () => {
     });
 
     describe.each`
-      limit        | offset       | expand                  | order          | count | firstId
-      ${undefined} | ${undefined} | ${undefined}            | ${undefined}   | ${1}  | ${1}
-      ${2}         | ${undefined} | ${undefined}            | ${undefined}   | ${2}  | ${1}
-      ${undefined} | ${1}         | ${undefined}            | ${undefined}   | ${1}  | ${2}
-      ${2}         | ${1}         | ${undefined}            | ${undefined}   | ${2}  | ${2}
-      ${undefined} | ${undefined} | ${undefined}            | ${["id:desc"]} | ${1}  | ${3}
-      ${undefined} | ${undefined} | ${["child1"]}           | ${undefined}   | ${1}  | ${1}
-      ${undefined} | ${undefined} | ${["child1", "child2"]} | ${undefined}   | ${1}  | ${1}
-      ${undefined} | ${undefined} | ${["child1", "child1"]} | ${undefined}   | ${1}  | ${1}
+      limit        | offset       | expand                  | order          | filter                    | count | firstId
+      ${undefined} | ${undefined} | ${undefined}            | ${undefined}   | ${undefined}              | ${1}  | ${1}
+      ${2}         | ${undefined} | ${undefined}            | ${undefined}   | ${undefined}              | ${2}  | ${1}
+      ${undefined} | ${1}         | ${undefined}            | ${undefined}   | ${undefined}              | ${1}  | ${2}
+      ${2}         | ${1}         | ${undefined}            | ${undefined}   | ${undefined}              | ${2}  | ${2}
+      ${undefined} | ${undefined} | ${undefined}            | ${["id:desc"]} | ${undefined}              | ${1}  | ${3}
+      ${undefined} | ${undefined} | ${["child1"]}           | ${undefined}   | ${undefined}              | ${1}  | ${1}
+      ${undefined} | ${undefined} | ${["child1", "child2"]} | ${undefined}   | ${undefined}              | ${1}  | ${1}
+      ${undefined} | ${undefined} | ${["child1", "child1"]} | ${undefined}   | ${undefined}              | ${1}  | ${1}
+      ${undefined} | ${undefined} | ${undefined}            | ${undefined}   | ${["id|eq:2"]}            | ${1}  | ${2}
+      ${2}         | ${undefined} | ${undefined}            | ${undefined}   | ${["id|in:2,3"]}          | ${2}  | ${2}
+      ${2}         | ${undefined} | ${undefined}            | ${undefined}   | ${["id|eq:2", "id|eq:1"]} | ${1}  | ${1}
     `(
-      "/?limit=$limit&offset=$offset&expand[]=$expand&order[]=$order (GET)",
-      ({ limit, offset, expand, order, count, firstId }) => {
+      "/?limit=$limit&offset=$offset&expand[]=$expand&order[]=$order&filter[]=$filter (GET)",
+      ({ limit, offset, expand, order, filter, count, firstId }) => {
         let body: { total: number; results: ParentEntity[] };
 
         beforeEach(async () => {
-          response = await requester
-            .get("/")
-            .query({ limit, offset, "expand[]": expand, "order[]": order });
+          response = await requester.get("/").query({
+            limit,
+            offset,
+            "expand[]": expand,
+            "order[]": order,
+            "filter[]": filter,
+          });
           ({ body } = response);
         });
 

@@ -154,7 +154,7 @@ export class RestControllerFactory<
       readonly service!: Interface["service"];
 
       async list(
-        ...[{ limit, offset, expand, order }, ...args]: Parameters<
+        ...[{ limit, offset, expand, order, filter }, ...args]: Parameters<
           Interface["list"]
         >
       ): Promise<unknown> {
@@ -165,6 +165,7 @@ export class RestControllerFactory<
           offset,
           expand,
           order,
+          filter,
         });
         const transformed = await Promise.all(
           entities.map((entity) => this.service.transform({ ...ctx, entity }))

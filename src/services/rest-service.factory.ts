@@ -8,6 +8,7 @@ import {
   In,
   IsNull,
   LessThan,
+  LessThanOrEqual,
   Like,
   MoreThan,
   MoreThanOrEqual,
@@ -226,7 +227,7 @@ export class RestServiceFactory<
           case "lt":
             return LessThan(value);
           case "lte":
-            return LessThan(value);
+            return LessThanOrEqual(value);
           case "ne":
             return Not(value);
           case "startswith":

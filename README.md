@@ -12,14 +12,17 @@ Easily build RESTful CRUD APIs
 
 # Tutorial
 
+Everything in this lib is created using factories which will create a class on its `.product` property when instantiated based on the options passed to the constructor, so that we can not only custom the product's behavior but also implement strong generic types.
+
 ## Creating the Service
 
-The service is a provider providing database CRUD operations. It can be created easily by extending the `RestServiceFactory`'s product.
+The service is a [provider](https://docs.nestjs.com/providers) serving the controller.
 
 ```ts
 @Injectable()
 class OurService extends new RestServiceFactory({
   entityClass: OurEntity,
+  repoConnection: "main-db", // optional
   dtoClasses: {
     create: CreateOurEntityDto,
     update: UpdateOurEntityDto,
@@ -28,47 +31,45 @@ class OurService extends new RestServiceFactory({
 }).product {}
 ```
 
-- `entityClass` specifies the entity of the api endpoint, the repository will be auto-injected to `.repository` using the default connection, unless you specified `repoConnection` as another connection name
-- `dtoClasses` is only used for generic type inferation in the service, **NOTE** that `replace` actions use the `create` DTO.
-- `lookupField` is the key of the field who will be used to lookup the entity, generally it is specified to `"id"` or other fields with a unique constraint
+Here a service is created. It will be injected the TypeORM repository of the entity `OurEntity` using connection name `"main-db"`, and its CRUD methods will use `"id"` as the field to lookup, `CreateOurEntityDto` as the DTO type for the _create_ and _replace_ action and `UpdateOurEntityDto` as the DTO type for the _update_ action.
 
-The options passed to the factory will be defined as metadata of the service using the symbol key `REST_SERVICE_OPTIONS_METADATA_KEY`, the key can be imported from the package directly.
+The options passed to the factory will be slightly processed, and be defined as metadata on the service using the `symbol` key `REST_SERVICE_OPTIONS_METADATA_KEY`.
 
 ## Creating the Controller
 
-There is also a `RestControllerFactory` for you to create controllers.
+There is also a `RestControllerFactory` to create the controller.
 
 ```ts
 @Controller()
 class OurController extends new RestControllerFactory({
   restServiceClass: OurService,
   actions: ["list", "create", "retrieve", "replace", "update", "destroy"],
+  lookupParam: "userId", // optional
 }).product {}
 ```
 
-Here it is the simplest controller, this controller provides the following API endpoints.
+Here it is the simplest controller with all the API endpoints enabled.
 
-| Action   | Method | URL                                  | Code        | Response                             |
-| -------- | ------ | ------------------------------------ | ----------- | ------------------------------------ |
-| List     | GET    | /?limit=\<number\>&offset=\<number\> | 200,400     | { total: number; results: Entity[] } |
-| Create   | POST   | /                                    | 201,400     | Entity                               |
-| Retrieve | GET    | /:lookup/                            | 200,404     | Entity                               |
-| Replace  | PUT    | /:lookup/                            | 200,400,404 | Entity                               |
-| Update   | PATCH  | /:lookup/                            | 200,400,404 | Entity                               |
-| Destroy  | DELETE | /:lookup/                            | 204,404     | void                                 |
+| Action   | Method | URL       | Code        | Response                             |
+| -------- | ------ | --------- | ----------- | ------------------------------------ |
+| List     | GET    | /         | 200,400     | { total: number; results: Entity[] } |
+| Create   | POST   | /         | 201,400     | Entity                               |
+| Retrieve | GET    | /:lookup/ | 200,404     | Entity                               |
+| Replace  | PUT    | /:lookup/ | 200,400,404 | Entity                               |
+| Update   | PATCH  | /:lookup/ | 200,400,404 | Entity                               |
+| Destroy  | DELETE | /:lookup/ | 204,404     | void                                 |
 
-Also, the service will be auto-injected, so there is nothing more to do inside the class in simplest cases.
+- `OurService` will be injected automatically, so there is nothing more to do inside the class in simplest cases.
+- The DTO classes specified during the service's creation will be used for validation using the `ValidationPipe`. The options to pass to the `ValidationPipe` can be customed by specifying the option `validationPipeOptions`, but the `transform` and `transformOptions.exposeDefaultValues` will be forced to be `true`.
+- `"userId"` will be the name of the URL param. By default it is `"lookup"`
+- `ParseIntPipe` will be applied to parse the lookup param if the type of the field to lookup specified during the service's creation is `number`.
+- An [exception filter](https://docs.nestjs.com/exception-filters) `EntityNotFoundErrorFilter` is applied by default to catch TypeORM's `EntityNotFoundError` and throw Nest's `NotFoundException` instead, which can be disabled by specifing the option `catchEntityNotFound` to `false`.
 
-- Data validation is forced to be enabled using the `ValidationPipe`, based on the DTOs specified in the service, you can custom the pipe's behavior by passing your own options to the `validationPipeOptions` option, but **NOTE** that a few options will be ignored.
-- `ParseIntPipe` is used to parse the lookup param to a number when the type of the `lookupField` specified in the service is `number`.
-- We have a filter `EntityNotFoundErrorFilter` to catch TypeORM's `EntityNotFoundError` and throw Nest's `NotFoundException` instead, you could disable this behavior by specifing the option `catchEntityNotFound` in the controller factory.
-- By default, the url param of the lookup value is just `"lookup"`, you can custom it by passing your own param name to the `lookupParam` option if needed.
+In this controller, only `limit` and `offset` query param is enabled for the _list_ action, to config more query params see [Configuring Query Params](#configuring-query-params)
 
-## Advanced Query Params Settings
+## Configuring Query Params
 
-There is a query DTO used to validate the query params of all the actions, the default query DTO have unlimited `limit` and `offset`, there is also a `QueryDtoFactory` provided for you to custom the DTO.
-
-You could also pass your own DTO or extend the factory for more wonderful implementations.
+There is a query DTO class used to validate the query params of all the actions, the default query DTO only have unlimited `limit` and `offset`, there is also a `QueryDtoFactory` provided to custom the DTO class.
 
 ```ts
 class OurController extends new RestControllerFactory({
@@ -76,29 +77,77 @@ class OurController extends new RestControllerFactory({
   queryDto: new QueryDtoFactory({
     limit: { max: 100, default: 50 },
     offset: { max: 10000 },
+    expand: {
+      in: ["relationField", "relationField.nestedField"],
+      default: ["relationField"],
+    },
+    order: {
+      in: ["id", "name", "ascOnlyField:asc"],
+      default: ["id:desc"],
+    },
+    filter: {
+      in: ["id", "name"],
+    },
   }).product,
   // ...
 }).product {}
 ```
 
+Alternatively, you can pass your own DTO class matching the interface.
+
+```ts
+class OwnQueryDto implements QueryDto<OurEntity> {
+  @IsOptional()
+  @Min(100)
+  limit: number = 500;
+  // ...
+}
+
+class OurController extends new RestControllerFactory({
+  // ...
+  queryDto: OwnQueryDto,
+  // ...
+}).product {}
+```
+
+| Filter Query          | Find Operator               |
+| --------------------- | --------------------------- |
+| name\|contains:QCX    | `Like("%QCX%")`             |
+| name\|endsWith:X      | `Like("%X")`                |
+| name\|eq:QCX          | `Equal("QCX")`              |
+| age\|gt:16            | `MoreThan(16)`              |
+| age\|gte:16           | `MoreThanOrEqual(16)`       |
+| name\|icontains:QCX   | `ILike("%QCX%")`            |
+| name\|iendswith:X     | `ILike("%X")`               |
+| name\|in:Q,C,X,\\,\\, | `In(["Q", "C", "X", ",,"])` |
+| name\|isnull:true     | `IsNull()`                  |
+| name\|isnull:false    | `Not(IsNull())`             |
+| name\|istartswith:Q   | `ILike("Q%")`               |
+| age\|lt:60            | `LessThan(60)`              |
+| age\|lte:60           | `LessThanOrEqual(60)`       |
+| name\|ne:QCX          | `Not("QCX")`                |
+| name\|startswith:Q    | `Like("Q%")`                |
+
 ## Forcing Query Conditions
 
-The method `.getQueryConditions()` in the service is useful in this case, and moreover, almost all the methods in this lib is asynchronous, so you could implement anything awesome by overriding the methods.
+`.getQueryConditions()` in the service is called to get primary query conditions for each actions.
 
 ```ts
 class OurService /*extends ...*/ {
-  async getQueryConditions({ lookup }: { lookup: number }) {
+  async getQueryConditions({ lookup }: { lookup?: number }) {
     const conditions = await super.getQueryConditions({ lookup });
     return { ...conditions, isActive: true };
   }
 }
 ```
 
-**NOTE**: the type of the parem `lookup` may be either `number` or `string`, depending the `lookupField` you specified. For forcing more complex query conditions, see [Getting More Context Data](#getting-more-context-data)
+**NOTE**: the type of the parem `lookup` may be either `number` or `string`, depending the `lookupField` you specified.
 
-## Custom Context Data
+Here only static conditions can be forced, see [Context Data](#context-data) for more complex conditions.
 
-By default, only a few context data is passed to the service method, so what we can implement is greatly limited. So the option `contextOptions` is here to help, it provides a way to get any context data through [custom decorators](https://docs.nestjs.com/custom-decorators).
+## Context Data
+
+Context Data provides a way to get any context data through [custom decorators](https://docs.nestjs.com/custom-decorators).
 
 ```ts
 class OurController extends new RestControllerFactory({
@@ -110,20 +159,22 @@ class OurController extends new RestControllerFactory({
 }).product {}
 ```
 
-We could then force more complex query conditions easily.
+This means that the `ReqUser()` decorator will be applied to the first rest argument of each controller's method to get the user from the request, and `User` will be the metadata type of this argument (optional, `Object` by default). Then the values of the extra arguments will be packed into an object and pass to the service's methods, in this case it will be `{ user: <value-of-the-argument> }`
+
+Because the service's methods will pass rest arguments to each other methods, we can now force query conditions based on the request.
 
 ```ts
 class OurService /*extends ...*/ {
-  async getQueryConditions({ lookup, user }: { lookup: number; user: User }) {
+  async getQueryConditions({ lookup, user }: { lookup?: number; user: User }) {
     const conditions = await super.getQueryConditions({ lookup });
     return { ...conditions, owner: user, isActive: true };
   }
 }
 ```
 
-## Applying Additional Decorators
+## Additional Decorators
 
-You may want to apply some additional decorators to implement wonderful things, there is no need to create an empty overload and specify all parameters and types for it, the factory has easy-to-use methods to do that.
+You may would like to apply some additional decorators to implement something wonderful, there is no need to create an empty overload and specify all parameters and types, the factory has easy-to-use methods for that.
 
 Skip authentication control for `create` actions:
 
@@ -139,7 +190,7 @@ Apply decorators for the 1st param of `.retrieve()`
 ```ts
 class OurController extends new RestControllerFactory({
   // ...
-}).applyParamDecorators("retrieve", 0 /*, <decorators>*/).product {}
+}).applyParamDecorators("retrieve", 4, Session()).product {}
 ```
 
 Apply a list of decorators for each param of `.update()`
@@ -148,7 +199,7 @@ Apply a list of decorators for each param of `.update()`
 class OurController extends new RestControllerFactory({
   // ...
 }).applyParamDecoratorSets(
-  "retrieve",
+  "update",
   [
     /*<decorators for the 1st param>*/
   ],
@@ -158,23 +209,24 @@ class OurController extends new RestControllerFactory({
 ).product {}
 ```
 
-## Customizing the Data Structure of List Action
+## Finalizing Response of List Action
 
-The service's `.finalizeList()` method is called every time before sending the response, after transforming the entities. By default, it takes the transformed entities and return a simple schema like this `{ total: 1342, results: [{ id: 1 }] }`. Change this behavior by overriding it:
+The service's `.finalizeList()` method is called before sending the response to finalize the response (after [transforming the entities](#transforming-entities-before-responding)). By default, it takes the transformed entities and return a simple schema like this `{ total: 1342, results: [{ id: 1 }] }`. Change this behavior by overriding it:
 
 ```ts
 class OurService /*extends ...*/ {
   async finalizeList({ entities }: { entities: OurEntity[] }) {
-    return entities;
+    return entities; // return an array of entities directly
   }
 }
 ```
 
 ## Transforming Entities before Responding
 
-The method `.transform()` in the service may help you. By default, it takes an entity, call [class-transformer](https://github.com/typestack/class-transformer)'s `plainToClass()` and then return it, that means you could use class-transformer's `Exclude()` decorator to prevent some fields to appear in the response.
+The service's `.transform()` is called on each entity before sending the response. By default, it takes an entity, call [class-transformer](https://github.com/typestack/class-transformer)'s `plainToClass()` and then return it, which means fields can be excluded from the response using the `Exclude()` decorator.
 
 ```ts
+@Entity()
 class OurEntity {
   @PrimaryGeneratedColumn()
   id: number;
@@ -184,7 +236,7 @@ class OurEntity {
 }
 ```
 
-You could also change its behavior and do anything with the entity by overriding it.
+Overriding it to do anything with the entity.
 
 ```ts
 class OurService /*extends ...*/ {
@@ -194,76 +246,44 @@ class OurService /*extends ...*/ {
 }
 ```
 
-## Nested Relation Fields
+## Overriding Controller's Action Methods
 
-The query param `expand` specifies which paths will be expanded as a nested field, and the others will be outputted as a primary key. Don't worry about type safe of the paths, the paths have been strongly typed.
+Here is something you should know before overriding the action methods, otherwise something really confusing may happen to you.
 
-```ts
-class OurController extends new RestControllerFactory({
-  // ...
-  queryDto: new QueryDtoFactory<OurEntity>({
-    // ...
-    expand: { in: ["child", "nested.child"] },
-    // ...
-  }).product,
-  // ...
-}).product {}
-```
+- Nest's controller decorators store metadata in the constructor, and when getting metadata, it will look up the metadata value through the prototype chain, so there is no need to decorate the class again when extending another class.
+- Nest's action method decorators store metadata in action methods directly, when looking metadata, it will look up the value directly from the method, but if we override a method, the method will be different from the old one and all the metadata will be lost, method decorators should be applied again.
+- Nest's param decorators store metadata in the constructor, as said before, there is no need to apply param decorators again.
 
-You can custom the relation options by overriding the `parseFieldExpansions` of the service.
-
-```ts
-class OurService /*extends ...*/ {
-  async parseFieldExpansions({
-    expand,
-  }: {
-    expand: RelationPaths<OurEntity>[];
-  }) {
-    return { loadRelationIds: true }; // disable nesting
-  }
-}
-```
-
-## Overriding Routing Methods
-
-Here is something you should know before overriding the action methods, or something confusing may happen to you.
-
-- Nest's controller decorators store metadata in constructors, and when getting metadata, it will look up the value in the prototype chain, so there is no need to decorate the class again when extending another class.
-- Nest's action method decorators store metadata in action methods directly, when looking metadata, it will look up the value directly from the method, but if we override a method, the method will be a different one, so all the metadata will be lost, we need to apply action method decorators again.
-- Nest's param decorators store metadata in the constructors, as said before, there is no need to apply param decorators again.
-
-So here is the example:
+Here is an example:
 
 ```ts
 class OurController /*extends ...*/ {
-  @Patch(":lookup")
+  @Patch(":lookup") // apply method decorators again
   async update(lookup: number, data: UpdateOurEntityDto) {
     // ...
   }
 }
 ```
 
-## Object Level Permission
+## Reusability
+
+It is recommended to create your own factory to reuse wonderful overridings by performing the overriding in the factory's protected `.createRawClass()` method.
 
 ```ts
-class OurService /*extends ...*/ {
-  async update({
-    entity,
-    data,
-    user,
-  }: {
-    entity: OurEntity;
-    data: CreateOurEntityDto;
-    user: User;
-  }) {
-    if (entity.owner != user) throw new ForbiddenException();
-    return await super.update({ entity, data });
+class OwnServiceFactory<
+  Entity = any,
+  CreateDto = Entity,
+  UpdateDto = CreateDto,
+  LookupField extends LookupableField<Entity> = LookupableField<Entity>
+> extends RestServiceFactory<Entity, CreateDto, UpdateDto, LookupField> {
+  protected createRawClass() {
+    return class RestService extends super.createRawClass() {
+      async finalizeList({ entities }: { entities: Entity[] }) {
+        return entities;
+      }
+    };
   }
 }
 ```
 
-## Reusability
-
-To reuse your wonderful overridings, the best solution is to extend the built-in factory and perform your overriding in the factory's protected `.createRawClass()` method, you can look for more details in the source code.
-
-**DONT** use mixins because the base class may be changed to a different one so the metadata defined in the factory will be lost.
+**DONT** use mixins because metadata may be lost.

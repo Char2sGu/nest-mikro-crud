@@ -120,7 +120,7 @@ export class QueryDtoFactory<Entity> extends AbstractFactory<QueryDto<Entity>> {
         IsOptional(),
         IsArray(),
         Matches(
-          `^(${filter.in.join("|")})\|(${FILTER_OPERATORS.join("|")}):.*$`,
+          `^(${filter.in.join("|")})\\|(${FILTER_OPERATORS.join("|")}):.*$`,
           undefined,
           { each: true }
         )

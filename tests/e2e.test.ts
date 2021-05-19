@@ -139,24 +139,27 @@ describe("E2E", () => {
     );
 
     describe.each`
-      limit        | offset       | expand       | order
-      ${0}         | ${undefined} | ${undefined} | ${undefined}
-      ${undefined} | ${0}         | ${undefined} | ${undefined}
-      ${4}         | ${undefined} | ${undefined} | ${undefined}
-      ${undefined} | ${undefined} | ${"child2"}  | ${undefined}
-      ${undefined} | ${undefined} | ${["xxxx"]}  | ${undefined}
-      ${undefined} | ${undefined} | ${undefined} | ${"id:desc"}
-      ${undefined} | ${undefined} | ${undefined} | ${["idd:desc"]}
-      ${undefined} | ${undefined} | ${undefined} | ${["id:descc"]}
+      limit        | offset       | expand       | order           | filter
+      ${0}         | ${undefined} | ${undefined} | ${undefined}    | ${undefined}
+      ${undefined} | ${0}         | ${undefined} | ${undefined}    | ${undefined}
+      ${4}         | ${undefined} | ${undefined} | ${undefined}    | ${undefined}
+      ${undefined} | ${undefined} | ${"child2"}  | ${undefined}    | ${undefined}
+      ${undefined} | ${undefined} | ${["xxxx"]}  | ${undefined}    | ${undefined}
+      ${undefined} | ${undefined} | ${undefined} | ${"id:desc"}    | ${undefined}
+      ${undefined} | ${undefined} | ${undefined} | ${["idd:desc"]} | ${undefined}
+      ${undefined} | ${undefined} | ${undefined} | ${["id:descc"]} | ${undefined}
+      ${undefined} | ${undefined} | ${undefined} | ${undefined}    | ${"id|eq:1"}
+      ${undefined} | ${undefined} | ${undefined} | ${undefined}    | ${["child1|eq:1"]}
     `(
-      "/?limit=$limit&offset=$offset&expand[]=$expand&order[]=$order (GET)",
-      ({ limit, offset, expand, order }) => {
+      "/?limit=$limit&offset=$offset&expand[]=$expand&order[]=$order&filter[]=$filter (GET)",
+      ({ limit, offset, expand, order, filter }) => {
         beforeEach(async () => {
           response = await requester.get("/").query({
             limit,
             offset,
             [expand instanceof Array ? "expand[]" : "expand"]: expand,
             [order instanceof Array ? "order[]" : "order"]: order,
+            [filter instanceof Array ? "filter[]" : "filter"]: filter,
           });
         });
 

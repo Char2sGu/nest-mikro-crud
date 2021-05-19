@@ -1,8 +1,8 @@
 import { Controller, Injectable, Provider, Type } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import { getRepositoryToken } from "@nestjs/typeorm";
-import { UnsubscriptionError } from "rxjs";
 import {
+  EntityField,
   QueryDtoFactory,
   RestControllerFactory,
   RestServiceFactory,
@@ -18,12 +18,18 @@ import {
 import { Child1Entity, Child2Entity, ParentEntity } from "./entities";
 import { getRequester, getTypeOrmModules } from "./utils";
 
-function assertSerializedEntity(entity: ParentEntity, id?: number) {
+function assertEntity(
+  entity: ParentEntity,
+  id?: number,
+  expand: EntityField<ParentEntity>[] = []
+) {
   expect(typeof entity.id).toBe("number");
   if (id) expect(entity.id).toBe(id);
   expect(entity.name).toBeUndefined();
-  expect(typeof entity.child1).toBe("number");
-  expect(entity.child2).toBeInstanceOf(Object);
+  if (expand.includes("child1")) expect(entity.child1).toBeInstanceOf(Object);
+  else expect(typeof entity.child1).toBe("number");
+  if (expand.includes("child2")) expect(entity.child2).toBeInstanceOf(Object);
+  else expect(typeof entity.child2).toBe("number");
 }
 
 describe("E2E", () => {
@@ -31,6 +37,10 @@ describe("E2E", () => {
   let child1Repository: Repository<Child1Entity>;
   let child2Repository: Repository<Child1Entity>;
   let requester: ReturnType<typeof getRequester>;
+  let response: Response;
+  let createChildDto: CreateChildEntityDto;
+  let updateChildDto: UpdateChildEntityDto;
+  let createParentDto: CreateParentEntityDto;
 
   async function prepare(serviceClass: Provider, controllerClass: Type) {
     const module = await Test.createTestingModule({
@@ -59,8 +69,6 @@ describe("E2E", () => {
   });
 
   describe("Common CRUD", () => {
-    const commonQueries = { "expand[]": ["child2"] };
-
     @Injectable()
     class TestService extends new RestServiceFactory({
       entityClass: ParentEntity,
@@ -77,7 +85,7 @@ describe("E2E", () => {
       actions: ["list", "retrieve", "create", "replace", "update", "destroy"],
       queryDto: new QueryDtoFactory<ParentEntity>({
         limit: { max: 2, default: 1 },
-        expand: { in: ["child2"] },
+        expand: { in: ["child1", "child2"] },
         order: { in: ["id:desc"] },
       }).product,
     }).product {}
@@ -87,22 +95,24 @@ describe("E2E", () => {
     });
 
     describe.each`
-      limit        | offset       | order        | count | firstId
-      ${undefined} | ${undefined} | ${undefined} | ${1}  | ${1}
-      ${2}         | ${undefined} | ${undefined} | ${2}  | ${1}
-      ${undefined} | ${1}         | ${undefined} | ${1}  | ${2}
-      ${2}         | ${1}         | ${undefined} | ${2}  | ${2}
-      ${undefined} | ${undefined} | ${"id:desc"} | ${1}  | ${3}
+      limit        | offset       | expand                  | order          | count | firstId
+      ${undefined} | ${undefined} | ${undefined}            | ${undefined}   | ${1}  | ${1}
+      ${2}         | ${undefined} | ${undefined}            | ${undefined}   | ${2}  | ${1}
+      ${undefined} | ${1}         | ${undefined}            | ${undefined}   | ${1}  | ${2}
+      ${2}         | ${1}         | ${undefined}            | ${undefined}   | ${2}  | ${2}
+      ${undefined} | ${undefined} | ${undefined}            | ${["id:desc"]} | ${1}  | ${3}
+      ${undefined} | ${undefined} | ${["child1"]}           | ${undefined}   | ${1}  | ${1}
+      ${undefined} | ${undefined} | ${["child1", "child2"]} | ${undefined}   | ${1}  | ${1}
+      ${undefined} | ${undefined} | ${["child1", "child1"]} | ${undefined}   | ${1}  | ${1}
     `(
-      "/?limit=$limit&offset=$offset (GET)",
-      ({ limit, offset, order, count, firstId }) => {
-        let response: Response;
+      "/?limit=$limit&offset=$offset&expand[]=$expand&order[]=$order (GET)",
+      ({ limit, offset, expand, order, count, firstId }) => {
         let body: { total: number; results: ParentEntity[] };
 
         beforeEach(async () => {
           response = await requester
             .get("/")
-            .query({ limit, offset, "order[]": order, ...commonQueries });
+            .query({ limit, offset, "expand[]": expand, "order[]": order });
           ({ body } = response);
         });
 
@@ -115,7 +125,7 @@ describe("E2E", () => {
           expect(body.total).toBe(3);
           expect(body.results).toBeInstanceOf(Array);
           expect(body.results).toHaveLength(count);
-          assertSerializedEntity(body.results[0], firstId);
+          assertEntity(body.results[0], firstId, expand ?? []);
         });
       }
     );
@@ -126,33 +136,35 @@ describe("E2E", () => {
       ${undefined} | ${0}         | ${undefined} | ${undefined}
       ${4}         | ${undefined} | ${undefined} | ${undefined}
       ${undefined} | ${undefined} | ${"child2"}  | ${undefined}
-      ${undefined} | ${undefined} | ${"child2"}  | ${"id:desc"}
-    `("/?limit=$limit&offset=$offset (GET)", (queries) => {
-      let response: Response;
+      ${undefined} | ${undefined} | ${["xxxx"]}  | ${undefined}
+      ${undefined} | ${undefined} | ${undefined} | ${"id:desc"}
+      ${undefined} | ${undefined} | ${undefined} | ${["idd:desc"]}
+      ${undefined} | ${undefined} | ${undefined} | ${["id:descc"]}
+    `(
+      "/?limit=$limit&offset=$offset&expand[]=$expand&order[]=$order (GET)",
+      ({ limit, offset, expand, order }) => {
+        beforeEach(async () => {
+          response = await requester.get("/").query({
+            limit,
+            offset,
+            [expand instanceof Array ? "expand[]" : "expand"]: expand,
+            [order instanceof Array ? "order[]" : "order"]: order,
+          });
+        });
 
-      beforeEach(async () => {
-        response = await requester.get("/").query(queries);
-      });
-
-      it("should return a 400", () => {
-        expect(response.status).toBe(400);
-      });
-    });
+        it("should return a 400", () => {
+          expect(response.status).toBe(400);
+        });
+      }
+    );
 
     describe("/ (POST)", () => {
-      let childDto: CreateChildEntityDto;
-      let parentDto: CreateParentEntityDto;
-      let response: Response;
-
       beforeEach(async () => {
-        childDto = { name: "child" };
-        parentDto = { name: "parent", child1: 4, child2: 4 };
-        await child1Repository.save(childDto);
-        await child2Repository.save(childDto);
-        response = await requester
-          .post("/")
-          .query(commonQueries)
-          .send(parentDto);
+        createChildDto = { name: "child" };
+        createParentDto = { name: "parent", child1: 4, child2: 4 };
+        await child1Repository.save(createChildDto);
+        await child2Repository.save(createChildDto);
+        response = await requester.post("/").send(createParentDto);
       });
 
       it("should return 201", () => {
@@ -162,11 +174,11 @@ describe("E2E", () => {
       it("should create the entity", async () => {
         const entity = await parentRepository.findOne(4);
         expect(entity).toBeDefined();
-        expect(entity?.name).toBe(parentDto.name);
+        expect(entity?.name).toBe(createParentDto.name);
       });
 
       it("should serialize and return entity", () => {
-        assertSerializedEntity(response.body, 4);
+        assertEntity(response.body, 4);
       });
     });
 
@@ -175,10 +187,8 @@ describe("E2E", () => {
       ${{}}
       ${{ name: 1 }}
     `("/ $dto (POST)", ({ dto }) => {
-      let response: Response;
-
       beforeEach(async () => {
-        response = await requester.post("/").query(commonQueries).send(dto);
+        response = await requester.post("/").send(dto);
       });
 
       it("should return 400", () => {
@@ -187,10 +197,8 @@ describe("E2E", () => {
     });
 
     describe("/1/ (GET)", () => {
-      let response: Response;
-
       beforeEach(async () => {
-        response = await requester.get("/1/").query(commonQueries);
+        response = await requester.get("/1/");
       });
 
       it("should return 200", () => {
@@ -198,7 +206,7 @@ describe("E2E", () => {
       });
 
       it("should serialize and return the entity", () => {
-        assertSerializedEntity(response.body, 1);
+        assertEntity(response.body, 1);
       });
     });
 
@@ -207,10 +215,8 @@ describe("E2E", () => {
       ${0}     | ${404}
       ${"str"} | ${400}
     `("/$lookup/ (GET)", ({ lookup, code }) => {
-      let response: Response;
-
       beforeEach(async () => {
-        response = await requester.get(`/${lookup}/`).query(commonQueries);
+        response = await requester.get(`/${lookup}/`);
       });
 
       it(`should return ${code}`, () => {
@@ -219,12 +225,9 @@ describe("E2E", () => {
     });
 
     describe("/1/ (PUT)", () => {
-      let dto: CreateParentEntityDto;
-      let response: Response;
-
       beforeEach(async () => {
-        dto = { name: "updated", child1: 1, child2: 1 };
-        response = await requester.put("/1/").send(dto).query(commonQueries);
+        createParentDto = { name: "updated", child1: 1, child2: 1 };
+        response = await requester.put("/1/").send(createParentDto);
       });
 
       it("should return 200", () => {
@@ -233,11 +236,11 @@ describe("E2E", () => {
 
       it("should update the entity", async () => {
         const entity = await parentRepository.findOne(1);
-        expect(entity?.name).toBe(dto.name);
+        expect(entity?.name).toBe(createParentDto.name);
       });
 
       it("should serialize and return the entity", () => {
-        assertSerializedEntity(response.body, 1);
+        assertEntity(response.body, 1);
       });
     });
 
@@ -246,10 +249,8 @@ describe("E2E", () => {
       ${{}}
       ${{ name: "n" }}
     `("/1/ $dto (PUT)", ({ dto }) => {
-      let response: Response;
-
       beforeEach(async () => {
-        response = await requester.put("/1/").send(dto).query(commonQueries);
+        response = await requester.put("/1/").send(dto);
       });
 
       it("should return 400", () => {
@@ -262,15 +263,9 @@ describe("E2E", () => {
       ${0}     | ${404}
       ${"put"} | ${400}
     `("/$lookup/ (PUT)", ({ lookup, code }) => {
-      let dto: CreateParentEntityDto;
-      let response: Response;
-
       beforeEach(async () => {
-        dto = { name: "updated", child1: 1, child2: 1 };
-        response = await requester
-          .put(`/${lookup}/`)
-          .send(dto)
-          .query(commonQueries);
+        createParentDto = { name: "updated", child1: 1, child2: 1 };
+        response = await requester.put(`/${lookup}/`).send(createParentDto);
       });
 
       it(`should return ${code}`, () => {
@@ -279,12 +274,9 @@ describe("E2E", () => {
     });
 
     describe("/1/ (PATCH)", () => {
-      let dto: UpdateChildEntityDto;
-      let response: Response;
-
       beforeEach(async () => {
-        dto = { name: "updated" };
-        response = await requester.patch("/1/").send(dto).query(commonQueries);
+        updateChildDto = { name: "updated" };
+        response = await requester.patch("/1/").send(updateChildDto);
       });
 
       it("should return 200", () => {
@@ -293,11 +285,11 @@ describe("E2E", () => {
 
       it("should update the entity", async () => {
         const entity = await parentRepository.findOne(1);
-        expect(entity?.name).toBe(dto.name);
+        expect(entity?.name).toBe(updateChildDto.name);
       });
 
       it("should serialize and return the entity", () => {
-        assertSerializedEntity(response.body, 1);
+        assertEntity(response.body, 1);
       });
     });
 
@@ -305,10 +297,8 @@ describe("E2E", () => {
       dto
       ${{ name: 1 }}
     `("/1/ $dto (PATCH)", ({ dto }) => {
-      let response: Response;
-
       beforeEach(async () => {
-        response = await requester.patch("/1/").send(dto).query(commonQueries);
+        response = await requester.patch("/1/").send(dto);
       });
 
       it("should return 400", () => {
@@ -321,15 +311,9 @@ describe("E2E", () => {
       ${0}     | ${404}
       ${"str"} | ${400}
     `("/$lookup/ (PATCH)", ({ lookup, code }) => {
-      let dto: UpdateChildEntityDto;
-      let response: Response;
-
       beforeEach(async () => {
-        dto = { name: "updated" };
-        response = await requester
-          .patch(`/${lookup}/`)
-          .send(dto)
-          .query(commonQueries);
+        updateChildDto = { name: "updated" };
+        response = await requester.patch(`/${lookup}/`).send(updateChildDto);
       });
 
       it(`should return ${code}`, () => {
@@ -338,10 +322,8 @@ describe("E2E", () => {
     });
 
     describe("/1/ (DELETE)", () => {
-      let response: Response;
-
       beforeEach(async () => {
-        response = await requester.delete("/1/").query(commonQueries);
+        response = await requester.delete("/1/");
       });
 
       it("should return 204", () => {
@@ -358,10 +340,8 @@ describe("E2E", () => {
       ${0}     | ${404}
       ${"str"} | ${400}
     `("/$lookup/ (DELETE)", ({ lookup, code }) => {
-      let response: Response;
-
       beforeEach(async () => {
-        response = await requester.delete(`/${lookup}/`).query(commonQueries);
+        response = await requester.delete(`/${lookup}/`);
       });
 
       it(`should return ${code}`, () => {

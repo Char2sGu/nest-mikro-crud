@@ -185,7 +185,7 @@ class OurController extends new RestControllerFactory({
 }).applyMethodDecorators("create", SkipAuth()).product {}
 ```
 
-Apply decorators for the 1st param of `.retrieve()`
+Apply decorators for the 4th param of `.retrieve()`
 
 ```ts
 class OurController extends new RestControllerFactory({

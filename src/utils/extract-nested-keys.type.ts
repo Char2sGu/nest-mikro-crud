@@ -19,23 +19,30 @@ import { Values } from "./values.type";
  *     };
  *   };
  * };
- * type T = ExtractNestedKeys<O, number, "/">; // "b" | "a/length" | "c/e" | "c/d/length" | "c/f/h" | "c/f/g/length"
+ * type T = ExtractNestedKeys<O, string | number, string, "/">;
+ * // "b" | "a/length" | "c/e" | "c/d/length" | "c/f/h" | "c/f/g/length"
  */
 export type ExtractNestedKeys<
   Target,
   Condition,
+  Exclusion = never,
   Separator extends string = ".",
   Root = Target
 > = Values<
   {
     [K in Extract<keyof Target, string>]:
-      | (Target[K] extends Condition ? K : never)
+      | (Target[K] extends Exclusion
+          ? never
+          : Target[K] extends Condition
+          ? K
+          : never)
       | (Target[K] extends Root
           ? never
           : // @ts-expect-error - this IS NOT an infinite loop!!!!
             `${K}${Separator}${ExtractNestedKeys<
               Target[K],
               Condition,
+              Exclusion,
               Separator,
               Root
             >}`);

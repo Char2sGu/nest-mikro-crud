@@ -201,6 +201,7 @@ export class RestControllerFactory<
         let entity: Entity;
         entity = await this.service.retrieve({ ...ctx, lookup });
         await this.service.replace({ ...ctx, entity, data });
+        lookup = entity[lookupField]; // lookup may be updated
         entity = await this.service.retrieve({ ...ctx, lookup, expand });
         return await this.service.transform({ ...ctx, entity });
       }
@@ -212,6 +213,7 @@ export class RestControllerFactory<
         let entity: Entity;
         entity = await this.service.retrieve({ ...ctx, lookup });
         await this.service.update({ ...ctx, entity, data });
+        lookup = entity[lookupField]; // lookup may be updated
         entity = await this.service.retrieve({ ...ctx, lookup, expand });
         return await this.service.transform({ ...ctx, entity });
       }

@@ -1,12 +1,16 @@
-import { IsInt, IsString } from "class-validator";
+import { Type } from "class-transformer";
+import { IsArray, IsInt, IsOptional, IsString } from "class-validator";
 
 export class CreateParentEntityDto {
+  @Type()
+  @IsOptional()
+  @IsInt()
+  id?: number;
+
   @IsString()
   name!: string;
 
-  @IsInt()
-  child1!: number;
-
-  @IsInt()
-  child2!: number;
+  @IsArray()
+  @IsInt({ each: true })
+  children!: number[];
 }

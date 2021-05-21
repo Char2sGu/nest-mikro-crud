@@ -59,9 +59,8 @@ describe(RestServiceFactory.name, () => {
       entity = {
         id: 1,
         name: "parent",
-        child1: { id: 1, name: "child1", parent: entity },
-        child2: { id: 2, name: "child2", parent: entity },
-      };
+        children: [{ id: 1, name: "child1", parent: entity }],
+      } as typeof entity;
     });
 
     describe(d(".transform()"), () => {
@@ -72,8 +71,8 @@ describe(RestServiceFactory.name, () => {
       });
 
       it("should return the transformed entity", async () => {
-        const { id, child1, child2 } = entity;
-        const transformed = { id, child1, child2 };
+        const { id, children } = entity;
+        const transformed = { id, children };
         expect(ret).toBeInstanceOf(ParentEntity);
         expect(ret).toEqual(transformed);
       });

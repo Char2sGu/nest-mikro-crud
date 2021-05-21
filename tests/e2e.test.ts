@@ -12,10 +12,9 @@ import { getConnection, Repository } from "typeorm";
 import {
   CreateChildEntityDto,
   CreateParentEntityDto,
-  UpdateChildEntityDto,
   UpdateParentEntityDto,
 } from "./dtos";
-import { Child1Entity, Child2Entity, ParentEntity } from "./entities";
+import { ChildEntity, ParentEntity } from "./entities";
 import { getRequester, getTypeOrmModules } from "./utils";
 
 function assertEntity(
@@ -26,25 +25,24 @@ function assertEntity(
   expect(typeof entity.id).toBe("number");
   if (id) expect(entity.id).toBe(id);
   expect(entity.name).toBeUndefined();
-  if (expand.includes("child1")) expect(entity.child1).toBeInstanceOf(Object);
-  else expect(typeof entity.child1).toBe("number");
-  if (expand.includes("child2")) expect(entity.child2).toBeInstanceOf(Object);
-  else expect(typeof entity.child2).toBe("number");
+  entity.children.forEach((child) => {
+    if (expand.includes("children")) expect(child).toBeInstanceOf(Object);
+    else expect(typeof child).toBe("number");
+  });
 }
 
 describe("E2E", () => {
   let parentRepository: Repository<ParentEntity>;
-  let child1Repository: Repository<Child1Entity>;
-  let child2Repository: Repository<Child1Entity>;
+  let childRepository: Repository<ChildEntity>;
   let requester: ReturnType<typeof getRequester>;
   let response: Response;
   let createChildDto: CreateChildEntityDto;
-  let updateChildDto: UpdateChildEntityDto;
   let createParentDto: CreateParentEntityDto;
+  let updateParentDto: UpdateParentEntityDto;
 
   async function prepare(serviceClass: Provider, controllerClass: Type) {
     const module = await Test.createTestingModule({
-      imports: [...getTypeOrmModules(ParentEntity, Child1Entity, Child2Entity)],
+      imports: [...getTypeOrmModules(ParentEntity, ChildEntity)],
       controllers: [controllerClass],
       providers: [serviceClass],
     }).compile();
@@ -52,15 +50,13 @@ describe("E2E", () => {
     const app = await module.createNestApplication().init();
 
     parentRepository = module.get(getRepositoryToken(ParentEntity));
-    child1Repository = module.get(getRepositoryToken(Child1Entity));
-    child2Repository = module.get(getRepositoryToken(Child2Entity));
+    childRepository = module.get(getRepositoryToken(ChildEntity));
     requester = getRequester(app);
 
     for (let i = 1; i <= 3; i++)
       await parentRepository.save({
         name: "parent",
-        child1: { name: "child1" },
-        child2: { name: "child2" },
+        children: [{ name: "child1" }],
       });
   }
 
@@ -80,12 +76,12 @@ describe("E2E", () => {
     }).product {}
 
     @Controller()
-    class TestController extends new RestControllerFactory({
+    class TestController extends new RestControllerFactory<TestService>({
       restServiceClass: TestService,
       actions: ["list", "retrieve", "create", "replace", "update", "destroy"],
       queryDto: new QueryDtoFactory<ParentEntity>({
         limit: { max: 2, default: 1 },
-        expand: { in: ["child1", "child2"] },
+        expand: { in: ["children"] },
         order: { in: ["id:desc"] },
         filter: { in: ["id"] },
       }).product,
@@ -96,18 +92,17 @@ describe("E2E", () => {
     });
 
     describe.each`
-      limit        | offset       | expand                  | order          | filter                    | count | firstId
-      ${undefined} | ${undefined} | ${undefined}            | ${undefined}   | ${undefined}              | ${1}  | ${1}
-      ${2}         | ${undefined} | ${undefined}            | ${undefined}   | ${undefined}              | ${2}  | ${1}
-      ${undefined} | ${1}         | ${undefined}            | ${undefined}   | ${undefined}              | ${1}  | ${2}
-      ${2}         | ${1}         | ${undefined}            | ${undefined}   | ${undefined}              | ${2}  | ${2}
-      ${undefined} | ${undefined} | ${undefined}            | ${["id:desc"]} | ${undefined}              | ${1}  | ${3}
-      ${undefined} | ${undefined} | ${["child1"]}           | ${undefined}   | ${undefined}              | ${1}  | ${1}
-      ${undefined} | ${undefined} | ${["child1", "child2"]} | ${undefined}   | ${undefined}              | ${1}  | ${1}
-      ${undefined} | ${undefined} | ${["child1", "child1"]} | ${undefined}   | ${undefined}              | ${1}  | ${1}
-      ${undefined} | ${undefined} | ${undefined}            | ${undefined}   | ${["id|eq:2"]}            | ${1}  | ${2}
-      ${2}         | ${undefined} | ${undefined}            | ${undefined}   | ${["id|in:2,3"]}          | ${2}  | ${2}
-      ${2}         | ${undefined} | ${undefined}            | ${undefined}   | ${["id|eq:2", "id|eq:1"]} | ${1}  | ${1}
+      limit        | offset       | expand                      | order          | filter                    | count | firstId
+      ${undefined} | ${undefined} | ${undefined}                | ${undefined}   | ${undefined}              | ${1}  | ${1}
+      ${2}         | ${undefined} | ${undefined}                | ${undefined}   | ${undefined}              | ${2}  | ${1}
+      ${undefined} | ${1}         | ${undefined}                | ${undefined}   | ${undefined}              | ${1}  | ${2}
+      ${2}         | ${1}         | ${undefined}                | ${undefined}   | ${undefined}              | ${2}  | ${2}
+      ${undefined} | ${undefined} | ${undefined}                | ${["id:desc"]} | ${undefined}              | ${1}  | ${3}
+      ${undefined} | ${undefined} | ${["children"]}             | ${undefined}   | ${undefined}              | ${1}  | ${1}
+      ${undefined} | ${undefined} | ${["children", "children"]} | ${undefined}   | ${undefined}              | ${1}  | ${1}
+      ${undefined} | ${undefined} | ${undefined}                | ${undefined}   | ${["id|eq:2"]}            | ${1}  | ${2}
+      ${2}         | ${undefined} | ${undefined}                | ${undefined}   | ${["id|in:2,3"]}          | ${2}  | ${2}
+      ${2}         | ${undefined} | ${undefined}                | ${undefined}   | ${["id|eq:2", "id|eq:1"]} | ${1}  | ${1}
     `(
       "/?limit=$limit&offset=$offset&expand[]=$expand&order[]=$order&filter[]=$filter (GET)",
       ({ limit, offset, expand, order, filter, count, firstId }) => {
@@ -149,7 +144,7 @@ describe("E2E", () => {
       ${undefined} | ${undefined} | ${undefined} | ${["idd:desc"]} | ${undefined}
       ${undefined} | ${undefined} | ${undefined} | ${["id:descc"]} | ${undefined}
       ${undefined} | ${undefined} | ${undefined} | ${undefined}    | ${"id|eq:1"}
-      ${undefined} | ${undefined} | ${undefined} | ${undefined}    | ${["child1|eq:1"]}
+      ${undefined} | ${undefined} | ${undefined} | ${undefined}    | ${["children|eq:1"]}
     `(
       "/?limit=$limit&offset=$offset&expand[]=$expand&order[]=$order&filter[]=$filter (GET)",
       ({ limit, offset, expand, order, filter }) => {
@@ -172,9 +167,8 @@ describe("E2E", () => {
     describe("/ (POST)", () => {
       beforeEach(async () => {
         createChildDto = { name: "child" };
-        createParentDto = { name: "parent", child1: 4, child2: 4 };
-        await child1Repository.save(createChildDto);
-        await child2Repository.save(createChildDto);
+        createParentDto = { name: "parent", children: [4] };
+        await childRepository.save(createChildDto);
         response = await requester.post("/").send(createParentDto);
       });
 
@@ -237,7 +231,7 @@ describe("E2E", () => {
 
     describe("/1/ (PUT)", () => {
       beforeEach(async () => {
-        createParentDto = { name: "updated", child1: 1, child2: 1 };
+        createParentDto = { id: 999, name: "updated", children: [1] };
         response = await requester.put("/1/").send(createParentDto);
       });
 
@@ -245,13 +239,8 @@ describe("E2E", () => {
         expect(response.status).toBe(200);
       });
 
-      it("should update the entity", async () => {
-        const entity = await parentRepository.findOne(1);
-        expect(entity?.name).toBe(createParentDto.name);
-      });
-
       it("should serialize and return the entity", () => {
-        assertEntity(response.body, 1);
+        assertEntity(response.body, 999);
       });
     });
 
@@ -275,7 +264,7 @@ describe("E2E", () => {
       ${"put"} | ${400}
     `("/$lookup/ (PUT)", ({ lookup, code }) => {
       beforeEach(async () => {
-        createParentDto = { name: "updated", child1: 1, child2: 1 };
+        createParentDto = { name: "updated", children: [1] };
         response = await requester.put(`/${lookup}/`).send(createParentDto);
       });
 
@@ -286,21 +275,16 @@ describe("E2E", () => {
 
     describe("/1/ (PATCH)", () => {
       beforeEach(async () => {
-        updateChildDto = { name: "updated" };
-        response = await requester.patch("/1/").send(updateChildDto);
+        updateParentDto = { id: 999, name: "updated" };
+        response = await requester.patch("/1/").send(updateParentDto);
       });
 
       it("should return 200", () => {
         expect(response.status).toBe(200);
       });
 
-      it("should update the entity", async () => {
-        const entity = await parentRepository.findOne(1);
-        expect(entity?.name).toBe(updateChildDto.name);
-      });
-
       it("should serialize and return the entity", () => {
-        assertEntity(response.body, 1);
+        assertEntity(response.body, 999);
       });
     });
 
@@ -323,8 +307,8 @@ describe("E2E", () => {
       ${"str"} | ${400}
     `("/$lookup/ (PATCH)", ({ lookup, code }) => {
       beforeEach(async () => {
-        updateChildDto = { name: "updated" };
-        response = await requester.patch(`/${lookup}/`).send(updateChildDto);
+        updateParentDto = { name: "updated" };
+        response = await requester.patch(`/${lookup}/`).send(updateParentDto);
       });
 
       it(`should return ${code}`, () => {

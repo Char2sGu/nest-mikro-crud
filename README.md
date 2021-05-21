@@ -74,7 +74,7 @@ There is a query DTO class used to validate the query params of all the actions,
 ```ts
 class OurController extends new RestControllerFactory({
   // ...
-  queryDto: new QueryDtoFactory({
+  queryDto: new QueryDtoFactory<OurEntity>({
     limit: { max: 100, default: 50 },
     offset: { max: 10000 },
     expand: {

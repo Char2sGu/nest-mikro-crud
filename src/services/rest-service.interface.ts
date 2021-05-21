@@ -21,6 +21,9 @@ export interface RestService<
 > {
   readonly repository: Repository<Entity>;
 
+  // ------------------------------------------------------------------------------------------
+  // Entry Methods
+
   /**
    * Top entry method of "list" action.
    * @param args
@@ -32,6 +35,15 @@ export interface RestService<
     order?: OrderQueryParam<Entity>[];
     filter?: FilterQueryParam<Entity>[];
   }): Promise<Entity[]>;
+
+  /**
+   * Will be called before sending the response of "list" action to get the
+   * final response data.
+   * @param entities
+   * @param queries
+   * @param args
+   */
+  finalizeList(args: { entities: Entity[] }): Promise<unknown>;
 
   /**
    * Top entry method of "create" action.
@@ -66,13 +78,15 @@ export interface RestService<
    */
   destroy(args: { entity: Entity }): Promise<Entity>;
 
-  count(args: {}): Promise<number>;
-
   /**
    * Will be called in the controller to transform the entity
    * before sending the response.
    */
   transform(args: { entity: Entity }): Promise<Entity>;
+
+  // ------------------------------------------------------------------------------------------
+
+  count(args: {}): Promise<number>;
 
   /**
    * Entry method of getting query conditions.
@@ -120,13 +134,4 @@ export interface RestService<
     operator: FilterOperator;
     value: string;
   }): Promise<FindOperator<unknown>>;
-
-  /**
-   * Will be called before sending the response of "list" action to get the
-   * final response data.
-   * @param entities
-   * @param queries
-   * @param args
-   */
-  finalizeList(args: { entities: Entity[] }): Promise<unknown>;
 }

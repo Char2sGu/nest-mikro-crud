@@ -77,6 +77,16 @@ export class RestServiceFactory<
         });
       }
 
+      async finalizeList({
+        entities,
+        ...args
+      }: Parameters<Interface["finalizeList"]>[0]): Promise<unknown> {
+        return {
+          total: await this.count({ ...args }),
+          results: entities,
+        };
+      }
+
       async create({ data, ...args }: Parameters<Interface["create"]>[0]) {
         return await this.repository.save(data);
       }
@@ -114,17 +124,17 @@ export class RestServiceFactory<
         return await this.repository.remove(entity);
       }
 
-      async count({ ...args }: Parameters<Interface["count"]>[0]) {
-        return await this.repository.count({
-          where: await this.getQueryConditions({ ...args }),
-        });
-      }
-
       async transform({
         entity,
         ...args
       }: Parameters<Interface["transform"]>[0]) {
         return plainToClass(entityClass, entity);
+      }
+
+      async count({ ...args }: Parameters<Interface["count"]>[0]) {
+        return await this.repository.count({
+          where: await this.getQueryConditions({ ...args }),
+        });
       }
 
       async getQueryConditions({
@@ -233,16 +243,6 @@ export class RestServiceFactory<
           case "startswith":
             return Like(`%${value}`);
         }
-      }
-
-      async finalizeList({
-        entities,
-        ...args
-      }: Parameters<Interface["finalizeList"]>[0]): Promise<unknown> {
-        return {
-          total: await this.count({ ...args }),
-          results: entities,
-        };
       }
     };
   }

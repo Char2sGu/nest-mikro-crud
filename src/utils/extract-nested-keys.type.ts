@@ -1,14 +1,8 @@
-import { ExtractKeys } from "./extract-keys.type";
 import { Values } from "./values.type";
-
-type NestedObj = Record<PropertyKey, any>;
-type ExtractLegalKeys<T, C> = Extract<ExtractKeys<T, C | NestedObj>, string>;
 
 /**
  * Extract all the keys that meet the condition in the target and its sub-objects and
  * connect the keys using the separator.
- *
- * **NOTE**: This type may cause performance problems.
  *
  * @param Root - Be used to prevent circular reference, set to `never` to disable.
  * @example
@@ -25,7 +19,7 @@ type ExtractLegalKeys<T, C> = Extract<ExtractKeys<T, C | NestedObj>, string>;
  *     };
  *   };
  * };
- * type T = ExtractNestedKeys<O, number, "/">; // "b" | "c/e" | "c/f/h"
+ * type T = ExtractNestedKeys<O, number, "/">; // "b" | "a/length" | "c/e" | "c/d/length" | "c/f/h" | "c/f/g/length"
  */
 export type ExtractNestedKeys<
   Target,
@@ -34,28 +28,16 @@ export type ExtractNestedKeys<
   Root = Target
 > = Values<
   {
-    [K in ExtractLegalKeys<Target, Condition>]: Target[K] extends Condition
-      ? Target[K] extends Root // prevent circular reference
-        ? K
-        : ExtractLegalKeys<Target[K], Condition> extends never
-        ? K
-        :
-            | K
-            | `${K}${Separator}${ExtractNestedKeys<
-                Target[K],
-                Condition,
-                Separator,
-                Root
-              >}`
-      : ExtractLegalKeys<Target[K], Condition> extends never
-      ? never
-      : Target[K] extends Root
-      ? never
-      : `${K}${Separator}${ExtractNestedKeys<
-          Target[K],
-          Condition,
-          Separator,
-          Root
-        >}`;
+    [K in Extract<keyof Target, string>]:
+      | (Target[K] extends Condition ? K : never)
+      | (Target[K] extends Root
+          ? never
+          : // @ts-expect-error - this IS NOT an infinite loop!!!!
+            `${K}${Separator}${ExtractNestedKeys<
+              Target[K],
+              Condition,
+              Separator,
+              Root
+            >}`);
   }
 >;

@@ -73,7 +73,7 @@ export interface RestService<
    */
   getQueryConditions(args: {
     lookup?: Entity[LookupField];
-  }): Promise<FindConditions<Entity>>;
+  }): Promise<FindConditions<Entity> | FindConditions<Entity>[]>;
 
   /**
    * Parse the "expand" query param into actual options.

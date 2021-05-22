@@ -26,10 +26,6 @@ export interface RestService<
   // ------------------------------------------------------------------------------------------
   // Entry Methods
 
-  /**
-   * Top entry method of "list" action.
-   * @param args
-   */
   list(args: {
     limit?: number;
     offset?: number;
@@ -38,37 +34,17 @@ export interface RestService<
     filter?: FilterQueryParam<Entity>[];
   }): Promise<{ total: number; results: Entity[] }>;
 
-  /**
-   * Top entry method of "create" action.
-   * @param args
-   */
   create(args: { data: CreateDto }): Promise<Entity>;
 
-  /**
-   * Top entry method of "retrieve" action.
-   * @param args
-   */
   retrieve(args: {
     lookup: Entity[LookupField];
     expand?: RelationPath<Entity>[];
   }): Promise<Entity>;
 
-  /**
-   * Top entry method of "replace" action.
-   * @param args
-   */
   replace(args: { entity: Entity; data: CreateDto }): Promise<Entity>;
 
-  /**
-   * Top entry method of "update" action.
-   * @param args
-   */
   update(args: { entity: Entity; data: UpdateDto }): Promise<Entity>;
 
-  /**
-   * Top entry method of "destroy" action.
-   * @param args
-   */
   destroy(args: { entity: Entity }): Promise<Entity>;
 
   /**
@@ -77,6 +53,16 @@ export interface RestService<
    */
   transform(args: { entity: Entity }): Promise<Entity>;
 
+  /**
+   * When the action is _list_ or _create_, it will be called once with
+   * `{ action: "<the-action-name>" }` before performing the action.
+   *
+   * In other cases it will be called twice, once is with `{ action: "<the-action-name>" }`
+   * before loading the target entity and once is with
+   * `{ action: "<the-action-name>", entity: <the-target-entity> }` before performing the
+   * action.
+   * @param args
+   */
   checkPermission(args: { action: ActionName; entity?: Entity }): Promise<void>;
 
   // ------------------------------------------------------------------------------------------

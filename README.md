@@ -130,7 +130,7 @@ class OurController extends new RestControllerFactory({
 
 ## Forcing Query Conditions
 
-`.getQueryConditions()` in the service is called to get primary query conditions for each actions.
+`.getQueryConditions()` in the service is called to get primary query conditions for each actions. (filter conditions, if exists, will be overwritten)
 
 ```ts
 class OurService /*extends ...*/ {
@@ -147,7 +147,7 @@ Here only static conditions can be forced, see [Context Data](#context-data) for
 
 ## Context Data
 
-Context Data provides a way to get any context data through [custom decorators](https://docs.nestjs.com/custom-decorators).
+Context Data provides a way to get anything you want through [custom decorators](https://docs.nestjs.com/custom-decorators).
 
 ```ts
 class OurController extends new RestControllerFactory({
@@ -161,7 +161,7 @@ class OurController extends new RestControllerFactory({
 
 This means that the `ReqUser()` decorator will be applied to the first rest argument of each controller's method to get the user from the request, and `User` will be the metadata type of this argument (optional, `Object` by default). Then the values of the extra arguments will be packed into an object and pass to the service's methods, in this case it will be `{ user: <value-of-the-argument> }`
 
-Because the service's methods will pass rest arguments to each other methods, we can now force query conditions based on the request.
+Since the method of the service will pass rest parameters to any other methods it calls, the context data can always exist, so we can now force query conditions based on the request.
 
 ```ts
 class OurService /*extends ...*/ {
@@ -174,51 +174,26 @@ class OurService /*extends ...*/ {
 
 ## Additional Decorators
 
-You may would like to apply some additional decorators to implement something wonderful, there is no need to create an empty overload and specify all parameters and types, the factory has easy-to-use methods for that.
+To apply additional decorators, there is no need to override the method, specify all its params and types, and return its super method directly, all factories provides helper methods for your usage.
 
-Skip authentication control for `create` actions:
-
-```ts
-@UseGurads(AuthGuard)
-class OurController extends new RestControllerFactory({
-  // ...
-}).applyMethodDecorators("create", SkipAuth()).product {}
-```
-
-Apply decorators for the 4th param of `.retrieve()`
+For example, to apply the auth guard for each action except _create_:
 
 ```ts
-class OurController extends new RestControllerFactory({
-  // ...
-}).applyParamDecorators("retrieve", 4, Session()).product {}
-```
-
-Apply a list of decorators for each param of `.update()`
-
-```ts
-class OurController extends new RestControllerFactory({
-  // ...
-}).applyParamDecoratorSets(
-  "update",
-  [
-    /*<decorators for the 1st param>*/
-  ],
-  [
-    /*<decorators for the 2nd param>*/
-  ]
-).product {}
-```
-
-## Finalizing Response of List Action
-
-The service's `.finalizeList()` method is called before sending the response to finalize the response (after [transforming the entities](#transforming-entities-before-responding)). By default, it takes the transformed entities and return a simple schema like this `{ total: 1342, results: [{ id: 1 }] }`. Change this behavior by overriding it:
-
-```ts
-class OurService /*extends ...*/ {
-  async finalizeList({ entities }: { entities: OurEntity[] }) {
-    return entities; // return an array of entities directly
-  }
-}
+@Controller()
+export class UsersController extends new RestControllerFactory({
+  restServiceClass: UsersService,
+  actions: ["list", "create", "retrieve", "replace", "update"],
+  queryDto: new QueryDtoFactory<User>({
+    limit: { max: 500, default: 100 },
+  }).product,
+  contextOptions: {
+    user: { type: User, decorators: [ReqUser()] },
+  },
+})
+  .applyMethodDecorators("list", UseGuards(JwtAuthGuard))
+  .applyMethodDecorators("retrieve", UseGuards(JwtAuthGuard))
+  .applyMethodDecorators("replace", UseGuards(JwtAuthGuard))
+  .applyMethodDecorators("update", UseGuards(JwtAuthGuard)).product {}
 ```
 
 ## Transforming Entities before Responding
@@ -254,13 +229,44 @@ Here is something you should know before overriding the action methods, otherwis
 - Nest's action method decorators store metadata in action methods directly, when looking metadata, it will look up the value directly from the method, but if we override a method, the method will be different from the old one and all the metadata will be lost, method decorators should be applied again.
 - Nest's param decorators store metadata in the constructor, as said before, there is no need to apply param decorators again.
 
-Here is an example:
+For example, to custom the _list_ action's response:
 
 ```ts
 class OurController /*extends ...*/ {
   @Patch(":lookup") // apply method decorators again
-  async update(lookup: number, data: UpdateOurEntityDto) {
-    // ...
+  async list(/* ... */) {
+    const data = await super.list(/* ... */);
+    return {
+      ...data,
+      youcan: "put anything here",
+    };
+  }
+}
+```
+
+## Access Control
+
+When the action is _list_ or _create_, the service's `.checkPermission()` will be called once with `{ action: "<the-action-name>" }` before performing the action.  
+In other cases it will be called twice, once is with `{ action: "<the-action-name>" }` before loading the target entity and once is with `{ action: "<the-action-name>", entity: <the-target-entity> }` before performing the action.
+
+Here is an example with [Context Data](#context-data):
+
+```ts
+async checkPermission({
+  action,
+  entity,
+  user,
+}: {
+  action: ActionName;
+  entity?: User;
+  user?: User;
+}) {
+  if (!entity) {
+    if (action == 'create' && user) throw new ForbiddenException();
+  } else {
+    if (entity.id != user.id) throw new ForbiddenException();
+    if (action == 'replace' || action == 'update')
+      if (!entity.isRecentUpdated) throw new ForbiddenException();
   }
 }
 ```

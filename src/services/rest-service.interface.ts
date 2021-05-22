@@ -78,7 +78,7 @@ export interface RestService<
   // ------------------------------------------------------------------------------------------
 
   /**
-   * Entry method of getting query conditions.
+   * Getting primary query conditions.
    * @param lookup
    */
   getQueryConditions(args: {

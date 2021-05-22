@@ -197,8 +197,7 @@ export class RestControllerFactory<
         ...[lookup, { expand }, data, ...args]: Parameters<Interface["replace"]>
       ): Promise<unknown> {
         const ctx = await this.prepareContext(args);
-        let entity: Entity;
-        entity = await this.service.retrieve({ ...ctx, lookup });
+        let entity = await this.service.retrieve({ ...ctx, lookup });
         await this.service.replace({ ...ctx, entity, data });
         lookup = entity[lookupField]; // lookup may be updated
         entity = await this.service.retrieve({ ...ctx, lookup, expand });
@@ -209,8 +208,7 @@ export class RestControllerFactory<
         ...[lookup, { expand }, data, ...args]: Parameters<Interface["update"]>
       ): Promise<unknown> {
         const ctx = await this.prepareContext(args);
-        let entity: Entity;
-        entity = await this.service.retrieve({ ...ctx, lookup });
+        let entity = await this.service.retrieve({ ...ctx, lookup });
         await this.service.update({ ...ctx, entity, data });
         lookup = entity[lookupField]; // lookup may be updated
         entity = await this.service.retrieve({ ...ctx, lookup, expand });

@@ -65,26 +65,19 @@ export class RestServiceFactory<
         filter = [],
         ...args
       }: Parameters<Interface["list"]>[0]) {
-        return await this.repository.find({
-          where: {
-            ...(await this.parseFilters({ filter, ...args })),
-            ...(await this.getQueryConditions({ ...args })),
-          },
+        const conditions = {
+          ...(await this.parseFilters({ filter, ...args })),
+          ...(await this.getQueryConditions({ ...args })),
+        };
+        const total = await this.repository.count({ where: conditions });
+        const results = await this.repository.find({
+          where: conditions,
           take: limit,
           skip: offset,
           order: await this.parseOrders({ order, ...args }),
           ...(await this.parseFieldExpansions({ expand, ...args })),
         });
-      }
-
-      async finalizeList({
-        entities,
-        ...args
-      }: Parameters<Interface["finalizeList"]>[0]): Promise<unknown> {
-        return {
-          total: await this.count({ ...args }),
-          results: entities,
-        };
+        return { total, results };
       }
 
       async create({ data, ...args }: Parameters<Interface["create"]>[0]) {
@@ -129,12 +122,6 @@ export class RestServiceFactory<
         ...args
       }: Parameters<Interface["transform"]>[0]) {
         return plainToClass(entityClass, entity);
-      }
-
-      async count({ ...args }: Parameters<Interface["count"]>[0]) {
-        return await this.repository.count({
-          where: await this.getQueryConditions({ ...args }),
-        });
       }
 
       async getQueryConditions({

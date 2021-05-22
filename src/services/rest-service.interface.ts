@@ -34,16 +34,7 @@ export interface RestService<
     expand?: RelationPath<Entity>[];
     order?: OrderQueryParam<Entity>[];
     filter?: FilterQueryParam<Entity>[];
-  }): Promise<Entity[]>;
-
-  /**
-   * Will be called before sending the response of "list" action to get the
-   * final response data.
-   * @param entities
-   * @param queries
-   * @param args
-   */
-  finalizeList(args: { entities: Entity[] }): Promise<unknown>;
+  }): Promise<{ total: number; results: Entity[] }>;
 
   /**
    * Top entry method of "create" action.
@@ -85,8 +76,6 @@ export interface RestService<
   transform(args: { entity: Entity }): Promise<Entity>;
 
   // ------------------------------------------------------------------------------------------
-
-  count(args: {}): Promise<number>;
 
   /**
    * Entry method of getting query conditions.

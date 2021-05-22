@@ -159,7 +159,7 @@ export class RestControllerFactory<
         >
       ): Promise<unknown> {
         const ctx = await this.prepareContext(args);
-        const entities = await this.service.list({
+        const data = await this.service.list({
           ...ctx,
           limit,
           offset,
@@ -167,13 +167,12 @@ export class RestControllerFactory<
           order,
           filter,
         });
-        const transformed = await Promise.all(
-          entities.map((entity) => this.service.transform({ ...ctx, entity }))
+        data.results = await Promise.all(
+          data.results.map((entity) =>
+            this.service.transform({ ...ctx, entity })
+          )
         );
-        return await this.service.finalizeList({
-          ...ctx,
-          entities: transformed,
-        });
+        return data;
       }
 
       async create(

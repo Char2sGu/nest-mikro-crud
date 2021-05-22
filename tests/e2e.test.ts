@@ -92,20 +92,20 @@ describe("E2E", () => {
     });
 
     describe.each`
-      limit        | offset       | expand                      | order          | filter                    | count | firstId
-      ${undefined} | ${undefined} | ${undefined}                | ${undefined}   | ${undefined}              | ${1}  | ${1}
-      ${2}         | ${undefined} | ${undefined}                | ${undefined}   | ${undefined}              | ${2}  | ${1}
-      ${undefined} | ${1}         | ${undefined}                | ${undefined}   | ${undefined}              | ${1}  | ${2}
-      ${2}         | ${1}         | ${undefined}                | ${undefined}   | ${undefined}              | ${2}  | ${2}
-      ${undefined} | ${undefined} | ${undefined}                | ${["id:desc"]} | ${undefined}              | ${1}  | ${3}
-      ${undefined} | ${undefined} | ${["children"]}             | ${undefined}   | ${undefined}              | ${1}  | ${1}
-      ${undefined} | ${undefined} | ${["children", "children"]} | ${undefined}   | ${undefined}              | ${1}  | ${1}
-      ${undefined} | ${undefined} | ${undefined}                | ${undefined}   | ${["id|eq:2"]}            | ${1}  | ${2}
-      ${2}         | ${undefined} | ${undefined}                | ${undefined}   | ${["id|in:2,3"]}          | ${2}  | ${2}
-      ${2}         | ${undefined} | ${undefined}                | ${undefined}   | ${["id|eq:2", "id|eq:1"]} | ${1}  | ${1}
+      limit        | offset       | expand                      | order          | filter                    | count | total | firstId
+      ${undefined} | ${undefined} | ${undefined}                | ${undefined}   | ${undefined}              | ${1}  | ${3}  | ${1}
+      ${2}         | ${undefined} | ${undefined}                | ${undefined}   | ${undefined}              | ${2}  | ${3}  | ${1}
+      ${undefined} | ${1}         | ${undefined}                | ${undefined}   | ${undefined}              | ${1}  | ${3}  | ${2}
+      ${2}         | ${1}         | ${undefined}                | ${undefined}   | ${undefined}              | ${2}  | ${3}  | ${2}
+      ${undefined} | ${undefined} | ${undefined}                | ${["id:desc"]} | ${undefined}              | ${1}  | ${3}  | ${3}
+      ${undefined} | ${undefined} | ${["children"]}             | ${undefined}   | ${undefined}              | ${1}  | ${3}  | ${1}
+      ${undefined} | ${undefined} | ${["children", "children"]} | ${undefined}   | ${undefined}              | ${1}  | ${3}  | ${1}
+      ${undefined} | ${undefined} | ${undefined}                | ${undefined}   | ${["id|eq:2"]}            | ${1}  | ${1}  | ${2}
+      ${2}         | ${undefined} | ${undefined}                | ${undefined}   | ${["id|in:2,3"]}          | ${2}  | ${2}  | ${2}
+      ${2}         | ${undefined} | ${undefined}                | ${undefined}   | ${["id|eq:2", "id|eq:1"]} | ${1}  | ${1}  | ${1}
     `(
       "/?limit=$limit&offset=$offset&expand[]=$expand&order[]=$order&filter[]=$filter (GET)",
-      ({ limit, offset, expand, order, filter, count, firstId }) => {
+      ({ limit, offset, expand, order, filter, count, total, firstId }) => {
         let body: { total: number; results: ParentEntity[] };
 
         beforeEach(async () => {
@@ -125,7 +125,7 @@ describe("E2E", () => {
 
         it(`should serialize and return the response with ${count} entities`, () => {
           expect(body.total).toBeDefined();
-          expect(body.total).toBe(3);
+          expect(body.total).toBe(total);
           expect(body.results).toBeInstanceOf(Array);
           expect(body.results).toHaveLength(count);
           assertEntity(body.results[0], firstId, expand ?? []);

@@ -142,7 +142,7 @@ export class RestServiceFactory<
                 [lookupField]: lookup,
               } as unknown)
             : {}
-        ) as FindConditions<Entity>;
+        ) as ReturnType<Interface["getQueryConditions"]>;
       }
 
       async parseFieldExpansions({

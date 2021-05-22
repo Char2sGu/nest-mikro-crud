@@ -158,7 +158,9 @@ export class RestControllerFactory<
           Interface["list"]
         >
       ): Promise<unknown> {
+        const action: ActionName = "list";
         const ctx = await this.prepareContext(args);
+        await this.service.checkPermission({ ...ctx, action });
         const data = await this.service.list({
           ...ctx,
           limit,
@@ -178,7 +180,9 @@ export class RestControllerFactory<
       async create(
         ...[{ expand }, data, ...args]: Parameters<Interface["create"]>
       ): Promise<unknown> {
+        const action: ActionName = "create";
         const ctx = await this.prepareContext(args);
+        await this.service.checkPermission({ ...ctx, action });
         let entity = await this.service.create({ ...ctx, data });
         const lookup = entity[lookupField];
         entity = await this.service.retrieve({ ...ctx, lookup, expand });
@@ -188,16 +192,22 @@ export class RestControllerFactory<
       async retrieve(
         ...[lookup, { expand }, ...args]: Parameters<Interface["retrieve"]>
       ): Promise<unknown> {
+        const action: ActionName = "retrieve";
         const ctx = await this.prepareContext(args);
+        await this.service.checkPermission({ ...ctx, action });
         const entity = await this.service.retrieve({ ...ctx, lookup, expand });
+        await this.service.checkPermission({ ...ctx, action, entity });
         return await this.service.transform({ ...ctx, entity });
       }
 
       async replace(
         ...[lookup, { expand }, data, ...args]: Parameters<Interface["replace"]>
       ): Promise<unknown> {
+        const action: ActionName = "replace";
         const ctx = await this.prepareContext(args);
+        await this.service.checkPermission({ ...ctx, action });
         let entity = await this.service.retrieve({ ...ctx, lookup });
+        await this.service.checkPermission({ ...ctx, action, entity });
         await this.service.replace({ ...ctx, entity, data });
         lookup = entity[lookupField]; // lookup may be updated
         entity = await this.service.retrieve({ ...ctx, lookup, expand });
@@ -207,8 +217,11 @@ export class RestControllerFactory<
       async update(
         ...[lookup, { expand }, data, ...args]: Parameters<Interface["update"]>
       ): Promise<unknown> {
+        const action: ActionName = "update";
         const ctx = await this.prepareContext(args);
+        await this.service.checkPermission({ ...ctx, action });
         let entity = await this.service.retrieve({ ...ctx, lookup });
+        await this.service.checkPermission({ ...ctx, action, entity });
         await this.service.update({ ...ctx, entity, data });
         lookup = entity[lookupField]; // lookup may be updated
         entity = await this.service.retrieve({ ...ctx, lookup, expand });
@@ -218,8 +231,11 @@ export class RestControllerFactory<
       async destroy(
         ...[lookup, ...args]: Parameters<Interface["destroy"]>
       ): Promise<unknown> {
+        const action: ActionName = "destroy";
         const ctx = await this.prepareContext(args);
+        await this.service.checkPermission({ ...ctx, action });
         const entity = await this.service.retrieve({ ...ctx, lookup });
+        await this.service.checkPermission({ ...ctx, action, entity });
         await this.service.destroy({ ...ctx, entity });
         return;
       }

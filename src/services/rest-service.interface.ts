@@ -1,3 +1,4 @@
+import { Action } from "rxjs/internal/scheduler/Action";
 import {
   FindConditions,
   FindManyOptions,
@@ -6,6 +7,7 @@ import {
   Repository,
 } from "typeorm";
 import {
+  ActionName,
   FilterOperator,
   FilterQueryParam,
   LookupableField,
@@ -74,6 +76,8 @@ export interface RestService<
    * before sending the response.
    */
   transform(args: { entity: Entity }): Promise<Entity>;
+
+  checkPermission(args: { action: ActionName; entity?: Entity }): Promise<void>;
 
   // ------------------------------------------------------------------------------------------
 

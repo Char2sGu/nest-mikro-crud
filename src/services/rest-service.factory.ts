@@ -124,6 +124,14 @@ export class RestServiceFactory<
         return plainToClass(entityClass, entity);
       }
 
+      async checkPermission({
+        action,
+        entity,
+        ...args
+      }: Parameters<Interface["checkPermission"]>[0]) {
+        return;
+      }
+
       async getQueryConditions({
         lookup,
         ...args

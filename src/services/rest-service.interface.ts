@@ -67,13 +67,9 @@ export interface RestService<
 
   // ------------------------------------------------------------------------------------------
 
-  /**
-   * Getting primary query conditions.
-   * @param lookup
-   */
-  getQueryConditions(args: {
-    lookup?: Entity[LookupField];
-  }): Promise<FindConditions<Entity> | FindConditions<Entity>[]>;
+  finalizedQueryConditions(args: {
+    conditions: FindConditions<Entity>;
+  }): Promise<FindConditions<Entity>[]>;
 
   /**
    * Parse the "expand" query param into actual options.

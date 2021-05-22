@@ -65,10 +65,10 @@ export class RestServiceFactory<
         filter = [],
         ...args
       }: Parameters<Interface["list"]>[0]) {
-        const conditions = {
-          ...(await this.parseFilters({ filter, ...args })),
-          ...(await this.getQueryConditions({ ...args })),
-        };
+        const conditions = await this.finalizedQueryConditions({
+          conditions: await this.parseFilters({ filter, ...args }),
+          ...args,
+        });
         const total = await this.repository.count({ where: conditions });
         const results = await this.repository.find({
           where: conditions,
@@ -90,7 +90,10 @@ export class RestServiceFactory<
         ...args
       }: Parameters<Interface["retrieve"]>[0]) {
         return await this.repository.findOneOrFail({
-          where: await this.getQueryConditions({ lookup, ...args }),
+          where: await this.finalizedQueryConditions({
+            conditions: { [lookupField]: lookup } as any,
+            ...args,
+          }),
           ...(await this.parseFieldExpansions({ expand, ...args })),
         });
       }
@@ -132,17 +135,10 @@ export class RestServiceFactory<
         return;
       }
 
-      async getQueryConditions({
-        lookup,
-        ...args
-      }: Parameters<Interface["getQueryConditions"]>[0]) {
-        return (
-          lookup != null
-            ? ({
-                [lookupField]: lookup,
-              } as unknown)
-            : {}
-        ) as ReturnType<Interface["getQueryConditions"]>;
+      async finalizedQueryConditions({
+        conditions,
+      }: Parameters<Interface["finalizedQueryConditions"]>[0]) {
+        return [conditions];
       }
 
       async parseFieldExpansions({

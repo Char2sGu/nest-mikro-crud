@@ -79,22 +79,6 @@ describe(RestServiceFactory.name, () => {
     });
 
     describe.each`
-      lookup       | expected
-      ${undefined} | ${{}}
-      ${0}         | ${{ id: 0 }}
-    `(d(".getQueryConditions({ lookup: $lookup })"), ({ lookup, expected }) => {
-      let ret: Resolved<ReturnType<RestService["getQueryConditions"]>>;
-
-      beforeEach(async () => {
-        ret = await service.getQueryConditions({ lookup });
-      });
-
-      it(`should return ${expected}`, async () => {
-        expect(ret).toEqual(expected);
-      });
-    });
-
-    describe.each`
       expand   | all                | expected
       ${["1"]} | ${["1", "2", "3"]} | ${[["1"], ["2", "3"]]}
     `(

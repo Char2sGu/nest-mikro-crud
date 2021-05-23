@@ -33,16 +33,17 @@
     "url": "https://github.com/TheNightmareX/nest-restful/issues"
   },
   "homepage": "https://github.com/TheNightmareX/nest-restful#readme",
-  "dependencies": {
-    "@nestjs/common": "^7.6.15",
-    "@nestjs/core": "^7.6.15",
-    "@nestjs/typeorm": "^7.1.5",
+  "peerDependencies": {
+    "@nestjs/common": "^7.0.0",
+    "@nestjs/core": "^7.0.0",
+    "@nestjs/typeorm": "^7.0.0",
     "class-transformer": "^0.4.0",
     "class-validator": "^0.13.1",
     "reflect-metadata": "^0.1.13",
-    "rxjs": "^6.6.7",
+    "rxjs": "^6.0.0",
     "typeorm": "^0.2.32"
   },
+  "dependencies": {},
   "devDependencies": {
     "@nestjs/mapped-types": "^0.4.1",
     "@nestjs/platform-express": "^7.6.15",

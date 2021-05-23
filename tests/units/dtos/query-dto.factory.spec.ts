@@ -14,14 +14,14 @@ describe(QueryDtoFactory.name, () => {
     factory = new QueryDtoFactory<ParentEntity>({
       limit: { max: 2, default: 1 },
       offset: { max: 4, default: 3 },
-      expand: { in: ["child1"], default: ["child2"] },
-      order: { in: ["child1", "child1:asc"], default: ["id:desc"] },
-      filter: { in: ["child1"], default: ["id|eq:1"] },
+      expand: { in: ["children"], default: ["children"] },
+      order: { in: ["children", "children:asc"], default: ["id:desc"] },
+      filter: { in: ["children"], default: ["id|eq:1"] },
     });
   });
 
   it("should standardize the order options", () => {
-    expect(factory.options.order.in).toEqual(["child1:asc", "child1:desc"]);
+    expect(factory.options.order.in).toEqual(["children:asc", "children:desc"]);
   });
 
   describe(d(".product"), () => {
@@ -31,7 +31,7 @@ describe(QueryDtoFactory.name, () => {
       instance = plainToClass(factory.product, {});
       expect(instance.limit).toBe(1);
       expect(instance.offset).toBe(3);
-      expect(instance.expand).toEqual(["child2"]);
+      expect(instance.expand).toEqual(["children"]);
       expect(instance.order).toEqual(["id:desc"]);
       expect(instance.filter).toEqual(["id|eq:1"]);
     });

@@ -71,8 +71,8 @@ describe(RestServiceFactory.name, () => {
       });
 
       it("should return the transformed entity", async () => {
-        const { id, children } = entity;
-        const transformed = { id, children };
+        const { id, name, children } = entity;
+        const transformed = { id, name, children };
         expect(ret).toBeInstanceOf(ParentEntity);
         expect(ret).toEqual(transformed);
       });

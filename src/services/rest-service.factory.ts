@@ -65,7 +65,7 @@ export class RestServiceFactory<
         filter = [],
         ...args
       }: Parameters<Interface["list"]>[0]) {
-        const conditions = await this.finalizedQueryConditions({
+        const conditions = await this.finalizeQueryConditions({
           conditions: await this.parseFilters({ filter, ...args }),
           ...args,
         });
@@ -90,7 +90,7 @@ export class RestServiceFactory<
         ...args
       }: Parameters<Interface["retrieve"]>[0]) {
         return await this.repository.findOneOrFail({
-          where: await this.finalizedQueryConditions({
+          where: await this.finalizeQueryConditions({
             conditions: { [lookupField]: lookup } as any,
             ...args,
           }),
@@ -135,9 +135,9 @@ export class RestServiceFactory<
         return;
       }
 
-      async finalizedQueryConditions({
+      async finalizeQueryConditions({
         conditions,
-      }: Parameters<Interface["finalizedQueryConditions"]>[0]) {
+      }: Parameters<Interface["finalizeQueryConditions"]>[0]) {
         return [conditions];
       }
 

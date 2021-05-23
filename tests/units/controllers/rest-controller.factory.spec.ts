@@ -52,15 +52,15 @@ describe(RestControllerFactory.name, () => {
 
   const testService: RestService = {
     repository: new Repository(),
-    list: jest.fn(async () => entities),
+    list: jest.fn(async () => ({ total: 1, results: entities })),
     create: jest.fn(async () => entity),
     retrieve: jest.fn(async () => entity),
     replace: jest.fn(async () => entity),
     update: jest.fn(async () => entity),
     destroy: jest.fn(async () => entity),
-    count: jest.fn(async () => entities.length),
+    checkPermission: jest.fn(),
     transform: jest.fn(async (v) => v.entity),
-    getQueryConditions: jest.fn(async () => ({})),
+    finalizeQueryConditions: jest.fn(async () => [{}]),
     parseFieldExpansions: jest.fn(async () => ({
       relations: [],
       loadRelationIds: { relations: [] },
@@ -68,7 +68,6 @@ describe(RestControllerFactory.name, () => {
     parseOrders: jest.fn(async () => ({})),
     parseFilters: jest.fn(async () => ({})),
     parseFilterOperator: jest.fn(async () => null as any),
-    finalizeList: jest.fn(async (v) => v.entities),
   };
   const TestService = jest.fn(() => testService);
   Reflect.defineMetadata(

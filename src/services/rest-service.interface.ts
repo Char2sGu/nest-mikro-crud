@@ -66,7 +66,7 @@ export interface RestService<
 
   // ------------------------------------------------------------------------------------------
 
-  finalizedQueryConditions(args: {
+  finalizeQueryConditions(args: {
     conditions: FindConditions<Entity>;
   }): Promise<FindConditions<Entity>[]>;
 

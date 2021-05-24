@@ -72,25 +72,28 @@ In this controller, only `limit` and `offset` query param is enabled for the _li
 There is a query DTO class used to validate the query params of all the actions, the default query DTO only have unlimited `limit` and `offset`, there is also a `QueryDtoFactory` provided to custom the DTO class.
 
 ```ts
-class OurController extends new RestControllerFactory({
-  // ...
-  queryDto: new QueryDtoFactory<OurEntity>({
-    limit: { max: 100, default: 50 },
-    offset: { max: 10000 },
-    expand: {
-      in: ["relationField", "relationField.nestedField"],
-      default: ["relationField"],
-    },
-    order: {
-      in: ["id", "name", "ascOnlyField:asc"],
-      default: ["id:desc"],
-    },
-    filter: {
-      in: ["id", "name"],
-    },
-  }).product,
-  // ...
-}).product {}
+class OurController extends new RestControllerFactory<OurService /* <--- the generic type must be specified or type inference will went wrong */>(
+  {
+    // ...
+    restServiceClass: OurService,
+    queryDto: new QueryDtoFactory<OurEntity>({
+      limit: { max: 100, default: 50 },
+      offset: { max: 10000 },
+      expand: {
+        in: ["relationField", "relationField.nestedField"],
+        default: ["relationField"],
+      },
+      order: {
+        in: ["id", "name", "ascOnlyField:asc"],
+        default: ["id:desc"],
+      },
+      filter: {
+        in: ["id", "name"],
+      },
+    }).product,
+    // ...
+  }
+).product {}
 ```
 
 Alternatively, you can pass your own DTO class matching the interface.

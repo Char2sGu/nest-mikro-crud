@@ -133,13 +133,19 @@ class OurController extends new RestControllerFactory({
 
 ## Forcing Query Conditions
 
-`.getQueryConditions()` in the service is called to get primary query conditions for each actions. (filter conditions, if exists, will be overwritten)
+`.finalizeQueryConditions()` in the service is called before each query to process the conditions, it should return an array of conditions which represents `OR`.
 
 ```ts
 class OurService /*extends ...*/ {
-  async getQueryConditions({ lookup }: { lookup?: number }) {
-    const conditions = await super.getQueryConditions({ lookup });
-    return { ...conditions, isActive: true };
+  async finalizeQueryConditions({
+    conditions,
+  }: {
+    conditions: FindConditions<OurEntity>;
+  }) {
+    return [
+      { ...conditions, isActive: true },
+      { ...conditions, isActive: false, persist: true },
+    ];
   }
 }
 ```
@@ -168,9 +174,17 @@ Since the method of the service will pass rest parameters to any other methods i
 
 ```ts
 class OurService /*extends ...*/ {
-  async getQueryConditions({ lookup, user }: { lookup?: number; user: User }) {
-    const conditions = await super.getQueryConditions({ lookup });
-    return { ...conditions, owner: user, isActive: true };
+  async finalizeQueryConditions({
+    conditions,
+    user,
+  }: {
+    conditions: FindConditions<OurEntity>;
+    user: User;
+  }) {
+    return [
+      { ...conditions, owner: user, isActive: true },
+      { ...conditions, owner: user, isActive: false, persist: true },
+    ];
   }
 }
 ```
@@ -270,6 +284,50 @@ async checkPermission({
     if (entity.id != user.id) throw new ForbiddenException();
     if (action == 'replace' || action == 'update')
       if (!entity.isRecentUpdated) throw new ForbiddenException();
+  }
+}
+```
+
+## Handling Relations
+
+This lib implements only basic CRUD, but provides high flexibility for you to implement complex logic, such as things about entity relations, by overriding the methods with a clear division of labor.
+
+For example, you'd like to create a membership for the user when creating a classroom:
+
+```ts
+class TestService /* extends ... */ {
+  @InjectRepository(Membership)
+  membershipRepository: Repository<Membership>;
+
+  async create({ data, user }: { data: CreateClassroomDto; user: User }) {
+    const membership = await this.membershipRepository.save({
+      user,
+      role: Role.HeadTeacher,
+    });
+    const classroom = await this.repository.save({
+      ...data,
+      members: [membership],
+    });
+    return classroom;
+  }
+}
+```
+
+Or you'd like to save nested entities using their primary keys:
+
+```ts
+class TestService /* extends ... */ {
+  @InjectRepository(ChildEntity)
+  childRepository!: Repository<ChildEntity>;
+
+  async create({ data }: { data: CreateParentEntityDto }) {
+    const childrenEntities = await Promise.all(
+      data.children.map((id) => this.childRepository.findOne(id))
+    );
+    return await this.repository.save({
+      ...data,
+      children: childrenEntities,
+    });
   }
 }
 ```

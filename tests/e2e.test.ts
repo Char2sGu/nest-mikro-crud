@@ -448,7 +448,7 @@ describe("E2E", () => {
         });
 
         describe.each`
-          expand
+          queries
           ${{ expand: ["children"] }}
           ${{ "expand[]": ["xxxxx"] }}
         `("Illegal Expand: $queries", ({ queries }) => {

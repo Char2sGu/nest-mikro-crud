@@ -64,7 +64,7 @@ export class RestServiceFactory<
         order = [],
         filter = [],
         ...args
-      }: Parameters<Interface["list"]>[0]) {
+      }: Parameters<Interface["list"]>[0]): ReturnType<Interface["list"]> {
         const conditions = await this.finalizeQueryConditions({
           conditions: await this.parseFilters({ filter, ...args }),
           ...args,
@@ -80,7 +80,10 @@ export class RestServiceFactory<
         return { total, results };
       }
 
-      async create({ data, ...args }: Parameters<Interface["create"]>[0]) {
+      async create({
+        data,
+        ...args
+      }: Parameters<Interface["create"]>[0]): ReturnType<Interface["create"]> {
         return await this.repository.save(data);
       }
 
@@ -102,7 +105,9 @@ export class RestServiceFactory<
         entity,
         data,
         ...args
-      }: Parameters<Interface["replace"]>[0]) {
+      }: Parameters<Interface["replace"]>[0]): ReturnType<
+        Interface["replace"]
+      > {
         const updatedEntity = this.repository.merge(entity, data);
         return await this.repository.save(updatedEntity);
       }
@@ -111,19 +116,26 @@ export class RestServiceFactory<
         entity,
         data,
         ...args
-      }: Parameters<Interface["update"]>[0]) {
+      }: Parameters<Interface["update"]>[0]): ReturnType<Interface["update"]> {
         const updatedEntity = this.repository.merge(entity, data);
         return await this.repository.save(updatedEntity);
       }
 
-      async destroy({ entity, ...args }: Parameters<Interface["destroy"]>[0]) {
+      async destroy({
+        entity,
+        ...args
+      }: Parameters<Interface["destroy"]>[0]): ReturnType<
+        Interface["destroy"]
+      > {
         return await this.repository.remove(entity);
       }
 
       async transform({
         entity,
         ...args
-      }: Parameters<Interface["transform"]>[0]) {
+      }: Parameters<Interface["transform"]>[0]): ReturnType<
+        Interface["transform"]
+      > {
         return plainToClass(entityClass, entity);
       }
 
@@ -131,20 +143,26 @@ export class RestServiceFactory<
         action,
         entity,
         ...args
-      }: Parameters<Interface["checkPermission"]>[0]) {
+      }: Parameters<Interface["checkPermission"]>[0]): ReturnType<
+        Interface["checkPermission"]
+      > {
         return;
       }
 
       async finalizeQueryConditions({
         conditions,
-      }: Parameters<Interface["finalizeQueryConditions"]>[0]) {
+      }: Parameters<Interface["finalizeQueryConditions"]>[0]): ReturnType<
+        Interface["finalizeQueryConditions"]
+      > {
         return [conditions];
       }
 
       async parseFieldExpansions({
         expand,
         ...args
-      }: Parameters<Interface["parseFieldExpansions"]>[0]) {
+      }: Parameters<Interface["parseFieldExpansions"]>[0]): ReturnType<
+        Interface["parseFieldExpansions"]
+      > {
         expand = [...new Set(expand)];
         const allRelationPaths = this.repository.metadata.relations.map(
           (relation) => relation.propertyPath
@@ -159,7 +177,11 @@ export class RestServiceFactory<
         };
       }
 
-      async parseOrders({ order }: Parameters<Interface["parseOrders"]>[0]) {
+      async parseOrders({
+        order,
+      }: Parameters<Interface["parseOrders"]>[0]): ReturnType<
+        Interface["parseOrders"]
+      > {
         const orderOptions: FindManyOptions<Entity>["order"] = {};
         order.forEach((raw) => {
           const [field, order] = raw.split(":") as [
@@ -174,7 +196,9 @@ export class RestServiceFactory<
       async parseFilters({
         filter,
         ...args
-      }: Parameters<Interface["parseFilters"]>[0]) {
+      }: Parameters<Interface["parseFilters"]>[0]): ReturnType<
+        Interface["parseFilters"]
+      > {
         const entries = await Promise.all(
           filter.map(async (filter) => {
             const regexp = /^(.*)\|(.+):(.*)$/;
@@ -199,7 +223,9 @@ export class RestServiceFactory<
         operator,
         value,
         ...args
-      }: Parameters<Interface["parseFilterOperator"]>[0]) {
+      }: Parameters<Interface["parseFilterOperator"]>[0]): ReturnType<
+        Interface["parseFilterOperator"]
+      > {
         switch (operator) {
           case "contains":
             return Like(`%${value}%`);

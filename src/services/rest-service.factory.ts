@@ -232,7 +232,7 @@ export class RestServiceFactory<
           case "ne":
             return Not(value);
           case "startswith":
-            return Like(`%${value}`);
+            return Like(`${value}%`);
         }
       }
     };

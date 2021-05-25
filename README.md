@@ -283,7 +283,7 @@ async checkPermission({
   } else {
     if (entity.id != user.id) throw new ForbiddenException();
     if (action == 'replace' || action == 'update')
-      if (!entity.isRecentUpdated) throw new ForbiddenException();
+      if (!entity.isUpdatedRecently) throw new ForbiddenException();
   }
 }
 ```

@@ -2,43 +2,34 @@ import { Controller, Injectable, Provider, Type } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import { getRepositoryToken } from "@nestjs/typeorm";
 import {
-  EntityField,
   QueryDtoFactory,
   RestControllerFactory,
   RestServiceFactory,
 } from "src";
 import { Response } from "supertest";
 import { getConnection, Repository } from "typeorm";
-import {
-  CreateChildEntityDto,
-  CreateParentEntityDto,
-  UpdateParentEntityDto,
-} from "./dtos";
+import { CreateParentEntityDto, UpdateParentEntityDto } from "./dtos";
 import { ChildEntity, ParentEntity } from "./entities";
 import { getRequester, getTypeOrmModules } from "./utils";
-
-function assertEntity(
-  entity: ParentEntity,
-  id?: number,
-  expand: EntityField<ParentEntity>[] = []
-) {
-  expect(typeof entity.id).toBe("number");
-  if (id) expect(entity.id).toBe(id);
-  expect(entity.name).toBeUndefined();
-  entity.children.forEach((child) => {
-    if (expand.includes("children")) expect(child).toBeInstanceOf(Object);
-    else expect(typeof child).toBe("number");
-  });
-}
 
 describe("E2E", () => {
   let parentRepository: Repository<ParentEntity>;
   let childRepository: Repository<ChildEntity>;
   let requester: ReturnType<typeof getRequester>;
   let response: Response;
-  let createChildDto: CreateChildEntityDto;
   let createParentDto: CreateParentEntityDto;
   let updateParentDto: UpdateParentEntityDto;
+  let entity: ParentEntity;
+
+  @Injectable()
+  class TestService extends new RestServiceFactory({
+    entityClass: ParentEntity,
+    dtoClasses: {
+      create: CreateParentEntityDto,
+      update: UpdateParentEntityDto,
+    },
+    lookupField: "id",
+  }).product {}
 
   async function prepare(serviceClass: Provider, controllerClass: Type) {
     const module = await Test.createTestingModule({
@@ -53,294 +44,483 @@ describe("E2E", () => {
     childRepository = module.get(getRepositoryToken(ChildEntity));
     requester = getRequester(app);
 
-    for (let i = 1; i <= 3; i++)
+    for (let i = 1; i <= 5; i++)
       await parentRepository.save({
-        name: "parent",
-        children: [{ name: "child1" }],
+        name: "parent" + i,
+        secret: "secret",
       });
+  }
+
+  function assertEntityFieldTypes({
+    entity,
+    expand = false,
+  }: {
+    entity: ParentEntity;
+    expand?: boolean;
+  }) {
+    expect(typeof entity.id).toBe("number");
+    expect(typeof entity.name).toBe("string");
+    expect(entity.secret).toBeUndefined();
+    entity.children.forEach((child) => {
+      if (!expand) expect(typeof child).toBe("number");
+      else {
+        expect(typeof child.id).toBe("number");
+        expect(typeof child.name).toBe("string");
+        expect(child.parent).toBeUndefined();
+      }
+    });
   }
 
   afterEach(async () => {
     await getConnection().close();
   });
 
-  describe("Common CRUD", () => {
-    @Injectable()
-    class TestService extends new RestServiceFactory({
-      entityClass: ParentEntity,
-      dtoClasses: {
-        create: CreateParentEntityDto,
-        update: UpdateParentEntityDto,
-      },
-      lookupField: "id",
-    }).product {}
-
+  describe("Basic CRUD", () => {
     @Controller()
     class TestController extends new RestControllerFactory<TestService>({
       restServiceClass: TestService,
       actions: ["list", "retrieve", "create", "replace", "update", "destroy"],
-      queryDto: new QueryDtoFactory<ParentEntity>({
-        limit: { max: 2, default: 1 },
-        expand: { in: ["children"] },
-        order: { in: ["id:desc"] },
-        filter: { in: ["id"] },
-      }).product,
     }).product {}
 
     beforeEach(async () => {
       await prepare(TestService, TestController);
     });
 
-    describe.each`
-      limit        | offset       | expand                      | order          | filter                    | count | total | firstId
-      ${undefined} | ${undefined} | ${undefined}                | ${undefined}   | ${undefined}              | ${1}  | ${3}  | ${1}
-      ${2}         | ${undefined} | ${undefined}                | ${undefined}   | ${undefined}              | ${2}  | ${3}  | ${1}
-      ${undefined} | ${1}         | ${undefined}                | ${undefined}   | ${undefined}              | ${1}  | ${3}  | ${2}
-      ${2}         | ${1}         | ${undefined}                | ${undefined}   | ${undefined}              | ${2}  | ${3}  | ${2}
-      ${undefined} | ${undefined} | ${undefined}                | ${["id:desc"]} | ${undefined}              | ${1}  | ${3}  | ${3}
-      ${undefined} | ${undefined} | ${["children"]}             | ${undefined}   | ${undefined}              | ${1}  | ${3}  | ${1}
-      ${undefined} | ${undefined} | ${["children", "children"]} | ${undefined}   | ${undefined}              | ${1}  | ${3}  | ${1}
-      ${undefined} | ${undefined} | ${undefined}                | ${undefined}   | ${["id|eq:2"]}            | ${1}  | ${1}  | ${2}
-      ${2}         | ${undefined} | ${undefined}                | ${undefined}   | ${["id|in:2,3"]}          | ${2}  | ${2}  | ${2}
-      ${2}         | ${undefined} | ${undefined}                | ${undefined}   | ${["id|eq:2", "id|eq:1"]} | ${1}  | ${1}  | ${1}
-    `(
-      "/?limit=$limit&offset=$offset&expand[]=$expand&order[]=$order&filter[]=$filter (GET)",
-      ({ limit, offset, expand, order, filter, count, total, firstId }) => {
-        let body: { total: number; results: ParentEntity[] };
-
+    describe("/ (GET)", () => {
+      describe("Common", () => {
         beforeEach(async () => {
-          response = await requester.get("/").query({
-            limit,
-            offset,
-            "expand[]": expand,
-            "order[]": order,
-            "filter[]": filter,
-          });
-          ({ body } = response);
+          response = await requester.get("/");
         });
 
-        it("should return 200", () => {
+        it("should return status 200", () => {
           expect(response.status).toBe(200);
         });
 
-        it(`should serialize and return the response with ${count} entities`, () => {
-          expect(body.total).toBeDefined();
-          expect(body.total).toBe(total);
-          expect(body.results).toBeInstanceOf(Array);
-          expect(body.results).toHaveLength(count);
-          assertEntity(body.results[0], firstId, expand ?? []);
+        it("should show the total is 5", () => {
+          expect(response.body.total).toBe(5);
         });
-      }
-    );
 
-    describe.each`
-      limit        | offset       | expand       | order           | filter
-      ${0}         | ${undefined} | ${undefined} | ${undefined}    | ${undefined}
-      ${undefined} | ${0}         | ${undefined} | ${undefined}    | ${undefined}
-      ${4}         | ${undefined} | ${undefined} | ${undefined}    | ${undefined}
-      ${undefined} | ${undefined} | ${"child2"}  | ${undefined}    | ${undefined}
-      ${undefined} | ${undefined} | ${["xxxx"]}  | ${undefined}    | ${undefined}
-      ${undefined} | ${undefined} | ${undefined} | ${"id:desc"}    | ${undefined}
-      ${undefined} | ${undefined} | ${undefined} | ${["idd:desc"]} | ${undefined}
-      ${undefined} | ${undefined} | ${undefined} | ${["id:descc"]} | ${undefined}
-      ${undefined} | ${undefined} | ${undefined} | ${undefined}    | ${"id|eq:1"}
-      ${undefined} | ${undefined} | ${undefined} | ${undefined}    | ${["children|eq:1"]}
-    `(
-      "/?limit=$limit&offset=$offset&expand[]=$expand&order[]=$order&filter[]=$filter (GET)",
-      ({ limit, offset, expand, order, filter }) => {
+        it(`should return 5 transformed entities`, () => {
+          expect(response.body.results).toHaveLength(5);
+          response.body.results.forEach((entity: ParentEntity) =>
+            assertEntityFieldTypes({ entity })
+          );
+        });
+      });
+    });
+
+    describe("/ (POST)", () => {
+      describe("Common", () => {
         beforeEach(async () => {
-          response = await requester.get("/").query({
-            limit,
-            offset,
-            [expand instanceof Array ? "expand[]" : "expand"]: expand,
-            [order instanceof Array ? "order[]" : "order"]: order,
-            [filter instanceof Array ? "filter[]" : "filter"]: filter,
+          createParentDto = { name: "new", secret: "secret" };
+          response = await requester.post("/").send(createParentDto);
+          entity = response.body;
+        });
+
+        it("should return status 201", () => {
+          expect(response.status).toBe(201);
+        });
+
+        it("should return a transformed entity", () => {
+          assertEntityFieldTypes({ entity });
+          expect(entity.name).toBe(createParentDto.name);
+        });
+      });
+
+      describe.each`
+        data
+        ${{}}
+        ${{ name: 1 }}
+      `("Illegal Data: $data", ({ data }) => {
+        beforeEach(async () => {
+          response = await requester.post("/").send(data);
+        });
+
+        it("should return status 400", () => {
+          expect(response.status).toBe(400);
+        });
+      });
+    });
+
+    describe("/:lookup/ (GET)", () => {
+      describe("Common", () => {
+        beforeEach(async () => {
+          response = await requester.get("/1/");
+          entity = response.body;
+        });
+
+        it("should return status 200", () => {
+          expect(response.status).toBe(200);
+        });
+
+        it("should return an serialized entity", () => {
+          assertEntityFieldTypes({ entity });
+          expect(entity.id).toBe(1);
+        });
+      });
+
+      describe.each`
+        lookup   | code
+        ${0}     | ${404}
+        ${"str"} | ${400}
+      `("Illegal Lookup: $lookup", ({ lookup, code }) => {
+        beforeEach(async () => {
+          response = await requester.get(`/${lookup}/`);
+        });
+
+        it(`should return status ${code}`, () => {
+          expect(response.status).toBe(code);
+        });
+      });
+    });
+
+    describe("/:lookup/ (PUT)", () => {
+      beforeEach(() => {
+        createParentDto = { name: "updated", secret: "secret" };
+      });
+
+      describe("Common", () => {
+        beforeEach(async () => {
+          response = await requester.put("/1/").send(createParentDto);
+          entity = response.body;
+        });
+
+        it("should return status 200", () => {
+          expect(response.status).toBe(200);
+        });
+
+        it("should return a transformed entity", () => {
+          assertEntityFieldTypes({ entity });
+          expect(entity.name).toBe(createParentDto.name);
+        });
+      });
+
+      describe.each`
+        data
+        ${{}}
+        ${{ name: "n" }}
+      `("Illegal Data: $data", ({ data }) => {
+        beforeEach(async () => {
+          response = await requester.put("/1/").send(data);
+        });
+
+        it("should return status 400", () => {
+          expect(response.status).toBe(400);
+        });
+      });
+
+      describe.each`
+        lookup   | code
+        ${0}     | ${404}
+        ${"put"} | ${400}
+      `("Illegal Lookup: $lookup", ({ lookup, code }) => {
+        beforeEach(async () => {
+          response = await requester.put(`/${lookup}/`).send(createParentDto);
+        });
+
+        it(`should return status ${code}`, () => {
+          expect(response.status).toBe(code);
+        });
+      });
+    });
+
+    describe("/:lookup/ (PATCH)", () => {
+      beforeEach(() => {
+        updateParentDto = { name: "updated" };
+      });
+
+      describe("Common", () => {
+        beforeEach(async () => {
+          response = await requester.patch("/1/").send(updateParentDto);
+          entity = response.body;
+        });
+
+        it("should return status 200", () => {
+          expect(response.status).toBe(200);
+        });
+
+        it("should return a transformed entity", () => {
+          assertEntityFieldTypes({ entity });
+          expect(entity.name).toBe(updateParentDto.name);
+        });
+      });
+
+      describe.each`
+        data
+        ${{ name: 1 }}
+      `("Illegal Data: $data", ({ data }) => {
+        beforeEach(async () => {
+          response = await requester.patch("/1/").send(data);
+        });
+
+        it("should return status 400", () => {
+          expect(response.status).toBe(400);
+        });
+      });
+
+      describe.each`
+        lookup   | code
+        ${0}     | ${404}
+        ${"str"} | ${400}
+      `("Illegal Lookup: $lookup", ({ lookup, code }) => {
+        beforeEach(async () => {
+          response = await requester.patch(`/${lookup}/`).send(updateParentDto);
+        });
+
+        it(`should return status ${code}`, () => {
+          expect(response.status).toBe(code);
+        });
+      });
+    });
+
+    describe("/:lookup/ (DELETE)", () => {
+      describe("Common", () => {
+        beforeEach(async () => {
+          response = await requester.delete("/1/");
+        });
+
+        it("should return status 204", () => {
+          expect(response.status).toBe(204);
+        });
+
+        it("should return no content", () => {
+          expect(response.body).toEqual({});
+        });
+      });
+
+      describe.each`
+        lookup   | code
+        ${0}     | ${404}
+        ${"str"} | ${400}
+      `("Illegal Lookup: $lookup", ({ lookup, code }) => {
+        beforeEach(async () => {
+          response = await requester.delete(`/${lookup}/`);
+        });
+
+        it(`should return status ${code}`, () => {
+          expect(response.status).toBe(code);
+        });
+      });
+    });
+  });
+
+  describe("Query Params", () => {
+    describe("Limit & Offset", () => {
+      @Controller()
+      class TestController extends new RestControllerFactory<TestService>({
+        restServiceClass: TestService,
+        actions: ["list"],
+        queryDto: new QueryDtoFactory<ParentEntity>({
+          limit: { max: 3, default: 1 },
+          offset: { max: 2, default: 1 },
+        }).product,
+      }).product {}
+
+      beforeEach(async () => {
+        await prepare(TestService, TestController);
+      });
+
+      describe("/ (GET)", () => {
+        describe.each`
+          queries          | count | firstId
+          ${{}}            | ${1}  | ${2}
+          ${{ limit: 2 }}  | ${2}  | ${2}
+          ${{ offset: 2 }} | ${1}  | ${3}
+        `("Common Queries: $queries", ({ queries, count, firstId }) => {
+          beforeEach(async () => {
+            response = await requester.get("/").query(queries);
+          });
+
+          it(`should make the results have length ${count} `, () => {
+            expect(response.body.results).toHaveLength(count);
+          });
+
+          it(`should make the first id ${firstId}`, () => {
+            entity = response.body.results[0];
+            expect(entity.id).toBe(firstId);
           });
         });
 
-        it("should return a 400", () => {
-          expect(response.status).toBe(400);
+        describe.each`
+          queries
+          ${{ limit: 0 }}
+          ${{ limit: -1 }}
+          ${{ limit: 4 }}
+          ${{ offset: 0 }}
+          ${{ offset: -1 }}
+          ${{ offset: 3 }}
+        `("Illegal Queries: $queries", ({ queries }) => {
+          beforeEach(async () => {
+            response = await requester.get("/").query(queries);
+          });
+
+          it(`should return status 400`, () => {
+            expect(response.status).toBe(400);
+          });
         });
-      }
-    );
-
-    describe("/ (POST)", () => {
-      beforeEach(async () => {
-        createChildDto = { name: "child" };
-        createParentDto = { name: "parent", children: [4] };
-        await childRepository.save(createChildDto);
-        response = await requester.post("/").send(createParentDto);
-      });
-
-      it("should return 201", () => {
-        expect(response.status).toBe(201);
-      });
-
-      it("should create the entity", async () => {
-        const entity = await parentRepository.findOne(4);
-        expect(entity).toBeDefined();
-        expect(entity?.name).toBe(createParentDto.name);
-      });
-
-      it("should serialize and return entity", () => {
-        assertEntity(response.body, 4);
       });
     });
 
-    describe.each`
-      dto
-      ${{}}
-      ${{ name: 1 }}
-    `("/ $dto (POST)", ({ dto }) => {
+    describe("Order", () => {
+      @Controller()
+      class TestController extends new RestControllerFactory<TestService>({
+        restServiceClass: TestService,
+        actions: ["list"],
+        queryDto: new QueryDtoFactory<ParentEntity>({
+          order: { in: ["id:desc", "name:desc"], default: ["id:desc"] },
+        }).product,
+      }).product {}
+
       beforeEach(async () => {
-        response = await requester.post("/").send(dto);
+        await prepare(TestService, TestController);
       });
 
-      it("should return 400", () => {
-        expect(response.status).toBe(400);
+      describe("/ (GET)", () => {
+        describe.each`
+          order            | firstId
+          ${undefined}     | ${5}
+          ${["id:desc"]}   | ${5}
+          ${["name:desc"]} | ${5}
+        `("Legal Order: $order", ({ order, firstId }) => {
+          beforeEach(async () => {
+            response = await requester.get("/").query({ "order[]": order });
+            entity = response.body.results[0];
+          });
+
+          it(`should make the first id ${firstId}`, () => {
+            expect(entity.id).toBe(firstId);
+          });
+        });
+
+        describe.each`
+          queries
+          ${{ order: ["id:desc"] }}
+          ${{ "order[]": ["id:xxxx"] }}
+        `("Illegal Order: $queries", ({ queries }) => {
+          beforeEach(async () => {
+            response = await requester.get("/").query(queries);
+          });
+
+          it("should returns status 400", () => {
+            expect(response.status).toBe(400);
+          });
+        });
       });
     });
 
-    describe("/1/ (GET)", () => {
+    describe("Expand", () => {
+      @Controller()
+      class TestController extends new RestControllerFactory<TestService>({
+        restServiceClass: TestService,
+        actions: ["list", "create", "retrieve", "replace", "update", "destroy"],
+        queryDto: new QueryDtoFactory<ParentEntity>({
+          expand: { in: ["children"], default: ["children"] },
+        }).product,
+      }).product {}
+
       beforeEach(async () => {
-        response = await requester.get("/1/");
-      });
-
-      it("should return 200", () => {
-        expect(response.status).toBe(200);
-      });
-
-      it("should serialize and return the entity", () => {
-        assertEntity(response.body, 1);
-      });
-    });
-
-    describe.each`
-      lookup   | code
-      ${0}     | ${404}
-      ${"str"} | ${400}
-    `("/$lookup/ (GET)", ({ lookup, code }) => {
-      beforeEach(async () => {
-        response = await requester.get(`/${lookup}/`);
-      });
-
-      it(`should return ${code}`, () => {
-        expect(response.status).toBe(code);
-      });
-    });
-
-    describe("/1/ (PUT)", () => {
-      beforeEach(async () => {
-        createParentDto = { id: 999, name: "updated", children: [1] };
-        response = await requester.put("/1/").send(createParentDto);
-      });
-
-      it("should return 200", () => {
-        expect(response.status).toBe(200);
-      });
-
-      it("should serialize and return the entity", () => {
-        assertEntity(response.body, 999);
-      });
-    });
-
-    describe.each`
-      dto
-      ${{}}
-      ${{ name: "n" }}
-    `("/1/ $dto (PUT)", ({ dto }) => {
-      beforeEach(async () => {
-        response = await requester.put("/1/").send(dto);
-      });
-
-      it("should return 400", () => {
-        expect(response.status).toBe(400);
-      });
-    });
-
-    describe.each`
-      lookup   | code
-      ${0}     | ${404}
-      ${"put"} | ${400}
-    `("/$lookup/ (PUT)", ({ lookup, code }) => {
-      beforeEach(async () => {
-        createParentDto = { name: "updated", children: [1] };
-        response = await requester.put(`/${lookup}/`).send(createParentDto);
-      });
-
-      it(`should return ${code}`, () => {
-        expect(response.status).toBe(code);
-      });
-    });
-
-    describe("/1/ (PATCH)", () => {
-      beforeEach(async () => {
-        updateParentDto = { id: 999, name: "updated" };
-        response = await requester.patch("/1/").send(updateParentDto);
-      });
-
-      it("should return 200", () => {
-        expect(response.status).toBe(200);
-      });
-
-      it("should serialize and return the entity", () => {
-        assertEntity(response.body, 999);
-      });
-    });
-
-    describe.each`
-      dto
-      ${{ name: 1 }}
-    `("/1/ $dto (PATCH)", ({ dto }) => {
-      beforeEach(async () => {
-        response = await requester.patch("/1/").send(dto);
-      });
-
-      it("should return 400", () => {
-        expect(response.status).toBe(400);
-      });
-    });
-
-    describe.each`
-      lookup   | code
-      ${0}     | ${404}
-      ${"str"} | ${400}
-    `("/$lookup/ (PATCH)", ({ lookup, code }) => {
-      beforeEach(async () => {
+        await prepare(TestService, TestController);
+        createParentDto = { name: "new", secret: "secret" };
         updateParentDto = { name: "updated" };
-        response = await requester.patch(`/${lookup}/`).send(updateParentDto);
       });
 
-      it(`should return ${code}`, () => {
-        expect(response.status).toBe(code);
+      describe.each`
+        description             | getResponse                                                                     | getEntity
+        ${"/ (GET)"}            | ${(queries: {}) => requester.get("/").query(queries)}                           | ${(response: Response) => response.body.results[0]}
+        ${"/ (POST)"}           | ${(queries: {}) => requester.post("/").query(queries).send(createParentDto)}    | ${(response: Response) => response.body}
+        ${"/:lookup/ (GET)"}    | ${(queries: {}) => requester.get("/1/").query(queries)}                         | ${(response: Response) => response.body}
+        ${"/:lookup/ (PUT))"}   | ${(queries: {}) => requester.put("/1/").query(queries).send(createParentDto)}   | ${(response: Response) => response.body}
+        ${"/:lookup/ (PATCH))"} | ${(queries: {}) => requester.patch("/1/").query(queries).send(updateParentDto)} | ${(response: Response) => response.body}
+      `("$description", ({ getResponse, getEntity }) => {
+        describe.each`
+          expand
+          ${undefined}
+          ${["children"]}
+        `("Legal Expand: $expand", ({ expand }) => {
+          beforeEach(async () => {
+            response = await getResponse({ "expand[]": expand });
+            entity = getEntity(response);
+          });
+
+          it("should expand the field", () => {
+            assertEntityFieldTypes({ entity, expand: true });
+          });
+        });
+
+        describe.each`
+          expand
+          ${{ expand: ["children"] }}
+          ${{ "expand[]": ["xxxxx"] }}
+        `("Illegal Expand: $queries", ({ queries }) => {
+          beforeEach(async () => {
+            response = await getResponse(queries);
+          });
+
+          it("should return status 400", () => {
+            expect(response.status).toBe(400);
+          });
+        });
       });
     });
 
-    describe("/1/ (DELETE)", () => {
+    describe("Filter", () => {
+      @Controller()
+      class TestController extends new RestControllerFactory<TestService>({
+        restServiceClass: TestService,
+        actions: ["list"],
+        queryDto: new QueryDtoFactory<ParentEntity>({
+          filter: { in: ["id", "name"], default: ["name|eq:parent3"] },
+        }).product,
+      }).product {}
+
       beforeEach(async () => {
-        response = await requester.delete("/1/");
+        await prepare(TestService, TestController);
       });
 
-      it("should return 204", () => {
-        expect(response.status).toBe(204);
-      });
+      describe("/ (GET)", () => {
+        describe.each`
+          filter                            | count | firstId
+          ${undefined}                      | ${1}  | ${3}
+          ${["name|contains:rent5"]}        | ${1}  | ${5}
+          ${["name|endswith:rent5"]}        | ${1}  | ${5}
+          ${["id|eq:"]}                     | ${0}  | ${undefined}
+          ${["id|eq:2"]}                    | ${1}  | ${2}
+          ${["id|gt:2"]}                    | ${3}  | ${3}
+          ${["name|gt:parent2"]}            | ${3}  | ${3}
+          ${["id|gte:2"]}                   | ${4}  | ${2}
+          ${["name|gte:parent2"]}           | ${4}  | ${2}
+          ${["name|icontains:"]}            | ${5}  | ${1}
+          ${["name|icontains:REnT5"]}       | ${1}  | ${5}
+          ${["name|iendswith:"]}            | ${5}  | ${1}
+          ${["name|iendswith:REnT5"]}       | ${1}  | ${5}
+          ${["name|in:"]}                   | ${0}  | ${undefined}
+          ${["name|in:parent2,parent3"]}    | ${2}  | ${2}
+          ${["name|isnull:true"]}           | ${0}  | ${undefined}
+          ${["name|isnull:false"]}          | ${5}  | ${1}
+          ${["name|istartswith:"]}          | ${5}  | ${1}
+          ${["name|istartswith:xxx"]}       | ${0}  | ${undefined}
+          ${["id|lt:3"]}                    | ${2}  | ${1}
+          ${["name|lt:parent3"]}            | ${2}  | ${1}
+          ${["id|lte:3"]}                   | ${3}  | ${1}
+          ${["name|lte:parent3"]}           | ${3}  | ${1}
+          ${["id|ne:1"]}                    | ${4}  | ${2}
+          ${["name|startswith:"]}           | ${5}  | ${1}
+          ${["name|startswith:par"]}        | ${5}  | ${1}
+          ${["id|gt:1", "name|ne:parent2"]} | ${3}  | ${3}
+        `("Legal Filter: $filter", ({ filter, count, firstId }) => {
+          beforeEach(async () => {
+            response = await requester.get("/").query({ "filter[]": filter });
+          });
 
-      it("should return no content", () => {
-        expect(response.body).toEqual({});
-      });
-    });
+          it(`should make the results have length ${count}`, () => {
+            expect(response.body.results).toHaveLength(count);
+          });
 
-    describe.each`
-      lookup   | code
-      ${0}     | ${404}
-      ${"str"} | ${400}
-    `("/$lookup/ (DELETE)", ({ lookup, code }) => {
-      beforeEach(async () => {
-        response = await requester.delete(`/${lookup}/`);
-      });
-
-      it(`should return ${code}`, () => {
-        expect(response.status).toBe(code);
+          it(`should make the first id ${firstId}`, () => {
+            entity = response.body.results[0];
+            expect(entity?.id).toBe(firstId);
+          });
+        });
       });
     });
   });

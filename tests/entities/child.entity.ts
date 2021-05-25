@@ -1,3 +1,4 @@
+import { Exclude } from "class-transformer";
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { ParentEntity } from "./parent.entity";
 
@@ -9,8 +10,7 @@ export class ChildEntity {
   @Column()
   name!: string;
 
-  @ManyToOne((type) => ParentEntity, (parent) => parent.children, {
-    cascade: true,
-  })
+  @Exclude()
+  @ManyToOne(() => ParentEntity, (parent) => parent.children)
   parent!: ParentEntity;
 }

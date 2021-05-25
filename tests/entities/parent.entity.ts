@@ -1,5 +1,4 @@
 import { Exclude } from "class-transformer";
-import { RelationPath } from "src";
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { ChildEntity } from "./child.entity";
 
@@ -8,10 +7,13 @@ export class ParentEntity {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Exclude()
   @Column()
   name!: string;
 
-  @OneToMany((type) => ChildEntity, (child) => child.parent)
+  @Exclude()
+  @Column()
+  secret!: string;
+
+  @OneToMany(() => ChildEntity, (child) => child.parent, { cascade: true })
   children!: ChildEntity[];
 }

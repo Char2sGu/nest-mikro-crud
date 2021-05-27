@@ -7,7 +7,7 @@ import {
   RestControllerFactory,
   RestService,
   RestServiceFactoryOptions,
-  REST_SERVICE_OPTIONS_METADATA_KEY,
+  REST_FACTORY_OPTIONS_METADATA_KEY,
 } from "src";
 import { buildKeyChecker, m } from "tests/utils";
 import { Entity, PrimaryGeneratedColumn, Repository } from "typeorm";
@@ -71,7 +71,7 @@ describe(RestControllerFactory.name, () => {
   };
   const TestService = jest.fn(() => testService);
   Reflect.defineMetadata(
-    REST_SERVICE_OPTIONS_METADATA_KEY,
+    REST_FACTORY_OPTIONS_METADATA_KEY,
     testServiceOptions,
     TestService
   );
@@ -132,6 +132,14 @@ describe(RestControllerFactory.name, () => {
         expect(ret).toEqual({ ctx: "ctx" });
       });
     });
+  });
+
+  it("should define the options as metadata on the product", () => {
+    const metadata = Reflect.getMetadata(
+      REST_FACTORY_OPTIONS_METADATA_KEY,
+      factory.product
+    );
+    expect(metadata).toBeDefined();
   });
 
   it("should apply dependency injection of the service", () => {

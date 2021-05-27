@@ -17,7 +17,7 @@ import {
 import { ClassConstructor } from "class-transformer";
 import { AbstractFactory } from "../abstract.factory";
 import {
-  REST_SERVICE_OPTIONS_METADATA_KEY,
+  REST_FACTORY_OPTIONS_METADATA_KEY,
   TS_TYPE_METADATA_KEY,
 } from "../constants";
 import { QueryDtoFactory } from "../dtos";
@@ -75,7 +75,7 @@ export class RestControllerFactory<
     this.options = this.processOptions(options);
 
     this.serviceOptions = Reflect.getMetadata(
-      REST_SERVICE_OPTIONS_METADATA_KEY,
+      REST_FACTORY_OPTIONS_METADATA_KEY,
       this.options.restServiceClass
     ) as RestServiceFactoryOptions<Entity, CreateDto, UpdateDto, LookupField>;
 
@@ -93,6 +93,12 @@ export class RestControllerFactory<
     );
     if (this.options.catchEntityNotFound)
       this.applyClassDecorators(UseFilters(EntityNotFoundErrorFilter));
+
+    Reflect.defineMetadata(
+      REST_FACTORY_OPTIONS_METADATA_KEY,
+      this.options,
+      this.product
+    );
   }
 
   protected processOptions(

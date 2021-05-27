@@ -15,7 +15,7 @@ import {
   Not,
 } from "typeorm";
 import { AbstractFactory } from "../abstract.factory";
-import { REST_SERVICE_OPTIONS_METADATA_KEY } from "../constants";
+import { REST_FACTORY_OPTIONS_METADATA_KEY } from "../constants";
 import { EntityField, FilterOperator, LookupableField } from "../types";
 import { RestServiceFactoryOptions } from "./rest-service-factory-options.interface";
 import { RestService } from "./rest-service.interface";
@@ -44,7 +44,7 @@ export class RestServiceFactory<
     this.defineInjectionsMetadata();
 
     Reflect.defineMetadata(
-      REST_SERVICE_OPTIONS_METADATA_KEY,
+      REST_FACTORY_OPTIONS_METADATA_KEY,
       options,
       this.product
     );

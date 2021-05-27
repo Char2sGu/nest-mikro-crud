@@ -1,3 +1,4 @@
+import "reflect-metadata";
 export * from "./abstract.factory";
 export * from "./constants";
 export * from "./controllers";

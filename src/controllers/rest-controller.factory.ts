@@ -10,11 +10,11 @@ import {
   Post,
   Put,
   Query,
+  Type,
   UseFilters,
   UsePipes,
   ValidationPipe,
 } from "@nestjs/common";
-import { ClassConstructor } from "class-transformer";
 import { AbstractFactory } from "../abstract.factory";
 import {
   REST_FACTORY_OPTIONS_METADATA_KEY,
@@ -277,7 +277,7 @@ export class RestControllerFactory<
     const Queries = Query();
     const Data = Body();
 
-    const contextTypes: ClassConstructor<unknown>[] = [];
+    const contextTypes: Type[] = [];
     const contextDecorators: ParameterDecorator[][] = [];
     Object.values(this.options.contextOptions).forEach(
       ({ type, decorators }) => {
@@ -288,7 +288,7 @@ export class RestControllerFactory<
 
     const table: Record<
       ActionName,
-      [MethodDecorator[], ClassConstructor<unknown>[], ParameterDecorator[][]]
+      [MethodDecorator[], Type[], ParameterDecorator[][]]
     > = {
       list: [[Get()], [queryDto], [[Queries]]],
       create: [[Post()], [queryDto, createDto], [[Queries], [Data]]],

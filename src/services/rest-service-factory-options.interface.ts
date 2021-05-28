@@ -1,4 +1,4 @@
-import { ClassConstructor } from "class-transformer";
+import { Type } from "@nestjs/common";
 import { LookupableField } from "../types";
 
 export interface RestServiceFactoryOptions<
@@ -10,7 +10,7 @@ export interface RestServiceFactoryOptions<
   /**
    * The entity's constructor whose repository will be auto-injected.
    */
-  entityClass: ClassConstructor<Entity>;
+  entityClass: Type<Entity>;
   /**
    * Specify the connection name of the entity repository.
    */
@@ -20,8 +20,8 @@ export interface RestServiceFactoryOptions<
    * controller.
    */
   dtoClasses: {
-    create: ClassConstructor<CreateDto>;
-    update: ClassConstructor<UpdateDto>;
+    create: Type<CreateDto>;
+    update: Type<UpdateDto>;
   };
   /**
    * Choose the field used for entity lookup.

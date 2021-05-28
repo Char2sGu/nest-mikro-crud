@@ -1,4 +1,4 @@
-import { ClassConstructor } from "class-transformer";
+import { Type } from "@nestjs/common";
 import { TS_PARAM_TYPES_METADATA_KEY, TS_TYPE_METADATA_KEY } from "./constants";
 import { ExtractKeys } from "./utils";
 
@@ -7,7 +7,7 @@ type MethodNames<T> = Extract<ExtractKeys<T, (...args: any[]) => any>, string>;
 type PropertyNames<T> = Exclude<AllNames<T>, MethodNames<T>>;
 
 export abstract class AbstractFactory<T> {
-  abstract readonly product: ClassConstructor<T>;
+  abstract readonly product: Type<T>;
 
   defineTypeMetadata(target: AllNames<T>, type: any): this {
     Reflect.defineMetadata(
@@ -21,9 +21,9 @@ export abstract class AbstractFactory<T> {
 
   defineParamTypesMetadata(
     target: MethodNames<T>,
-    ...types: (ClassConstructor<unknown> | "keep")[]
+    ...types: (Type | "keep")[]
   ): this {
-    const primitive: ClassConstructor<unknown>[] =
+    const primitive: Type[] =
       Reflect.getMetadata(
         TS_PARAM_TYPES_METADATA_KEY,
         this.product.prototype,

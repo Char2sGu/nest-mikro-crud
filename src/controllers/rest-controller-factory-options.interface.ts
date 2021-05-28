@@ -1,5 +1,4 @@
-import { ValidationPipeOptions } from "@nestjs/common";
-import { ClassConstructor } from "class-transformer";
+import { Type, ValidationPipeOptions } from "@nestjs/common";
 import { QueryDto } from "../dtos";
 import { RestService } from "../services";
 import { ActionName, LookupableField } from "../types";
@@ -19,7 +18,7 @@ export interface RestControllerFactoryOptions<
   /**
    * The service will be auto-injected for db CRUD actions.
    */
-  restServiceClass: ClassConstructor<Service>;
+  restServiceClass: Type<Service>;
   /**
    * Specify which actions should be enabled.
    */
@@ -27,7 +26,7 @@ export interface RestControllerFactoryOptions<
   /**
    * Use specific dto for more advanced settings of the query params.
    */
-  queryDto?: ClassConstructor<QueryDto<Entity>>;
+  queryDto?: Type<QueryDto<Entity>>;
   /**
    * Specify the parameter name for entity lookup in the URL
    */
@@ -54,6 +53,6 @@ export interface RestControllerFactoryOptions<
    */
   contextOptions?: Record<
     string,
-    { type?: ClassConstructor<unknown>; decorators: ParameterDecorator[] }
+    { type?: Type<unknown>; decorators: ParameterDecorator[] }
   >;
 }

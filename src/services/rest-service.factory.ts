@@ -41,7 +41,7 @@ export class RestServiceFactory<
     super();
 
     this.product = this.createRawClass();
-    this.defineInjectionsMetadata();
+    this.defineInjections();
 
     Reflect.defineMetadata(
       REST_FACTORY_OPTIONS_METADATA_KEY,
@@ -264,7 +264,7 @@ export class RestServiceFactory<
     };
   }
 
-  protected defineInjectionsMetadata() {
+  protected defineInjections() {
     const repositoryKey: keyof RestService = "repository";
     InjectRepository(this.options.entityClass, this.options.repoConnection)(
       this.product.prototype,

@@ -72,7 +72,7 @@ export class RestControllerFactory<
   ) {
     super();
 
-    this.options = this.processOptions(options);
+    this.options = this.standardizeOptions(options);
 
     this.serviceOptions = Reflect.getMetadata(
       REST_FACTORY_OPTIONS_METADATA_KEY,
@@ -86,13 +86,14 @@ export class RestControllerFactory<
     );
 
     this.product = this.createRawClass();
-    this.defineInjectionsMetadata();
-    this.completeActions();
+    this.defineInjections();
+    this.buildActions();
     this.applyClassDecorators(
-      UsePipes(new ValidationPipe(this.options.validationPipeOptions))
+      UsePipes(new ValidationPipe(this.options.validationPipeOptions)),
+      UseFilters(
+        ...(this.options.catchEntityNotFound ? [EntityNotFoundErrorFilter] : [])
+      )
     );
-    if (this.options.catchEntityNotFound)
-      this.applyClassDecorators(UseFilters(EntityNotFoundErrorFilter));
 
     Reflect.defineMetadata(
       REST_FACTORY_OPTIONS_METADATA_KEY,
@@ -101,7 +102,7 @@ export class RestControllerFactory<
     );
   }
 
-  protected processOptions(
+  protected standardizeOptions(
     options: RestControllerFactoryOptions<
       Entity,
       CreateDto,
@@ -254,13 +255,13 @@ export class RestControllerFactory<
     };
   }
 
-  protected defineInjectionsMetadata() {
+  protected defineInjections() {
     const target = this.product.prototype;
     const serviceKey: keyof RestController = "service";
     Inject(this.options.restServiceClass)(target, serviceKey);
   }
 
-  protected completeActions() {
+  protected buildActions() {
     const lookupType = this.lookupType;
 
     const {
@@ -272,7 +273,7 @@ export class RestControllerFactory<
 
     const Lookup = Param(
       this.options.lookupParam,
-      ...(this.lookupType == Number ? [ParseIntPipe] : [])
+      ...(lookupType == Number ? [ParseIntPipe] : [])
     );
     const Queries = Query();
     const Data = Body();

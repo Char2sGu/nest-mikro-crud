@@ -15,15 +15,15 @@ export interface QueryDtoFactoryOptions<Entity> {
     default?: number;
   };
   expand?: {
-    in?: RelationPath<Entity>[];
+    in: RelationPath<Entity>[];
     default?: RelationPath<Entity>[];
   };
   order?: {
-    in?: (OrderQueryParam<Entity> | EntityField<Entity>)[];
+    in: (OrderQueryParam<Entity> | EntityField<Entity>)[];
     default?: OrderQueryParam<Entity>[];
   };
   filter?: {
-    in?: EntityField<Entity>[];
+    in: EntityField<Entity>[];
     default?: FilterQueryParam<Entity>[];
   };
 }

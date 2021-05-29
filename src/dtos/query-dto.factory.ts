@@ -27,35 +27,21 @@ export class QueryDtoFactory<Entity> extends AbstractFactory<QueryDto<Entity>> {
   }
 
   protected standardizeOptions(options: QueryDtoFactoryOptions<Entity>) {
-    const { limit, offset, expand, order, filter } = options;
+    const { order } = options;
 
     return {
-      limit,
-      offset,
-      expand: expand
-        ? {
-            ...expand,
-            in: expand.in ?? [],
-          }
-        : undefined,
+      ...options,
       order: order
         ? {
             ...order,
-            in: order.in
-              ? ([
-                  ...new Set(
-                    order.in?.flatMap((v) =>
-                      v.includes(":") ? v : [`${v}:asc`, `${v}:desc`]
-                    )
-                  ),
-                ] as OrderQueryParam<Entity>[])
-              : [],
-          }
-        : undefined,
-      filter: filter
-        ? {
-            ...filter,
-            in: filter.in ?? [],
+            in: [
+              // deduplicate & complete shortcuts
+              ...new Set(
+                order.in.flatMap((v) =>
+                  v.includes(":") ? v : [`${v}:asc`, `${v}:desc`]
+                )
+              ),
+            ] as OrderQueryParam<Entity>[],
           }
         : undefined,
     };

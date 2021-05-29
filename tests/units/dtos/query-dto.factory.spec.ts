@@ -21,7 +21,10 @@ describe(QueryDtoFactory.name, () => {
   });
 
   it("should standardize the order options", () => {
-    expect(factory.options.order.in).toEqual(["children:asc", "children:desc"]);
+    expect(factory.options.order?.in).toEqual([
+      "children:asc",
+      "children:desc",
+    ]);
   });
 
   describe(d(".product"), () => {
@@ -97,9 +100,9 @@ describe(QueryDtoFactory.name, () => {
         filter: ["def"],
       });
       expect(instance).toEqual({
-        expand: ["bbb"],
-        order: ["aaaa:asc"],
-        filter: ["cc|eq:1"],
+        expand: ["123"],
+        order: ["abc"],
+        filter: ["def"],
       });
     });
   });

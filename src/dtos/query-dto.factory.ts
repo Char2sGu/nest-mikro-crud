@@ -27,37 +27,37 @@ export class QueryDtoFactory<Entity> extends AbstractFactory<QueryDto<Entity>> {
   }
 
   protected standardizeOptions(options: QueryDtoFactoryOptions<Entity>) {
-    const {
-      limit = {},
-      offset = {},
-      expand = {},
-      order = {},
-      filter = {},
-    } = options;
+    const { limit, offset, expand, order, filter } = options;
 
     return {
       limit,
       offset,
-      expand: {
-        ...expand,
-        in: expand.in ?? [],
-      },
-      order: {
-        ...order,
-        in: order.in
-          ? ([
-              ...new Set(
-                order.in?.flatMap((v) =>
-                  v.includes(":") ? v : [`${v}:asc`, `${v}:desc`]
-                )
-              ),
-            ] as OrderQueryParam<Entity>[])
-          : [],
-      },
-      filter: {
-        ...filter,
-        in: filter.in ?? [],
-      },
+      expand: expand
+        ? {
+            ...expand,
+            in: expand.in ?? [],
+          }
+        : undefined,
+      order: order
+        ? {
+            ...order,
+            in: order.in
+              ? ([
+                  ...new Set(
+                    order.in?.flatMap((v) =>
+                      v.includes(":") ? v : [`${v}:asc`, `${v}:desc`]
+                    )
+                  ),
+                ] as OrderQueryParam<Entity>[])
+              : [],
+          }
+        : undefined,
+      filter: filter
+        ? {
+            ...filter,
+            in: filter.in ?? [],
+          }
+        : undefined,
     };
   }
 
@@ -66,57 +66,57 @@ export class QueryDtoFactory<Entity> extends AbstractFactory<QueryDto<Entity>> {
 
     type Interface = QueryDto<Entity>;
     return class QueryDto implements Interface {
-      limit? = limit.default;
-      offset? = offset.default;
-      expand? = expand.default;
-      order? = order.default;
-      filter? = filter.default;
+      limit? = limit?.default;
+      offset? = offset?.default;
+      expand? = expand?.default;
+      order? = order?.default;
+      filter? = filter?.default;
     };
   }
 
   protected defineValidations() {
     const { limit, offset, expand, order, filter } = this.options;
 
-    this.defineType("limit", Number)
-      .applyPropertyDecorators(
+    if (limit)
+      this.defineType("limit", Number).applyPropertyDecorators(
         "limit",
         Type(() => Number),
         IsOptional(),
         IsNumber(),
         Min(1),
         ...(limit.max ? [Max(limit.max)] : [])
-      )
+      );
 
-      .defineType("offset", Number)
-      .applyPropertyDecorators(
+    if (offset)
+      this.defineType("offset", Number).applyPropertyDecorators(
         "offset",
         Type(() => Number),
         IsOptional(),
         IsNumber(),
         Min(1),
         ...(offset.max ? [Max(offset.max)] : [])
-      )
+      );
 
-      .defineType("expand", Array)
-      .applyPropertyDecorators(
+    if (expand)
+      this.defineType("expand", Array).applyPropertyDecorators(
         "expand",
         Type(() => String),
         IsOptional(),
         IsArray(),
         IsIn(expand.in, { each: true })
-      )
+      );
 
-      .defineType("order", Array)
-      .applyPropertyDecorators(
+    if (order)
+      this.defineType("order", Array).applyPropertyDecorators(
         "order",
         Type(() => String),
         IsOptional(),
         IsArray(),
         IsIn(order.in, { each: true })
-      )
+      );
 
-      .defineType("filter", Array)
-      .applyPropertyDecorators(
+    if (filter)
+      this.defineType("filter", Array).applyPropertyDecorators(
         "filter",
         Type(() => String),
         IsOptional(),
@@ -131,8 +131,8 @@ export class QueryDtoFactory<Entity> extends AbstractFactory<QueryDto<Entity>> {
 
   protected excludeDisabled() {
     const { expand, order, filter } = this.options;
-    if (!expand.in.length) this.applyPropertyDecorators("expand", Exclude());
-    if (!order.in.length) this.applyPropertyDecorators("order", Exclude());
-    if (!filter.in.length) this.applyPropertyDecorators("filter", Exclude());
+    if (!expand) this.applyPropertyDecorators("expand", Exclude());
+    if (!order) this.applyPropertyDecorators("order", Exclude());
+    if (!filter) this.applyPropertyDecorators("filter", Exclude());
   }
 }

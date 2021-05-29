@@ -1,6 +1,8 @@
+import { Inject } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { plainToClass } from "class-transformer";
 import {
+  EntityManager,
   Equal,
   FindConditions,
   FindManyOptions,
@@ -265,10 +267,12 @@ export class RestServiceFactory<
   }
 
   protected defineInjections() {
-    const repositoryKey: keyof RestService = "repository";
-    InjectRepository(this.options.entityClass, this.options.repoConnection)(
-      this.product.prototype,
-      repositoryKey
-    );
+    const proto = this.product.prototype;
+    let key: keyof RestService;
+
+    key = "repository";
+    const { entityClass, repoConnection } = this.options;
+    this.defineType(key, entityClass);
+    InjectRepository(entityClass, repoConnection)(proto, key);
   }
 }

@@ -256,9 +256,12 @@ export class RestControllerFactory<
   }
 
   protected defineInjections() {
-    const target = this.product.prototype;
-    const serviceKey: keyof RestController = "service";
-    Inject(this.options.restServiceClass)(target, serviceKey);
+    const proto = this.product.prototype;
+    let key: keyof RestController;
+
+    key = "service";
+    this.defineType(key, this.options.restServiceClass);
+    Inject(this.options.restServiceClass)(proto, key);
   }
 
   protected buildActions() {

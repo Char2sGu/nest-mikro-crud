@@ -44,13 +44,15 @@ export class QueryDtoFactory<Entity> extends AbstractFactory<QueryDto<Entity>> {
       },
       order: {
         ...order,
-        in: [
-          ...new Set(
-            order?.in?.flatMap((v) =>
-              v.includes(":") ? v : [`${v}:asc`, `${v}:desc`]
-            )
-          ),
-        ] as OrderQueryParam<Entity>[],
+        in: order.in
+          ? ([
+              ...new Set(
+                order.in?.flatMap((v) =>
+                  v.includes(":") ? v : [`${v}:asc`, `${v}:desc`]
+                )
+              ),
+            ] as OrderQueryParam<Entity>[])
+          : [],
       },
       filter: {
         ...filter,

@@ -10,81 +10,114 @@ let factory: QueryDtoFactory<ParentEntity>;
 let instance: typeof factory.product.prototype;
 
 describe(QueryDtoFactory.name, () => {
-  describe("Common", () => {
+  describe("Default", () => {
     beforeEach(() => {
       factory = new QueryDtoFactory<ParentEntity>({
-        limit: { max: 2, default: 1 },
-        offset: { max: 4, default: 3 },
-        expand: { in: ["children"], default: ["children"] },
-        order: { in: ["children", "children:asc"], default: ["id:desc"] },
-        filter: { in: ["children"], default: ["id|eq:1"] },
+        limit: { default: 1 },
+        offset: { default: 2 },
+        expand: { in: [], default: ["children"] },
+        order: { in: [], default: ["id:asc"] },
+        filter: { in: [], default: ["id|eq:1"] },
       });
-    });
-
-    it("should standardize the order options", () => {
-      expect(factory.options.order?.in).toEqual([
-        "children:asc",
-        "children:desc",
-      ]);
     });
 
     describe(d(".product"), () => {
-      const d = buildKeyChecker<typeof factory.product.prototype>();
-
-      it("should assign default values when optional properties are not provided", () => {
-        instance = plainToClass(factory.product, {});
-        expect(instance.limit).toBe(1);
-        expect(instance.offset).toBe(3);
-        expect(instance.expand).toEqual(["children"]);
-        expect(instance.order).toEqual(["id:desc"]);
-        expect(instance.filter).toEqual(["id|eq:1"]);
+      it("should use the default values when value not provided", () => {
+        const ret = plainToClass(factory.product, {});
+        expect(ret).toEqual({
+          limit: 1,
+          offset: 2,
+          expand: ["children"],
+          order: ["id:asc"],
+          filter: ["id|eq:1"],
+        });
       });
-
-      it.each`
-        name        | value
-        ${"limit"}  | ${0}
-        ${"limit"}  | ${3}
-        ${"limit"}  | ${"nan"}
-        ${"offset"} | ${0}
-        ${"offset"} | ${5}
-        ${"offset"} | ${"nan"}
-        ${"expand"} | ${["unknown"]}
-        ${"expand"} | ${"notanarray"}
-        ${"order"}  | ${["unknown"]}
-        ${"order"}  | ${"notanarray"}
-        ${"filter"} | ${["illegal"]}
-        ${"filter"} | ${["   id|eq:1"]}
-        ${"filter"} | ${["iiii|eq:1"]}
-        ${"filter"} | ${["id|eqqq:1"]}
-        ${"filter"} | ${"notanarray"}
-      `(
-        "should throw an error when `$name` is $value",
-        async ({ name, value }) => {
-          await expect(
-            validateOrReject(plainToClass(factory.product, { [name]: value }))
-          ).rejects.toBeDefined();
-        }
-      );
-
-      it.each`
-        name        | value
-        ${"limit"}  | ${1}
-        ${"offset"} | ${2}
-        ${"expand"} | ${["child1"]}
-        ${"order"}  | ${["child1:desc"]}
-        ${"filter"} | ${["id|eq:"]}
-      `(
-        "should pass the validation when $name is $value",
-        async ({ name, value }) => {
-          await expect(
-            validateOrReject(plainToClass(factory.product, { [name]: value }))
-          ).rejects.toBeDefined();
-        }
-      );
     });
   });
 
-  describe("Disabled Params", () => {
+  describe("Validation", () => {
+    beforeEach(() => {
+      factory = new QueryDtoFactory<ParentEntity>({
+        limit: { max: 1 },
+        offset: { max: 1 },
+        expand: { in: ["children"] },
+        order: { in: ["id", "id:asc"] },
+        filter: { in: ["id"] },
+      });
+    });
+
+    it.each`
+      name        | value
+      ${"limit"}  | ${0}
+      ${"limit"}  | ${2}
+      ${"limit"}  | ${"NaN"}
+      ${"offset"} | ${0}
+      ${"offset"} | ${2}
+      ${"offset"} | ${"NaN"}
+      ${"expand"} | ${["unknown"]}
+      ${"expand"} | ${"notanarray"}
+      ${"order"}  | ${["unknown"]}
+      ${"order"}  | ${"notanarray"}
+      ${"filter"} | ${["illegal"]}
+      ${"filter"} | ${["   id|eq:1"]}
+      ${"filter"} | ${["iiii|eq:1"]}
+      ${"filter"} | ${["id|eqqq:1"]}
+      ${"filter"} | ${"notanarray"}
+    `(
+      "should throw an error when `$name` is $value",
+      async ({ name, value }) => {
+        await expect(
+          validateOrReject(plainToClass(factory.product, { [name]: value }))
+        ).rejects.toBeDefined();
+      }
+    );
+
+    it.each`
+      name        | value
+      ${"limit"}  | ${1}
+      ${"offset"} | ${1}
+      ${"expand"} | ${["children"]}
+      ${"order"}  | ${["id:asc"]}
+      ${"filter"} | ${["id|eq:"]}
+    `(
+      "should pass the validation when $name is $value",
+      async ({ name, value }) => {
+        await expect(
+          validateOrReject(plainToClass(factory.product, { [name]: value }))
+        ).resolves.toBeUndefined();
+      }
+    );
+  });
+
+  describe("Mandatory", () => {
+    beforeEach(() => {
+      factory = new QueryDtoFactory<any>({
+        expand: { in: [], mandatory: ["a", "v1"] },
+        order: { in: [], mandatory: ["b:asc", "v2:asc"] },
+        filter: { in: [], mandatory: ["c|eq:", "v3|eq:"] },
+      });
+    });
+
+    it("should append the mandatory values and deduplicate", () => {
+      const ret = plainToClass(factory.product, {
+        expand: ["a"],
+        order: ["b:asc"],
+        filter: ["c|eq:"],
+      });
+      expect(ret).toEqual({
+        expand: ["a", "v1"],
+        order: ["b:asc", "v2:asc"],
+        filter: ["c|eq:", "v3|eq:"],
+      });
+    });
+
+    it("should not append the mandatory values when value not provided", () => {
+      const ret = plainToClass(factory.product, {});
+      expect(ret).toEqual({});
+    });
+  });
+
+  describe("Exclusion", () => {
     beforeEach(() => {
       factory = new QueryDtoFactory<any>({});
     });

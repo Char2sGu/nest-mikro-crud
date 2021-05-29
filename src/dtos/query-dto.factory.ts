@@ -1,4 +1,4 @@
-import { Exclude, Type } from "class-transformer";
+import { Exclude, Transform, Type } from "class-transformer";
 import {
   IsArray,
   IsIn,
@@ -10,9 +10,11 @@ import {
 } from "class-validator";
 import { AbstractFactory } from "../abstract.factory";
 import { FILTER_OPERATORS } from "../constants";
-import { OrderQueryParam } from "../types";
+import { OrderQueryParam, RelationPath } from "../types";
 import { QueryDtoFactoryOptions } from "./query-dto-factory-options.interface";
 import { QueryDto } from "./query-dto.interface";
+
+const deduplicate = (arr: unknown[]) => [...new Set(arr)];
 
 export class QueryDtoFactory<Entity> extends AbstractFactory<QueryDto<Entity>> {
   readonly options;
@@ -27,21 +29,31 @@ export class QueryDtoFactory<Entity> extends AbstractFactory<QueryDto<Entity>> {
   }
 
   protected standardizeOptions(options: QueryDtoFactoryOptions<Entity>) {
-    const { order } = options;
+    const { expand, order, filter } = options;
 
     return {
       ...options,
+      expand: expand
+        ? {
+            ...expand,
+            mandatory: expand.mandatory ?? [],
+          }
+        : undefined,
       order: order
         ? {
             ...order,
-            in: [
-              // deduplicate & complete shortcuts
-              ...new Set(
-                order.in.flatMap((v) =>
-                  v.includes(":") ? v : [`${v}:asc`, `${v}:desc`]
-                )
-              ),
-            ] as OrderQueryParam<Entity>[],
+            in: deduplicate(
+              order.in.flatMap((v) =>
+                v.includes(":") ? v : [`${v}:asc`, `${v}:desc`]
+              )
+            ) as OrderQueryParam<Entity>[],
+            mandatory: order.mandatory ?? [],
+          }
+        : undefined,
+      filter: filter
+        ? {
+            ...filter,
+            mandatory: filter.mandatory ?? [],
           }
         : undefined,
     };
@@ -61,6 +73,11 @@ export class QueryDtoFactory<Entity> extends AbstractFactory<QueryDto<Entity>> {
   }
 
   protected defineValidations() {
+    const ApplyMandatory = (mandatory: unknown[]) =>
+      Transform(({ value }: { value: [] }) =>
+        deduplicate([...value, ...mandatory])
+      );
+
     const { limit, offset, expand, order, filter } = this.options;
 
     if (limit)
@@ -89,7 +106,8 @@ export class QueryDtoFactory<Entity> extends AbstractFactory<QueryDto<Entity>> {
         Type(() => String),
         IsOptional(),
         IsArray(),
-        IsIn(expand.in, { each: true })
+        IsIn(expand.in, { each: true }),
+        ApplyMandatory(expand.mandatory)
       );
 
     if (order)
@@ -98,7 +116,8 @@ export class QueryDtoFactory<Entity> extends AbstractFactory<QueryDto<Entity>> {
         Type(() => String),
         IsOptional(),
         IsArray(),
-        IsIn(order.in, { each: true })
+        IsIn(order.in, { each: true }),
+        ApplyMandatory(order.mandatory)
       );
 
     if (filter)
@@ -111,7 +130,8 @@ export class QueryDtoFactory<Entity> extends AbstractFactory<QueryDto<Entity>> {
           `^(${filter.in.join("|")})\\|(${FILTER_OPERATORS.join("|")}):.*$`,
           undefined,
           { each: true }
-        )
+        ),
+        ApplyMandatory(filter.mandatory)
       );
   }
 

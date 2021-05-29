@@ -6,9 +6,18 @@ import {
 } from "../types";
 
 export interface QueryDtoFactoryOptions<Entity> {
-  limit?: Partial<Record<"max" | "default", number>>;
-  offset?: Partial<Record<"max" | "default", number>>;
-  expand?: Partial<Record<"in" | "default", RelationPath<Entity>[]>>;
+  limit?: {
+    max?: number;
+    default?: number;
+  };
+  offset?: {
+    max?: number;
+    default?: number;
+  };
+  expand?: {
+    in?: RelationPath<Entity>[];
+    default?: RelationPath<Entity>[];
+  };
   order?: {
     in?: (OrderQueryParam<Entity> | EntityField<Entity>)[];
     default?: OrderQueryParam<Entity>[];

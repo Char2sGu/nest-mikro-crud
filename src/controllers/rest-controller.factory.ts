@@ -256,12 +256,12 @@ export class RestControllerFactory<
   }
 
   protected defineInjections() {
-    const proto = this.product.prototype;
-    let key: keyof RestController;
+    const { restServiceClass } = this.options;
 
-    key = "service";
-    this.defineType(key, this.options.restServiceClass);
-    Inject(this.options.restServiceClass)(proto, key);
+    this.defineType("service", restServiceClass).applyPropertyDecorators(
+      "service" as any, // service is generic so the type cannot be inferred correctly
+      Inject(restServiceClass)
+    );
   }
 
   protected buildActions() {

@@ -267,12 +267,11 @@ export class RestServiceFactory<
   }
 
   protected defineInjections() {
-    const proto = this.product.prototype;
-    let key: keyof RestService;
-
-    key = "repository";
     const { entityClass, repoConnection } = this.options;
-    this.defineType(key, entityClass);
-    InjectRepository(entityClass, repoConnection)(proto, key);
+
+    this.defineType("repository", entityClass).applyPropertyDecorators(
+      "repository",
+      InjectRepository(entityClass, repoConnection)
+    );
   }
 }

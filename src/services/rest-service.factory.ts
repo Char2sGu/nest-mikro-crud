@@ -1,8 +1,6 @@
-import { Inject } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { plainToClass } from "class-transformer";
 import {
-  EntityManager,
   Equal,
   FindConditions,
   FindManyOptions,
@@ -30,10 +28,11 @@ export class RestServiceFactory<
 > extends AbstractFactory<
   RestService<Entity, CreateDto, UpdateDto, LookupField>
 > {
+  readonly options;
   readonly product;
 
   constructor(
-    readonly options: RestServiceFactoryOptions<
+    options: RestServiceFactoryOptions<
       Entity,
       CreateDto,
       UpdateDto,
@@ -41,6 +40,8 @@ export class RestServiceFactory<
     >
   ) {
     super();
+
+    this.options = this.standardizeOptions(options);
 
     this.product = this.createRawClass();
     this.defineInjections();
@@ -50,6 +51,17 @@ export class RestServiceFactory<
       options,
       this.product
     );
+  }
+
+  protected standardizeOptions(
+    options: RestServiceFactoryOptions<
+      Entity,
+      CreateDto,
+      UpdateDto,
+      LookupField
+    >
+  ) {
+    return options;
   }
 
   protected createRawClass() {

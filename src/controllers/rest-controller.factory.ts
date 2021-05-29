@@ -11,7 +11,6 @@ import {
   Put,
   Query,
   Type,
-  UseFilters,
   UsePipes,
   ValidationPipe,
 } from "@nestjs/common";
@@ -21,7 +20,6 @@ import {
   TS_TYPE_METADATA_KEY,
 } from "../constants";
 import { QueryDtoFactory } from "../dtos";
-import { EntityNotFoundErrorFilter } from "../filters";
 import { RestService, RestServiceFactoryOptions } from "../services";
 import { ActionName, LookupableField } from "../types";
 import { RestControllerFactoryOptions } from "./rest-controller-factory-options.interface";
@@ -89,10 +87,7 @@ export class RestControllerFactory<
     this.defineInjections();
     this.buildActions();
     this.applyClassDecorators(
-      UsePipes(new ValidationPipe(this.options.validationPipeOptions)),
-      UseFilters(
-        ...(this.options.catchEntityNotFound ? [EntityNotFoundErrorFilter] : [])
-      )
+      UsePipes(new ValidationPipe(this.options.validationPipeOptions))
     );
 
     Reflect.defineMetadata(
@@ -114,7 +109,6 @@ export class RestControllerFactory<
     const {
       queryDto = new QueryDtoFactory({}).product,
       lookupParam = "lookup",
-      catchEntityNotFound = true,
       validationPipeOptions = {},
       contextOptions = {},
     } = options;
@@ -123,7 +117,6 @@ export class RestControllerFactory<
       ...options,
       queryDto,
       lookupParam,
-      catchEntityNotFound,
       validationPipeOptions: {
         ...validationPipeOptions,
         transform: true,

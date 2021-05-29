@@ -1,3 +1,4 @@
+import { NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { plainToClass } from "class-transformer";
 import {
@@ -106,13 +107,15 @@ export class RestServiceFactory<
         expand = [],
         ...args
       }: Parameters<Interface["retrieve"]>[0]) {
-        return await this.repository.findOneOrFail({
+        const entity = await this.repository.findOne({
           where: await this.finalizeQueryConditions({
             conditions: { [lookupField]: lookup } as any,
             ...args,
           }),
           ...(await this.parseFieldExpansions({ expand, ...args })),
         });
+        if (!entity) throw new NotFoundException();
+        return entity;
       }
 
       async replace({

@@ -1,6 +1,5 @@
 import { Inject } from "@nestjs/common";
 import {
-  QueryDto,
   QueryDtoFactory,
   Resolved,
   RestController,
@@ -92,7 +91,6 @@ describe(RestControllerFactory.name, () => {
     expect(QueryDtoFactory).toHaveBeenCalled();
     expect(factory.options.queryDto).toBeDefined();
     expect(factory.options.lookupParam).toBeDefined();
-    expect(factory.options.catchEntityNotFound).toBeDefined();
     expect(factory.options.validationPipeOptions).toBeDefined();
     expect(factory.options.validationPipeOptions.transform).toBe(true);
     expect(

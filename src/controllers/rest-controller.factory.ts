@@ -313,7 +313,7 @@ export class RestControllerFactory<
     ] of Object.entries(table)) {
       const name = k as ActionName;
       this.applyMethodDecorators(name, ...methodDecorators)
-        .defineParamTypesMetadata(name, ...paramTypes, ...contextTypes)
+        .defineParamTypes(name, ...paramTypes, ...contextTypes)
         .applyParamDecoratorSets(
           name,
           ...paramDecoratorSets,

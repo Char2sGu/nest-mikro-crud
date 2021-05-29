@@ -9,7 +9,7 @@ type PropertyNames<T> = Exclude<AllNames<T>, MethodNames<T>>;
 export abstract class AbstractFactory<T> {
   abstract readonly product: Type<T>;
 
-  defineTypeMetadata(target: AllNames<T>, type: any): this {
+  defineType(target: AllNames<T>, type: any): this {
     Reflect.defineMetadata(
       TS_TYPE_METADATA_KEY,
       type,
@@ -19,10 +19,7 @@ export abstract class AbstractFactory<T> {
     return this;
   }
 
-  defineParamTypesMetadata(
-    target: MethodNames<T>,
-    ...types: (Type | "keep")[]
-  ): this {
+  defineParamTypes(target: MethodNames<T>, ...types: (Type | "keep")[]): this {
     const primitive: Type[] =
       Reflect.getMetadata(
         TS_PARAM_TYPES_METADATA_KEY,

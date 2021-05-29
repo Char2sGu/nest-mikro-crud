@@ -75,7 +75,7 @@ export class QueryDtoFactory<Entity> extends AbstractFactory<QueryDto<Entity>> {
   protected defineValidations() {
     const { limit, offset, expand, order, filter } = this.options;
 
-    this.defineTypeMetadata("limit", Number)
+    this.defineType("limit", Number)
       .applyPropertyDecorators(
         "limit",
         Type(() => Number),
@@ -85,7 +85,7 @@ export class QueryDtoFactory<Entity> extends AbstractFactory<QueryDto<Entity>> {
         ...(limit.max ? [Max(limit.max)] : [])
       )
 
-      .defineTypeMetadata("offset", Number)
+      .defineType("offset", Number)
       .applyPropertyDecorators(
         "offset",
         Type(() => Number),
@@ -95,7 +95,7 @@ export class QueryDtoFactory<Entity> extends AbstractFactory<QueryDto<Entity>> {
         ...(offset.max ? [Max(offset.max)] : [])
       )
 
-      .defineTypeMetadata("expand", Array)
+      .defineType("expand", Array)
       .applyPropertyDecorators(
         "expand",
         Type(() => String),
@@ -104,7 +104,7 @@ export class QueryDtoFactory<Entity> extends AbstractFactory<QueryDto<Entity>> {
         IsIn(expand.in, { each: true })
       )
 
-      .defineTypeMetadata("order", Array)
+      .defineType("order", Array)
       .applyPropertyDecorators(
         "order",
         Type(() => String),
@@ -113,7 +113,7 @@ export class QueryDtoFactory<Entity> extends AbstractFactory<QueryDto<Entity>> {
         IsIn(order.in, { each: true })
       )
 
-      .defineTypeMetadata("filter", Array)
+      .defineType("filter", Array)
       .applyPropertyDecorators(
         "filter",
         Type(() => String),

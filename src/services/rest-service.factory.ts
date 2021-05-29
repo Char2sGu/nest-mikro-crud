@@ -84,13 +84,20 @@ export class RestServiceFactory<
           conditions: await this.parseFilters({ filter, ...args }),
           ...args,
         });
-        const total = await this.repository.count({ where: conditions });
+        const relationOptions = await this.parseFieldExpansions({
+          expand,
+          ...args,
+        });
+        const total = await this.repository.count({
+          where: conditions,
+          ...relationOptions,
+        });
         const results = await this.repository.find({
           where: conditions,
           take: limit,
           skip: offset,
           order: await this.parseOrders({ order, ...args }),
-          ...(await this.parseFieldExpansions({ expand, ...args })),
+          ...relationOptions,
         });
         return { total, results };
       }

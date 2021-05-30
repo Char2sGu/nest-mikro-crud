@@ -154,15 +154,6 @@ export class RestServiceFactory<
         return await this.repository.remove(entity);
       }
 
-      async transform({
-        entity,
-        ...args
-      }: Parameters<Interface["transform"]>[0]): ReturnType<
-        Interface["transform"]
-      > {
-        return plainToClass(entityClass, entity);
-      }
-
       async checkPermission({
         action,
         entity,
@@ -171,6 +162,15 @@ export class RestServiceFactory<
         Interface["checkPermission"]
       > {
         return;
+      }
+
+      async transform({
+        entity,
+        ...args
+      }: Parameters<Interface["transform"]>[0]): ReturnType<
+        Interface["transform"]
+      > {
+        return plainToClass(entityClass, entity);
       }
 
       async finalizeQueryConditions({

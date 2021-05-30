@@ -47,12 +47,6 @@ export interface RestService<
   destroy(args: { entity: Entity }): Promise<Entity>;
 
   /**
-   * Will be called in the controller to transform the entity
-   * before sending the response.
-   */
-  transform(args: { entity: Entity }): Promise<Entity>;
-
-  /**
    * When the action is _list_ or _create_, it will be called once with
    * `{ action: "<the-action-name>" }` before performing the action.
    *
@@ -63,6 +57,12 @@ export interface RestService<
    * @param args
    */
   checkPermission(args: { action: ActionName; entity?: Entity }): Promise<void>;
+
+  /**
+   * Will be called in the controller to transform the entity
+   * before sending the response.
+   */
+  transform(args: { entity: Entity }): Promise<Entity>;
 
   // ------------------------------------------------------------------------------------------
 

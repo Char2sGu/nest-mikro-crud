@@ -206,7 +206,7 @@ export class RestControllerFactory<
         const action: ActionName = "replace";
         const ctx = await this.prepareContext(args);
         await this.service.checkPermission({ ...ctx, action });
-        let entity = await this.service.retrieve({ ...ctx, lookup });
+        let entity = await this.service.retrieve({ ...ctx, lookup, expand });
         await this.service.checkPermission({ ...ctx, action, entity });
         await this.service.replace({ ...ctx, entity, data });
         lookup = entity[lookupField]; // lookup may be updated
@@ -220,7 +220,7 @@ export class RestControllerFactory<
         const action: ActionName = "update";
         const ctx = await this.prepareContext(args);
         await this.service.checkPermission({ ...ctx, action });
-        let entity = await this.service.retrieve({ ...ctx, lookup });
+        let entity = await this.service.retrieve({ ...ctx, lookup, expand });
         await this.service.checkPermission({ ...ctx, action, entity });
         await this.service.update({ ...ctx, entity, data });
         lookup = entity[lookupField]; // lookup may be updated
@@ -229,12 +229,12 @@ export class RestControllerFactory<
       }
 
       async destroy(
-        ...[lookup, ...args]: Parameters<Interface["destroy"]>
+        ...[lookup, { expand }, ...args]: Parameters<Interface["destroy"]>
       ): Promise<unknown> {
         const action: ActionName = "destroy";
         const ctx = await this.prepareContext(args);
         await this.service.checkPermission({ ...ctx, action });
-        const entity = await this.service.retrieve({ ...ctx, lookup });
+        const entity = await this.service.retrieve({ ...ctx, lookup, expand });
         await this.service.checkPermission({ ...ctx, action, entity });
         await this.service.destroy({ ...ctx, entity });
         return;
@@ -300,7 +300,11 @@ export class RestControllerFactory<
         [lookupType, queryDto, updateDto],
         [[Lookup], [Queries], [Data]],
       ],
-      destroy: [[Delete(path), HttpCode(204)], [lookupType], [[Lookup]]],
+      destroy: [
+        [Delete(path), HttpCode(204)],
+        [lookupType, queryDto],
+        [[Lookup], [Queries]],
+      ],
     };
 
     for (const [

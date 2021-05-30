@@ -44,7 +44,11 @@ export interface RestController<
     ...args: any[]
   ): Promise<unknown>;
 
-  destroy(lookup: Entity[LookupField], ...args: any[]): Promise<unknown>;
+  destroy(
+    lookup: Entity[LookupField],
+    queries: QueryDto<Entity>,
+    ...args: any[]
+  ): Promise<unknown>;
 
   /**
    * Pack the args into an object which will pass to each method of the service

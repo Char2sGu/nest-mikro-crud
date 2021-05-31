@@ -6,7 +6,7 @@ import {
   RestControllerFactory,
   RestService,
   RestServiceFactoryOptions,
-  REST_FACTORY_OPTIONS_METADATA_KEY,
+  REST_FACTORY_METADATA_KEY,
 } from "src";
 import { buildKeyChecker, m } from "tests/utils";
 import { Entity, PrimaryGeneratedColumn, Repository } from "typeorm";
@@ -70,8 +70,8 @@ describe(RestControllerFactory.name, () => {
   };
   const TestService = jest.fn(() => testService);
   Reflect.defineMetadata(
-    REST_FACTORY_OPTIONS_METADATA_KEY,
-    testServiceOptions,
+    REST_FACTORY_METADATA_KEY,
+    { options: testServiceOptions },
     TestService
   );
 
@@ -96,8 +96,8 @@ describe(RestControllerFactory.name, () => {
     ).toBe(true);
   });
 
-  it("should expose the service's options", () => {
-    expect(factory.serviceOptions).toBe(testServiceOptions);
+  it("should expose the service's factory", () => {
+    expect(factory.serviceFactory).toBeDefined();
   });
 
   it("should expose the lookup type", () => {
@@ -118,7 +118,7 @@ describe(RestControllerFactory.name, () => {
 
   it("should define the options as metadata on the product", () => {
     const metadata = Reflect.getMetadata(
-      REST_FACTORY_OPTIONS_METADATA_KEY,
+      REST_FACTORY_METADATA_KEY,
       factory.product
     );
     expect(metadata).toBeDefined();

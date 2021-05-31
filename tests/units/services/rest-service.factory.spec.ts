@@ -3,7 +3,7 @@ import {
   Resolved,
   RestService,
   RestServiceFactory,
-  REST_FACTORY_OPTIONS_METADATA_KEY,
+  REST_FACTORY_METADATA_KEY,
 } from "src";
 import { CreateParentEntityDto, UpdateParentEntityDto } from "tests/dtos";
 import { ParentEntity } from "tests/entities";
@@ -141,9 +141,9 @@ describe(RestServiceFactory.name, () => {
     );
   });
 
-  it("should define the options as metadata on the product", () => {
+  it("should define the factory as metadata on the product", () => {
     const metadata = Reflect.getMetadata(
-      REST_FACTORY_OPTIONS_METADATA_KEY,
+      REST_FACTORY_METADATA_KEY,
       factory.product
     );
     expect(metadata).toBeDefined();

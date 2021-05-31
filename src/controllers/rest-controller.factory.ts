@@ -15,13 +15,10 @@ import {
   ValidationPipe,
 } from "@nestjs/common";
 import { AbstractFactory } from "../abstract.factory";
-import {
-  REST_FACTORY_OPTIONS_METADATA_KEY,
-  TS_TYPE_METADATA_KEY,
-} from "../constants";
+import { REST_FACTORY_METADATA_KEY, TS_TYPE_METADATA_KEY } from "../constants";
 import { ReqUser } from "../decorators";
 import { QueryDtoFactory } from "../dtos";
-import { RestService, RestServiceFactoryOptions } from "../services";
+import { RestService, RestServiceFactory } from "../services";
 import { ActionName, LookupableField } from "../types";
 import { RestControllerFactoryOptions } from "./rest-controller-factory-options.interface";
 import { RestController } from "./rest-controller.interface";
@@ -56,7 +53,7 @@ export class RestControllerFactory<
   RestController<Entity, CreateDto, UpdateDto, LookupField, Service>
 > {
   readonly options;
-  readonly serviceOptions;
+  readonly serviceFactory;
   readonly lookupType: typeof Number | typeof String;
   readonly product;
 
@@ -73,15 +70,15 @@ export class RestControllerFactory<
 
     this.options = this.standardizeOptions(options);
 
-    this.serviceOptions = Reflect.getMetadata(
-      REST_FACTORY_OPTIONS_METADATA_KEY,
+    this.serviceFactory = Reflect.getMetadata(
+      REST_FACTORY_METADATA_KEY,
       this.options.restServiceClass
-    ) as RestServiceFactoryOptions<Entity, CreateDto, UpdateDto, LookupField>;
+    ) as RestServiceFactory<Entity, CreateDto, UpdateDto, LookupField>;
 
     this.lookupType = Reflect.getMetadata(
       TS_TYPE_METADATA_KEY,
-      this.serviceOptions.entityClass.prototype,
-      this.serviceOptions.lookupField
+      this.serviceFactory.options.entityClass.prototype,
+      this.serviceFactory.options.lookupField
     );
 
     this.product = this.createRawClass();
@@ -91,11 +88,7 @@ export class RestControllerFactory<
       UsePipes(new ValidationPipe(this.options.validationPipeOptions))
     );
 
-    Reflect.defineMetadata(
-      REST_FACTORY_OPTIONS_METADATA_KEY,
-      this.options,
-      this.product
-    );
+    Reflect.defineMetadata(REST_FACTORY_METADATA_KEY, this, this.product);
   }
 
   protected standardizeOptions(
@@ -137,7 +130,7 @@ export class RestControllerFactory<
    * Create a no-metadata controller class
    */
   protected createRawClass() {
-    const { lookupField } = this.serviceOptions;
+    const { lookupField } = this.serviceFactory.options;
 
     type Interface = RestController<
       Entity,
@@ -246,7 +239,7 @@ export class RestControllerFactory<
 
     const {
       dtoClasses: { create: createDto, update: updateDto },
-    } = this.serviceOptions;
+    } = this.serviceFactory.options;
     const {
       queryDto,
       requestUser: { type: reqUserType, decorators: reqUserDecorators },

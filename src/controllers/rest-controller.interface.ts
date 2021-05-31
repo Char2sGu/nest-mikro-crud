@@ -16,17 +16,23 @@ export interface RestController<
 > {
   readonly service: Service;
 
-  list(queries: QueryDto<Entity>, ...args: any[]): Promise<unknown>;
+  list(
+    queries: QueryDto<Entity>,
+    user: unknown,
+    ...args: any[]
+  ): Promise<unknown>;
 
   create(
     queries: QueryDto<Entity>,
     data: CreateDto,
+    user: unknown,
     ...args: any[]
   ): Promise<unknown>;
 
   retrieve(
     lookup: Entity[LookupField],
     queries: QueryDto<Entity>,
+    user: unknown,
     ...args: any[]
   ): Promise<unknown>;
 
@@ -34,6 +40,7 @@ export interface RestController<
     lookup: Entity[LookupField],
     queries: QueryDto<Entity>,
     data: CreateDto,
+    user: unknown,
     ...args: any[]
   ): Promise<unknown>;
 
@@ -41,18 +48,14 @@ export interface RestController<
     lookup: Entity[LookupField],
     queries: QueryDto<Entity>,
     data: UpdateDto,
+    user: unknown,
     ...args: any[]
   ): Promise<unknown>;
 
   destroy(
     lookup: Entity[LookupField],
     queries: QueryDto<Entity>,
+    user: unknown,
     ...args: any[]
   ): Promise<unknown>;
-
-  /**
-   * Pack the args into an object which will pass to each method of the service
-   * accroding to context options.
-   */
-  prepareContext(args: unknown[]): Promise<Record<string, unknown>>;
 }

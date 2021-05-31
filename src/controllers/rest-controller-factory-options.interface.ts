@@ -31,23 +31,10 @@ export interface RestControllerFactoryOptions<
    * Specify the parameter name for entity lookup in the URL
    */
   lookupParam?: string;
+  requestUser?: { type?: Type; decorators: ParameterDecorator[] };
   /**
    * - `transform` will be forced to be `true`
    * - `transformOptions.exposeDefaultValues` will be forced to be `true`
    */
   validationPipeOptions?: ValidationPipeOptions;
-  /**
-   * Custom additional context data.
-   *
-   * @example
-   * { user: { type: User, decorators: [ReqUser()] } }
-   * class YourService extends ... {
-   *   getQueryConditions({ user }) {
-   *   }
-   * }
-   */
-  contextOptions?: Record<
-    string,
-    { type?: Type<unknown>; decorators: ParameterDecorator[] }
-  >;
 }

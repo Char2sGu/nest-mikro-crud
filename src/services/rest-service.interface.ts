@@ -31,20 +31,26 @@ export interface RestService<
     expand?: RelationPath<Entity>[];
     order?: OrderQueryParam<Entity>[];
     filter?: FilterQueryParam<Entity>[];
+    user: any;
   }): Promise<{ total: number; results: Entity[] }>;
 
-  create(args: { data: CreateDto }): Promise<Entity>;
+  create(args: { data: CreateDto; user: any }): Promise<Entity>;
 
   retrieve(args: {
     lookup: Entity[LookupField];
     expand?: RelationPath<Entity>[];
+    user: any;
   }): Promise<Entity>;
 
-  replace(args: { entity: Entity; data: CreateDto }): Promise<Entity>;
+  replace(args: {
+    entity: Entity;
+    data: CreateDto;
+    user: any;
+  }): Promise<Entity>;
 
-  update(args: { entity: Entity; data: UpdateDto }): Promise<Entity>;
+  update(args: { entity: Entity; data: UpdateDto; user: any }): Promise<Entity>;
 
-  destroy(args: { entity: Entity }): Promise<Entity>;
+  destroy(args: { entity: Entity; user: any }): Promise<Entity>;
 
   /**
    * When the action is _list_ or _create_, it will be called once with
@@ -56,7 +62,11 @@ export interface RestService<
    * action.
    * @param args
    */
-  checkPermission(args: { action: ActionName; entity?: Entity }): Promise<void>;
+  checkPermission(args: {
+    action: ActionName;
+    entity?: Entity;
+    user: any;
+  }): Promise<void>;
 
   /**
    * Will be called in the controller to transform the entity
@@ -68,6 +78,7 @@ export interface RestService<
 
   finalizeQueryConditions(args: {
     conditions: FindConditions<Entity>;
+    user: any;
   }): Promise<FindConditions<Entity>[]>;
 
   /**

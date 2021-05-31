@@ -81,9 +81,6 @@ describe(RestControllerFactory.name, () => {
     factory = new RestControllerFactory({
       restServiceClass: TestService,
       actions: ["list", "create", "retrieve", "replace", "update", "destroy"],
-      contextOptions: {
-        ctx: { type: String, decorators: [jest.fn()] },
-      },
     });
   });
 
@@ -97,7 +94,6 @@ describe(RestControllerFactory.name, () => {
       factory.options.validationPipeOptions.transformOptions
         ?.exposeDefaultValues
     ).toBe(true);
-    expect(factory.options.contextOptions).toBeDefined();
   });
 
   it("should expose the service's options", () => {
@@ -117,18 +113,6 @@ describe(RestControllerFactory.name, () => {
       controller = new factory.product();
       // @ts-expect-error - manual injection
       controller.service = new TestService();
-    });
-
-    describe(d(".prepareContext()"), () => {
-      let ret: Resolved<ReturnType<typeof controller.prepareContext>>;
-
-      beforeEach(async () => {
-        ret = await controller.prepareContext(["ctx"]);
-      });
-
-      it("should return the context", () => {
-        expect(ret).toEqual({ ctx: "ctx" });
-      });
     });
   });
 

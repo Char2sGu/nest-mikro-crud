@@ -78,15 +78,14 @@ export class RestServiceFactory<
         expand = [],
         order = [],
         filter = [],
-        ...args
+        user,
       }: Parameters<Interface["list"]>[0]): ReturnType<Interface["list"]> {
         const conditions = await this.finalizeQueryConditions({
-          conditions: await this.parseFilters({ filter, ...args }),
-          ...args,
+          conditions: await this.parseFilters({ filter }),
+          user,
         });
         const relationOptions = await this.parseFieldExpansions({
           expand,
-          ...args,
         });
         const total = await this.repository.count({
           where: conditions,
@@ -96,7 +95,7 @@ export class RestServiceFactory<
           where: conditions,
           take: limit,
           skip: offset,
-          order: await this.parseOrders({ order, ...args }),
+          order: await this.parseOrders({ order }),
           ...relationOptions,
         });
         return { total, results };
@@ -104,7 +103,6 @@ export class RestServiceFactory<
 
       async create({
         data,
-        ...args
       }: Parameters<Interface["create"]>[0]): ReturnType<Interface["create"]> {
         return await this.repository.save(data);
       }
@@ -112,14 +110,14 @@ export class RestServiceFactory<
       async retrieve({
         lookup,
         expand = [],
-        ...args
+        user,
       }: Parameters<Interface["retrieve"]>[0]) {
         const entity = await this.repository.findOne({
           where: await this.finalizeQueryConditions({
             conditions: { [lookupField]: lookup } as any,
-            ...args,
+            user,
           }),
-          ...(await this.parseFieldExpansions({ expand, ...args })),
+          ...(await this.parseFieldExpansions({ expand })),
         });
         if (!entity) throw new NotFoundException();
         return entity;
@@ -128,7 +126,6 @@ export class RestServiceFactory<
       async replace({
         entity,
         data,
-        ...args
       }: Parameters<Interface["replace"]>[0]): ReturnType<
         Interface["replace"]
       > {
@@ -139,7 +136,6 @@ export class RestServiceFactory<
       async update({
         entity,
         data,
-        ...args
       }: Parameters<Interface["update"]>[0]): ReturnType<Interface["update"]> {
         const updatedEntity = this.repository.merge(entity, data);
         return await this.repository.save(updatedEntity);
@@ -147,7 +143,6 @@ export class RestServiceFactory<
 
       async destroy({
         entity,
-        ...args
       }: Parameters<Interface["destroy"]>[0]): ReturnType<
         Interface["destroy"]
       > {
@@ -157,7 +152,6 @@ export class RestServiceFactory<
       async checkPermission({
         action,
         entity,
-        ...args
       }: Parameters<Interface["checkPermission"]>[0]): ReturnType<
         Interface["checkPermission"]
       > {
@@ -166,7 +160,6 @@ export class RestServiceFactory<
 
       async transform({
         entity,
-        ...args
       }: Parameters<Interface["transform"]>[0]): ReturnType<
         Interface["transform"]
       > {
@@ -183,7 +176,6 @@ export class RestServiceFactory<
 
       async parseFieldExpansions({
         expand,
-        ...args
       }: Parameters<Interface["parseFieldExpansions"]>[0]): ReturnType<
         Interface["parseFieldExpansions"]
       > {
@@ -219,7 +211,6 @@ export class RestServiceFactory<
 
       async parseFilters({
         filter,
-        ...args
       }: Parameters<Interface["parseFilters"]>[0]): ReturnType<
         Interface["parseFilters"]
       > {
@@ -246,7 +237,6 @@ export class RestServiceFactory<
       async parseFilterOperator({
         operator,
         value,
-        ...args
       }: Parameters<Interface["parseFilterOperator"]>[0]): ReturnType<
         Interface["parseFilterOperator"]
       > {

@@ -19,6 +19,7 @@ import {
   REST_FACTORY_OPTIONS_METADATA_KEY,
   TS_TYPE_METADATA_KEY,
 } from "../constants";
+import { ReqUser } from "../decorators";
 import { QueryDtoFactory } from "../dtos";
 import { RestService, RestServiceFactoryOptions } from "../services";
 import { ActionName, LookupableField } from "../types";
@@ -109,14 +110,18 @@ export class RestControllerFactory<
     const {
       queryDto = new QueryDtoFactory({}).product,
       lookupParam = "lookup",
+      requestUser = { decorators: [ReqUser()] },
       validationPipeOptions = {},
-      contextOptions = {},
     } = options;
 
     return {
       ...options,
       queryDto,
       lookupParam,
+      requestUser: {
+        ...requestUser,
+        type: requestUser.type ?? Object,
+      },
       validationPipeOptions: {
         ...validationPipeOptions,
         transform: true,
@@ -125,14 +130,6 @@ export class RestControllerFactory<
           exposeDefaultValues: true,
         },
       },
-      contextOptions: Object.fromEntries(
-        Object.entries(contextOptions).map(
-          ([name, { type = Object, decorators }]) => [
-            name,
-            { type, decorators },
-          ]
-        )
-      ),
     };
   }
 
@@ -140,7 +137,6 @@ export class RestControllerFactory<
    * Create a no-metadata controller class
    */
   protected createRawClass() {
-    const { contextOptions } = this.options;
     const { lookupField } = this.serviceOptions;
 
     type Interface = RestController<
@@ -154,96 +150,84 @@ export class RestControllerFactory<
       readonly service!: Interface["service"];
 
       async list(
-        ...[{ limit, offset, expand, order, filter }, ...args]: Parameters<
-          Interface["list"]
-        >
+        ...[
+          { limit, offset, expand, order, filter },
+          user,
+          ...args
+        ]: Parameters<Interface["list"]>
       ): Promise<unknown> {
         const action: ActionName = "list";
-        const ctx = await this.prepareContext(args);
-        await this.service.checkPermission({ ...ctx, action });
+        await this.service.checkPermission({ action, user });
         const data = await this.service.list({
-          ...ctx,
           limit,
           offset,
           expand,
           order,
           filter,
+          user,
         });
         data.results = await Promise.all(
-          data.results.map((entity) =>
-            this.service.transform({ ...ctx, entity })
-          )
+          data.results.map((entity) => this.service.transform({ entity }))
         );
         return data;
       }
 
       async create(
-        ...[{ expand }, data, ...args]: Parameters<Interface["create"]>
+        ...[{ expand }, data, user]: Parameters<Interface["create"]>
       ): Promise<unknown> {
         const action: ActionName = "create";
-        const ctx = await this.prepareContext(args);
-        await this.service.checkPermission({ ...ctx, action });
-        let entity = await this.service.create({ ...ctx, data });
+        await this.service.checkPermission({ action, user });
+        let entity = await this.service.create({ data, user });
         const lookup = entity[lookupField];
-        entity = await this.service.retrieve({ ...ctx, lookup, expand });
-        return await this.service.transform({ ...ctx, entity });
+        entity = await this.service.retrieve({ lookup, expand, user });
+        return await this.service.transform({ entity });
       }
 
       async retrieve(
-        ...[lookup, { expand }, ...args]: Parameters<Interface["retrieve"]>
+        ...[lookup, { expand }, user]: Parameters<Interface["retrieve"]>
       ): Promise<unknown> {
         const action: ActionName = "retrieve";
-        const ctx = await this.prepareContext(args);
-        await this.service.checkPermission({ ...ctx, action });
-        const entity = await this.service.retrieve({ ...ctx, lookup, expand });
-        await this.service.checkPermission({ ...ctx, action, entity });
-        return await this.service.transform({ ...ctx, entity });
+        await this.service.checkPermission({ action, user });
+        const entity = await this.service.retrieve({ lookup, expand, user });
+        await this.service.checkPermission({ action, entity, user });
+        return await this.service.transform({ entity });
       }
 
       async replace(
-        ...[lookup, { expand }, data, ...args]: Parameters<Interface["replace"]>
+        ...[lookup, { expand }, data, user]: Parameters<Interface["replace"]>
       ): Promise<unknown> {
         const action: ActionName = "replace";
-        const ctx = await this.prepareContext(args);
-        await this.service.checkPermission({ ...ctx, action });
-        let entity = await this.service.retrieve({ ...ctx, lookup, expand });
-        await this.service.checkPermission({ ...ctx, action, entity });
-        await this.service.replace({ ...ctx, entity, data });
+        await this.service.checkPermission({ action, user });
+        let entity = await this.service.retrieve({ lookup, expand, user });
+        await this.service.checkPermission({ action, entity, user });
+        await this.service.replace({ entity, data, user });
         lookup = entity[lookupField]; // lookup may be updated
-        entity = await this.service.retrieve({ ...ctx, lookup, expand });
-        return await this.service.transform({ ...ctx, entity });
+        entity = await this.service.retrieve({ lookup, expand, user });
+        return await this.service.transform({ entity });
       }
 
       async update(
-        ...[lookup, { expand }, data, ...args]: Parameters<Interface["update"]>
+        ...[lookup, { expand }, data, user]: Parameters<Interface["update"]>
       ): Promise<unknown> {
         const action: ActionName = "update";
-        const ctx = await this.prepareContext(args);
-        await this.service.checkPermission({ ...ctx, action });
-        let entity = await this.service.retrieve({ ...ctx, lookup, expand });
-        await this.service.checkPermission({ ...ctx, action, entity });
-        await this.service.update({ ...ctx, entity, data });
+        await this.service.checkPermission({ action, user });
+        let entity = await this.service.retrieve({ lookup, expand, user });
+        await this.service.checkPermission({ action, entity, user });
+        await this.service.update({ entity, data, user });
         lookup = entity[lookupField]; // lookup may be updated
-        entity = await this.service.retrieve({ ...ctx, lookup, expand });
-        return await this.service.transform({ ...ctx, entity });
+        entity = await this.service.retrieve({ lookup, expand, user });
+        return await this.service.transform({ entity });
       }
 
       async destroy(
-        ...[lookup, { expand }, ...args]: Parameters<Interface["destroy"]>
+        ...[lookup, { expand }, user]: Parameters<Interface["destroy"]>
       ): Promise<unknown> {
         const action: ActionName = "destroy";
-        const ctx = await this.prepareContext(args);
-        await this.service.checkPermission({ ...ctx, action });
-        const entity = await this.service.retrieve({ ...ctx, lookup, expand });
-        await this.service.checkPermission({ ...ctx, action, entity });
-        await this.service.destroy({ ...ctx, entity });
+        await this.service.checkPermission({ action, user });
+        const entity = await this.service.retrieve({ lookup, expand, user });
+        await this.service.checkPermission({ action, entity, user });
+        await this.service.destroy({ entity, user });
         return;
-      }
-
-      async prepareContext(args: unknown[]) {
-        return Object.fromEntries(
-          Object.keys(contextOptions).map((name, index) => [name, args[index]])
-        );
       }
     };
   }
@@ -263,7 +247,10 @@ export class RestControllerFactory<
     const {
       dtoClasses: { create: createDto, update: updateDto },
     } = this.serviceOptions;
-    const { queryDto } = this.options;
+    const {
+      queryDto,
+      requestUser: { type: reqUserType, decorators: reqUserDecorators },
+    } = this.options;
 
     const path = `:${this.options.lookupParam}`;
 
@@ -273,15 +260,6 @@ export class RestControllerFactory<
     );
     const Queries = Query();
     const Data = Body();
-
-    const contextTypes: Type[] = [];
-    const contextDecorators: ParameterDecorator[][] = [];
-    Object.values(this.options.contextOptions).forEach(
-      ({ type, decorators }) => {
-        contextTypes.push(type);
-        contextDecorators.push(decorators);
-      }
-    );
 
     const table: Record<
       ActionName,
@@ -313,11 +291,11 @@ export class RestControllerFactory<
     ] of Object.entries(table)) {
       const name = k as ActionName;
       this.applyMethodDecorators(name, ...methodDecorators)
-        .defineParamTypes(name, ...paramTypes, ...contextTypes)
+        .defineParamTypes(name, ...paramTypes, reqUserType)
         .applyParamDecoratorSets(
           name,
           ...paramDecoratorSets,
-          ...contextDecorators
+          reqUserDecorators
         );
     }
   }

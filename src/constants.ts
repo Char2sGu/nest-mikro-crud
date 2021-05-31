@@ -18,19 +18,4 @@ export const FILTER_OPERATORS = [
   "lte",
   "ne",
   "startswith",
-] as [
-  "contains",
-  "endswith",
-  "eq",
-  "gt",
-  "gte",
-  "icontains",
-  "iendswith",
-  "in",
-  "isnull",
-  "istartswith",
-  "lt",
-  "lte",
-  "ne",
-  "startswith"
-];
+] as const;

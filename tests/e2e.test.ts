@@ -422,6 +422,12 @@ describe("E2E", () => {
         await prepare(TestService, TestController);
         createParentDto = { name: "new", secret: "secret" };
         updateParentDto = { name: "updated" };
+
+        for (let i = 1; i <= 5; i++)
+          await childRepository.save({
+            parent: i as any,
+            name: "child" + i,
+          });
       });
 
       describe.each`

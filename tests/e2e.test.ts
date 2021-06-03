@@ -487,31 +487,23 @@ describe("E2E", () => {
         describe.each`
           filter                            | count | firstId
           ${undefined}                      | ${1}  | ${3}
-          ${["name|contains:rent5"]}        | ${1}  | ${5}
-          ${["name|endswith:rent5"]}        | ${1}  | ${5}
           ${["id|eq:"]}                     | ${0}  | ${undefined}
           ${["id|eq:2"]}                    | ${1}  | ${2}
           ${["id|gt:2"]}                    | ${3}  | ${3}
           ${["name|gt:parent2"]}            | ${3}  | ${3}
           ${["id|gte:2"]}                   | ${4}  | ${2}
           ${["name|gte:parent2"]}           | ${4}  | ${2}
-          ${["name|icontains:"]}            | ${5}  | ${1}
-          ${["name|icontains:REnT5"]}       | ${1}  | ${5}
-          ${["name|iendswith:"]}            | ${5}  | ${1}
-          ${["name|iendswith:REnT5"]}       | ${1}  | ${5}
           ${["name|in:"]}                   | ${0}  | ${undefined}
           ${["name|in:parent2,parent3"]}    | ${2}  | ${2}
-          ${["name|isnull:true"]}           | ${0}  | ${undefined}
-          ${["name|isnull:false"]}          | ${5}  | ${1}
-          ${["name|istartswith:"]}          | ${5}  | ${1}
-          ${["name|istartswith:xxx"]}       | ${0}  | ${undefined}
           ${["id|lt:3"]}                    | ${2}  | ${1}
           ${["name|lt:parent3"]}            | ${2}  | ${1}
           ${["id|lte:3"]}                   | ${3}  | ${1}
           ${["name|lte:parent3"]}           | ${3}  | ${1}
+          ${["id|ne:"]}                     | ${5}  | ${1}
           ${["id|ne:1"]}                    | ${4}  | ${2}
-          ${["name|startswith:"]}           | ${5}  | ${1}
-          ${["name|startswith:par"]}        | ${5}  | ${1}
+          ${["id|nin:1,2"]}                 | ${3}  | ${3}
+          ${["name|like:parent%"]}          | ${5}  | ${1}
+          ${["name|like:%rent5"]}           | ${1}  | ${5}
           ${["id|gt:1", "name|ne:parent2"]} | ${3}  | ${3}
         `("Legal Filter: $filter", ({ filter, count, firstId }) => {
           beforeEach(async () => {

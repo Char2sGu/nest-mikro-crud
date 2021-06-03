@@ -5,18 +5,14 @@ export const TS_TYPE_METADATA_KEY = "design:type";
 export const REST_FACTORY_METADATA_KEY = Symbol("rest:factory");
 
 export const FILTER_OPERATORS = [
-  "contains",
-  "endswith",
   "eq",
   "gt",
   "gte",
-  "icontains",
-  "iendswith",
   "in",
-  "isnull",
-  "istartswith",
   "lt",
   "lte",
   "ne",
-  "startswith",
+  "nin",
+  "like",
+  "ilike",
 ] as const;

@@ -236,39 +236,30 @@ export class RestServiceFactory<
       }: Parameters<Interface["parseFilterOperator"]>[0]): ReturnType<
         Interface["parseFilterOperator"]
       > {
+        const parseMultiValues = () =>
+          value.split(/(?<!\\),/).map((v) => v.replace("\\,", ","));
+
         switch (operator) {
-          case "contains":
-            return Like(`%${value}%`);
-          case "endswith":
-            return Like(`%${value}`);
           case "eq":
             return Equal(value);
           case "gt":
             return MoreThan(value);
           case "gte":
             return MoreThanOrEqual(value);
-          case "icontains":
-            return ILike(`%${value}%`);
-          case "iendswith":
-            return ILike(`%${value}`);
           case "in":
-            return In(
-              value.split(/(?<!\\),/).map((v) => v.replace("\\,", ","))
-            );
-          case "isnull":
-            return ["true", "True", "1", "t", "T"].includes(value)
-              ? IsNull()
-              : Not(IsNull());
-          case "istartswith":
-            return ILike(`${value}%`);
+            return In(parseMultiValues());
           case "lt":
             return LessThan(value);
           case "lte":
             return LessThanOrEqual(value);
           case "ne":
-            return Not(value);
-          case "startswith":
-            return Like(`${value}%`);
+            return Not(Equal(value));
+          case "nin":
+            return Not(In(parseMultiValues()));
+          case "like":
+            return Like(value);
+          case "ilike":
+            return ILike(value);
         }
       }
     };

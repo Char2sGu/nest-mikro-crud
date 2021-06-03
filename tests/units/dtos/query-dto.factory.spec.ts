@@ -89,34 +89,6 @@ describe(QueryDtoFactory.name, () => {
     );
   });
 
-  describe("Mandatory", () => {
-    beforeEach(() => {
-      factory = new QueryDtoFactory<any>({
-        expand: { in: [], mandatory: ["a", "v1"] },
-        order: { in: [], mandatory: ["b:asc", "v2:asc"] },
-        filter: { in: [], mandatory: ["c|eq:", "v3|eq:"] },
-      });
-    });
-
-    it("should append the mandatory values and deduplicate", () => {
-      const ret = plainToClass(factory.product, {
-        expand: ["a"],
-        order: ["b:asc"],
-        filter: ["c|eq:"],
-      });
-      expect(ret).toEqual({
-        expand: ["a", "v1"],
-        order: ["b:asc", "v2:asc"],
-        filter: ["c|eq:", "v3|eq:"],
-      });
-    });
-
-    it("should not append the mandatory values when value not provided", () => {
-      const ret = plainToClass(factory.product, {});
-      expect(ret).toEqual({});
-    });
-  });
-
   describe("Exclusion", () => {
     beforeEach(() => {
       factory = new QueryDtoFactory<any>({});

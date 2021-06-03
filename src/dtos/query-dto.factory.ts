@@ -29,16 +29,10 @@ export class QueryDtoFactory<Entity> extends AbstractFactory<QueryDto<Entity>> {
   }
 
   protected standardizeOptions(options: QueryDtoFactoryOptions<Entity>) {
-    const { expand, order, filter } = options;
+    const { order } = options;
 
     return {
       ...options,
-      expand: expand
-        ? {
-            ...expand,
-            mandatory: expand.mandatory ?? [],
-          }
-        : undefined,
       order: order
         ? {
             ...order,
@@ -47,13 +41,6 @@ export class QueryDtoFactory<Entity> extends AbstractFactory<QueryDto<Entity>> {
                 v.includes(":") ? v : [`${v}:asc`, `${v}:desc`]
               )
             ) as OrderQueryParam<Entity>[],
-            mandatory: order.mandatory ?? [],
-          }
-        : undefined,
-      filter: filter
-        ? {
-            ...filter,
-            mandatory: filter.mandatory ?? [],
           }
         : undefined,
     };
@@ -73,11 +60,6 @@ export class QueryDtoFactory<Entity> extends AbstractFactory<QueryDto<Entity>> {
   }
 
   protected defineValidations() {
-    const ApplyMandatory = (mandatory: unknown[]) =>
-      Transform(({ value }: { value: [] }) =>
-        deduplicate([...value, ...mandatory])
-      );
-
     const { limit, offset, expand, order, filter } = this.options;
 
     if (limit)
@@ -106,8 +88,7 @@ export class QueryDtoFactory<Entity> extends AbstractFactory<QueryDto<Entity>> {
         Type(() => String),
         IsOptional(),
         IsArray(),
-        IsIn(expand.in, { each: true }),
-        ApplyMandatory(expand.mandatory)
+        IsIn(expand.in, { each: true })
       );
 
     if (order)
@@ -116,8 +97,7 @@ export class QueryDtoFactory<Entity> extends AbstractFactory<QueryDto<Entity>> {
         Type(() => String),
         IsOptional(),
         IsArray(),
-        IsIn(order.in, { each: true }),
-        ApplyMandatory(order.mandatory)
+        IsIn(order.in, { each: true })
       );
 
     if (filter)
@@ -130,8 +110,7 @@ export class QueryDtoFactory<Entity> extends AbstractFactory<QueryDto<Entity>> {
           `^(${filter.in.join("|")})\\|(${FILTER_OPERATORS.join("|")}):.*$`,
           undefined,
           { each: true }
-        ),
-        ApplyMandatory(filter.mandatory)
+        )
       );
   }
 

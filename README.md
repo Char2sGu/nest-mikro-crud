@@ -35,7 +35,7 @@ class UsersController extends new RestControllerFactory<UsersService>({
   restServiceClass: UsersService,
   actions: ["list", "create", "retrieve", "replace", "update", "destroy"],
   lookupParam: "userId", // default: "lookup"
-  queryDto: new QueryDtoFactory<User>({
+  queryDtoClass: new QueryDtoFactory<User>({
     limit: { default: 50, max: 200 },
     offset: { max: 10000 },
     order: {

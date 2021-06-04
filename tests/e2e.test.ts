@@ -310,7 +310,7 @@ describe("E2E", () => {
       class TestController extends new RestControllerFactory<TestService>({
         restServiceClass: TestService,
         actions: ["list"],
-        queryDto: new QueryDtoFactory<ParentEntity>({
+        queryDtoClass: new QueryDtoFactory<ParentEntity>({
           limit: { max: 3, default: 1 },
           offset: { max: 2, default: 1 },
         }).product,
@@ -366,7 +366,7 @@ describe("E2E", () => {
       class TestController extends new RestControllerFactory<TestService>({
         restServiceClass: TestService,
         actions: ["list"],
-        queryDto: new QueryDtoFactory<ParentEntity>({
+        queryDtoClass: new QueryDtoFactory<ParentEntity>({
           order: { in: ["id:desc", "name:desc"], default: ["id:desc"] },
         }).product,
       }).product {}
@@ -413,7 +413,7 @@ describe("E2E", () => {
       class TestController extends new RestControllerFactory<TestService>({
         restServiceClass: TestService,
         actions: ["list", "create", "retrieve", "replace", "update", "destroy"],
-        queryDto: new QueryDtoFactory<ParentEntity>({
+        queryDtoClass: new QueryDtoFactory<ParentEntity>({
           expand: { in: ["children"], default: ["children"] },
         }).product,
       }).product {}
@@ -474,7 +474,7 @@ describe("E2E", () => {
       class TestController extends new RestControllerFactory<TestService>({
         restServiceClass: TestService,
         actions: ["list"],
-        queryDto: new QueryDtoFactory<ParentEntity>({
+        queryDtoClass: new QueryDtoFactory<ParentEntity>({
           filter: { in: ["id", "name"], default: ["name|eq:parent3"] },
         }).product,
       }).product {}

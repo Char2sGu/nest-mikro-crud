@@ -86,7 +86,7 @@ describe(RestControllerFactory.name, () => {
 
   it("should process the options and expose it", () => {
     expect(QueryDtoFactory).toHaveBeenCalled();
-    expect(factory.options.queryDto).toBeDefined();
+    expect(factory.options.queryDtoClass).toBeDefined();
     expect(factory.options.lookupParam).toBeDefined();
     expect(factory.options.validationPipeOptions).toBeDefined();
     expect(factory.options.validationPipeOptions.transform).toBe(true);

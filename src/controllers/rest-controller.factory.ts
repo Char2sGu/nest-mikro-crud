@@ -101,7 +101,7 @@ export class RestControllerFactory<
     >
   ) {
     const {
-      queryDto = new QueryDtoFactory({}).product,
+      queryDtoClass = new QueryDtoFactory({}).product,
       lookupParam = "lookup",
       requestUser = { decorators: [ReqUser()] },
       validationPipeOptions = {},
@@ -109,7 +109,7 @@ export class RestControllerFactory<
 
     return {
       ...options,
-      queryDto,
+      queryDtoClass,
       lookupParam,
       requestUser: {
         ...requestUser,
@@ -241,7 +241,7 @@ export class RestControllerFactory<
       dtoClasses: { create: createDto, update: updateDto },
     } = this.serviceFactory.options;
     const {
-      queryDto,
+      queryDtoClass,
       requestUser: { type: reqUserType, decorators: reqUserDecorators },
     } = this.options;
 
@@ -258,22 +258,26 @@ export class RestControllerFactory<
       ActionName,
       [MethodDecorator[], Type[], ParameterDecorator[][]]
     > = {
-      list: [[Get()], [queryDto], [[Queries]]],
-      create: [[Post()], [queryDto, createDto], [[Queries], [Data]]],
-      retrieve: [[Get(path)], [lookupType, queryDto], [[Lookup], [Queries]]],
+      list: [[Get()], [queryDtoClass], [[Queries]]],
+      create: [[Post()], [queryDtoClass, createDto], [[Queries], [Data]]],
+      retrieve: [
+        [Get(path)],
+        [lookupType, queryDtoClass],
+        [[Lookup], [Queries]],
+      ],
       replace: [
         [Put(path)],
-        [lookupType, queryDto, createDto],
+        [lookupType, queryDtoClass, createDto],
         [[Lookup], [Queries], [Data]],
       ],
       update: [
         [Patch(path)],
-        [lookupType, queryDto, updateDto],
+        [lookupType, queryDtoClass, updateDto],
         [[Lookup], [Queries], [Data]],
       ],
       destroy: [
         [Delete(path), HttpCode(204)],
-        [lookupType, queryDto],
+        [lookupType, queryDtoClass],
         [[Lookup], [Queries]],
       ],
     };

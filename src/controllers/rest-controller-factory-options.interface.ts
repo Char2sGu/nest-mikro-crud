@@ -26,7 +26,7 @@ export interface RestControllerFactoryOptions<
   /**
    * Use specific dto for more advanced settings of the query params.
    */
-  queryDto?: Type<QueryDto<Entity>>;
+  queryDtoClass?: Type<QueryDto<Entity>>;
   /**
    * Specify the parameter name for entity lookup in the URL
    */

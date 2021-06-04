@@ -24,6 +24,7 @@ export interface RestService<
   // Entry Methods
 
   list(args: {
+    conditions?: FindConditions<Entity>[];
     limit?: number;
     offset?: number;
     expand?: RelationPath<Entity>[];
@@ -75,7 +76,7 @@ export interface RestService<
   // ------------------------------------------------------------------------------------------
 
   finalizeQueryConditions(args: {
-    conditions: FindConditions<Entity>;
+    conditions: FindConditions<Entity>[];
     user: any;
   }): Promise<FindConditions<Entity>[]>;
 

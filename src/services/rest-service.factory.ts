@@ -56,6 +56,7 @@ export class RestServiceFactory<
       readonly repository!: Interface["repository"];
 
       async list({
+        conditions = [{}],
         limit,
         offset,
         expand = [],
@@ -63,10 +64,12 @@ export class RestServiceFactory<
         filter = [],
         user,
       }: Parameters<Interface["list"]>[0]): ReturnType<Interface["list"]> {
-        const conditions = await this.finalizeQueryConditions({
-          conditions: await this.parseFilters({ filter }),
-          user,
-        });
+        const filterConditions = await this.parseFilters({ filter });
+        conditions = conditions.map((conditions) => ({
+          ...filterConditions,
+          ...conditions,
+        }));
+        conditions = await this.finalizeQueryConditions({ conditions, user });
         const relationOptions = await this.parseFieldExpansions({
           expand,
         });
@@ -97,7 +100,7 @@ export class RestServiceFactory<
       }: Parameters<Interface["retrieve"]>[0]) {
         const entity = await this.repository.findOne({
           where: await this.finalizeQueryConditions({
-            conditions,
+            conditions: [conditions],
             user,
           }),
           ...(await this.parseFieldExpansions({ expand })),
@@ -154,7 +157,7 @@ export class RestServiceFactory<
       }: Parameters<Interface["finalizeQueryConditions"]>[0]): ReturnType<
         Interface["finalizeQueryConditions"]
       > {
-        return [conditions];
+        return conditions;
       }
 
       async parseFieldExpansions({

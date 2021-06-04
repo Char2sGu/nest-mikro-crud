@@ -504,6 +504,9 @@ describe("E2E", () => {
           ${["id|nin:1,2"]}                 | ${3}  | ${3}
           ${["name|like:parent%"]}          | ${5}  | ${1}
           ${["name|like:%rent5"]}           | ${1}  | ${5}
+          ${["name|like:%rent5"]}           | ${1}  | ${5}
+          ${["name|isnull:"]}               | ${0}  | ${undefined}
+          ${["name|notnull:"]}              | ${5}  | ${1}
           ${["id|gt:1", "name|ne:parent2"]} | ${3}  | ${3}
         `("Legal Filter: $filter", ({ filter, count, firstId }) => {
           beforeEach(async () => {

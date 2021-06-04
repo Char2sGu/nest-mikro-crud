@@ -260,6 +260,10 @@ export class RestServiceFactory<
             return Like(value);
           case "ilike":
             return ILike(value);
+          case "isnull":
+            return IsNull();
+          case "notnull":
+            return Not(IsNull());
         }
       }
     };

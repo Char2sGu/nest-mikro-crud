@@ -15,4 +15,6 @@ export const FILTER_OPERATORS = [
   "nin",
   "like",
   "ilike",
+  "isnull",
+  "notnull",
 ] as const;

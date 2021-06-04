@@ -17,28 +17,20 @@ import {
 } from "typeorm";
 import { AbstractFactory } from "../abstract.factory";
 import { REST_FACTORY_METADATA_KEY } from "../constants";
-import { EntityField, FilterOperator, LookupableField } from "../types";
+import { EntityField, FilterOperator } from "../types";
 import { RestServiceFactoryOptions } from "./rest-service-factory-options.interface";
 import { RestService } from "./rest-service.interface";
 
 export class RestServiceFactory<
   Entity = any,
   CreateDto = Entity,
-  UpdateDto = CreateDto,
-  LookupField extends LookupableField<Entity> = LookupableField<Entity>
-> extends AbstractFactory<
-  RestService<Entity, CreateDto, UpdateDto, LookupField>
-> {
+  UpdateDto = CreateDto
+> extends AbstractFactory<RestService<Entity, CreateDto, UpdateDto>> {
   readonly options;
   readonly product;
 
   constructor(
-    options: RestServiceFactoryOptions<
-      Entity,
-      CreateDto,
-      UpdateDto,
-      LookupField
-    >
+    options: RestServiceFactoryOptions<Entity, CreateDto, UpdateDto>
   ) {
     super();
 
@@ -51,20 +43,15 @@ export class RestServiceFactory<
   }
 
   protected standardizeOptions(
-    options: RestServiceFactoryOptions<
-      Entity,
-      CreateDto,
-      UpdateDto,
-      LookupField
-    >
+    options: RestServiceFactoryOptions<Entity, CreateDto, UpdateDto>
   ) {
     return options;
   }
 
   protected createRawClass() {
-    const { lookupField, entityClass } = this.options;
+    const { entityClass } = this.options;
 
-    type Interface = RestService<Entity, CreateDto, UpdateDto, LookupField>;
+    type Interface = RestService<Entity, CreateDto, UpdateDto>;
     return class RestService implements Interface {
       readonly repository!: Interface["repository"];
 
@@ -104,13 +91,13 @@ export class RestServiceFactory<
       }
 
       async retrieve({
-        lookup,
+        conditions,
         expand = [],
         user,
       }: Parameters<Interface["retrieve"]>[0]) {
         const entity = await this.repository.findOne({
           where: await this.finalizeQueryConditions({
-            conditions: { [lookupField]: lookup } as any,
+            conditions,
             user,
           }),
           ...(await this.parseFieldExpansions({ expand })),

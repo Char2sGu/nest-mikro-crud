@@ -14,6 +14,8 @@ import {
   UsePipes,
   ValidationPipe,
 } from "@nestjs/common";
+import e from "express";
+import { FindConditions } from "typeorm";
 import { AbstractFactory } from "../abstract.factory";
 import { REST_FACTORY_METADATA_KEY, TS_TYPE_METADATA_KEY } from "../constants";
 import { ReqUser } from "../decorators";
@@ -26,35 +28,27 @@ import { RestController } from "./rest-controller.interface";
 type ServiceGenerics<Service> = Service extends RestService<
   infer Entity,
   infer CreateDto,
-  infer UpdateDto,
-  infer LookupField
+  infer UpdateDto
 >
   ? {
       Entity: Entity;
       CreateDto: CreateDto;
       UpdateDto: UpdateDto;
-      LookupField: LookupField;
     }
   : never;
 
 // TODO: make the generic type `LookupField` literal
 export class RestControllerFactory<
-  Service extends RestService<
-    Entity,
-    CreateDto,
-    UpdateDto,
-    LookupField
-  > = RestService,
+  Service extends RestService<Entity, CreateDto, UpdateDto> = RestService,
   Entity = ServiceGenerics<Service>["Entity"],
   CreateDto = ServiceGenerics<Service>["CreateDto"],
   UpdateDto = ServiceGenerics<Service>["UpdateDto"],
-  LookupField extends LookupableField<Entity> = ServiceGenerics<Service>["LookupField"]
+  LookupField extends LookupableField<Entity> = LookupableField<Entity>
 > extends AbstractFactory<
   RestController<Entity, CreateDto, UpdateDto, LookupField, Service>
 > {
-  readonly options;
   readonly serviceFactory;
-  readonly lookupType: typeof Number | typeof String;
+  readonly options;
   readonly product;
 
   constructor(
@@ -68,18 +62,12 @@ export class RestControllerFactory<
   ) {
     super();
 
-    this.options = this.standardizeOptions(options);
-
     this.serviceFactory = Reflect.getMetadata(
       REST_FACTORY_METADATA_KEY,
-      this.options.restServiceClass
-    ) as RestServiceFactory<Entity, CreateDto, UpdateDto, LookupField>;
+      options.restServiceClass
+    ) as RestServiceFactory<Entity, CreateDto, UpdateDto>;
 
-    this.lookupType = Reflect.getMetadata(
-      TS_TYPE_METADATA_KEY,
-      this.serviceFactory.options.entityClass.prototype,
-      this.serviceFactory.options.lookupField
-    );
+    this.options = this.standardizeOptions(options);
 
     this.product = this.createRawClass();
     this.defineInjections();
@@ -102,7 +90,7 @@ export class RestControllerFactory<
   ) {
     const {
       queryDtoClass = new QueryDtoFactory({}).product,
-      lookupParam = "lookup",
+      lookup,
       requestUser = { decorators: [ReqUser()] },
       validationPipeOptions = {},
     } = options;
@@ -110,7 +98,17 @@ export class RestControllerFactory<
     return {
       ...options,
       queryDtoClass,
-      lookupParam,
+      lookup: {
+        ...lookup,
+        type:
+          lookup.type ??
+          (Reflect.getMetadata(
+            TS_TYPE_METADATA_KEY,
+            this.serviceFactory.options.entityClass.prototype,
+            lookup.field
+          ) as typeof lookup.type)!,
+        name: lookup.name ?? "lookup",
+      },
       requestUser: {
         ...requestUser,
         type: requestUser.type ?? Object,
@@ -130,7 +128,14 @@ export class RestControllerFactory<
    * Create a no-metadata controller class
    */
   protected createRawClass() {
-    const { lookupField } = this.serviceFactory.options;
+    const {
+      lookup: { field: lookupField },
+    } = this.options;
+
+    const getLookupConditions = (value: unknown) =>
+      ({
+        [lookupField]: value,
+      } as unknown as FindConditions<Entity>);
 
     type Interface = RestController<
       Entity,
@@ -171,8 +176,8 @@ export class RestControllerFactory<
         const action: ActionName = "create";
         await this.service.checkPermission({ action, user });
         let entity = await this.service.create({ data, user });
-        const lookup = entity[lookupField];
-        entity = await this.service.retrieve({ lookup, expand, user });
+        const conditions = getLookupConditions(entity[lookupField]);
+        entity = await this.service.retrieve({ conditions, expand, user });
         return await this.service.transform({ entity });
       }
 
@@ -181,7 +186,9 @@ export class RestControllerFactory<
       ): Promise<unknown> {
         const action: ActionName = "retrieve";
         await this.service.checkPermission({ action, user });
-        const entity = await this.service.retrieve({ lookup, expand, user });
+        const conditions = getLookupConditions(lookup);
+        let entity: Entity;
+        entity = await this.service.retrieve({ conditions, expand, user });
         await this.service.checkPermission({ action, entity, user });
         return await this.service.transform({ entity });
       }
@@ -189,13 +196,15 @@ export class RestControllerFactory<
       async replace(
         ...[lookup, { expand }, data, user]: Parameters<Interface["replace"]>
       ): Promise<unknown> {
-        const action: ActionName = "replace";
+        const action: ActionName = "update";
         await this.service.checkPermission({ action, user });
-        let entity = await this.service.retrieve({ lookup, expand, user });
+        let conditions = getLookupConditions(lookup);
+        let entity: Entity;
+        entity = await this.service.retrieve({ conditions, expand, user });
         await this.service.checkPermission({ action, entity, user });
         await this.service.replace({ entity, data, user });
-        lookup = entity[lookupField]; // lookup may be updated
-        entity = await this.service.retrieve({ lookup, expand, user });
+        conditions = getLookupConditions(entity[lookupField]); // lookup may be updated
+        entity = await this.service.retrieve({ conditions, expand, user });
         return await this.service.transform({ entity });
       }
 
@@ -204,11 +213,13 @@ export class RestControllerFactory<
       ): Promise<unknown> {
         const action: ActionName = "update";
         await this.service.checkPermission({ action, user });
-        let entity = await this.service.retrieve({ lookup, expand, user });
+        let conditions = getLookupConditions(lookup);
+        let entity: Entity;
+        entity = await this.service.retrieve({ conditions, expand, user });
         await this.service.checkPermission({ action, entity, user });
         await this.service.update({ entity, data, user });
-        lookup = entity[lookupField]; // lookup may be updated
-        entity = await this.service.retrieve({ lookup, expand, user });
+        conditions = getLookupConditions(entity[lookupField]); // lookup may be updated
+        entity = await this.service.retrieve({ conditions, expand, user });
         return await this.service.transform({ entity });
       }
 
@@ -217,7 +228,9 @@ export class RestControllerFactory<
       ): Promise<unknown> {
         const action: ActionName = "destroy";
         await this.service.checkPermission({ action, user });
-        const entity = await this.service.retrieve({ lookup, expand, user });
+        const conditions = getLookupConditions(lookup);
+        let entity: Entity;
+        entity = await this.service.retrieve({ conditions, expand, user });
         await this.service.checkPermission({ action, entity, user });
         await this.service.destroy({ entity, user });
         return;
@@ -235,7 +248,9 @@ export class RestControllerFactory<
   }
 
   protected buildActions() {
-    const lookupType = this.lookupType;
+    const {
+      lookup: { type: lookupType, name: lookupParamName },
+    } = this.options;
 
     const {
       dtoClasses: { create: createDto, update: updateDto },
@@ -245,10 +260,10 @@ export class RestControllerFactory<
       requestUser: { type: reqUserType, decorators: reqUserDecorators },
     } = this.options;
 
-    const path = `:${this.options.lookupParam}`;
+    const path = `:${lookupParamName}`;
 
     const Lookup = Param(
-      this.options.lookupParam,
+      lookupParamName,
       ...(lookupType == Number ? [ParseIntPipe] : [])
     );
     const Queries = Query();

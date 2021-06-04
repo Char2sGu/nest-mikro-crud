@@ -23,8 +23,7 @@ describe(RestServiceFactory.name, () => {
   let factory: RestServiceFactory<
     ParentEntity,
     CreateParentEntityDto,
-    UpdateParentEntityDto,
-    "id"
+    UpdateParentEntityDto
   >;
 
   beforeEach(() => {
@@ -35,7 +34,6 @@ describe(RestServiceFactory.name, () => {
         create: CreateParentEntityDto,
         update: UpdateParentEntityDto,
       },
-      lookupField: "id",
     });
   });
 
@@ -46,8 +44,7 @@ describe(RestServiceFactory.name, () => {
     let service: RestService<
       ParentEntity,
       CreateParentEntityDto,
-      UpdateParentEntityDto,
-      "id"
+      UpdateParentEntityDto
     >;
     let entity: ParentEntity;
 

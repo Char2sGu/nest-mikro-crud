@@ -8,12 +8,11 @@ export interface RestControllerFactoryOptions<
   CreateDto = Entity,
   UpdateDto = CreateDto,
   LookupField extends LookupableField<Entity> = LookupableField<Entity>,
-  Service extends RestService<
+  Service extends RestService<Entity, CreateDto, UpdateDto> = RestService<
     Entity,
     CreateDto,
-    UpdateDto,
-    LookupField
-  > = RestService<Entity, CreateDto, UpdateDto, LookupField>
+    UpdateDto
+  >
 > {
   /**
    * The service will be auto-injected for db CRUD actions.
@@ -27,10 +26,20 @@ export interface RestControllerFactoryOptions<
    * Use specific dto for more advanced settings of the query params.
    */
   queryDtoClass?: Type<QueryDto<Entity>>;
-  /**
-   * Specify the parameter name for entity lookup in the URL
-   */
-  lookupParam?: string;
+  lookup: {
+    /**
+     * Choose the field used for entity lookup.
+     */
+    field: LookupField;
+    /**
+     * Specify the data type of field to lookup.
+     */
+    type?: typeof Number | typeof String;
+    /**
+     * Specify the parameter name for entity lookup in the URL
+     */
+    name?: string;
+  };
   requestUser?: { type?: Type; decorators: ParameterDecorator[] };
   /**
    * - `transform` will be forced to be `true`

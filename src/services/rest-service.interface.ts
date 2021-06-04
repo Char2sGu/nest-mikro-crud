@@ -9,7 +9,6 @@ import {
   ActionName,
   FilterOperator,
   FilterQueryParam,
-  LookupableField,
   OrderQueryParam,
   RelationPath,
 } from "../types";
@@ -17,8 +16,7 @@ import {
 export interface RestService<
   Entity = any,
   CreateDto = Entity,
-  UpdateDto = CreateDto,
-  LookupField extends LookupableField<Entity> = LookupableField<Entity>
+  UpdateDto = CreateDto
 > {
   readonly repository: Repository<Entity>;
 
@@ -37,7 +35,7 @@ export interface RestService<
   create(args: { data: CreateDto; user: any }): Promise<Entity>;
 
   retrieve(args: {
-    lookup: Entity[LookupField];
+    conditions: FindConditions<Entity>;
     expand?: RelationPath<Entity>[];
     user: any;
   }): Promise<Entity>;

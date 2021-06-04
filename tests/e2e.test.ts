@@ -28,7 +28,6 @@ describe("E2E", () => {
       create: CreateParentEntityDto,
       update: UpdateParentEntityDto,
     },
-    lookupField: "id",
   }).product {}
 
   async function prepare(serviceClass: Provider, controllerClass: Type) {
@@ -80,6 +79,7 @@ describe("E2E", () => {
     class TestController extends new RestControllerFactory<TestService>({
       restServiceClass: TestService,
       actions: ["list", "retrieve", "create", "replace", "update", "destroy"],
+      lookup: { field: "id" },
     }).product {}
 
     beforeEach(async () => {
@@ -310,6 +310,7 @@ describe("E2E", () => {
       class TestController extends new RestControllerFactory<TestService>({
         restServiceClass: TestService,
         actions: ["list"],
+        lookup: { field: "id" },
         queryDtoClass: new QueryDtoFactory<ParentEntity>({
           limit: { max: 3, default: 1 },
           offset: { max: 2, default: 1 },
@@ -366,6 +367,7 @@ describe("E2E", () => {
       class TestController extends new RestControllerFactory<TestService>({
         restServiceClass: TestService,
         actions: ["list"],
+        lookup: { field: "id" },
         queryDtoClass: new QueryDtoFactory<ParentEntity>({
           order: { in: ["id:desc", "name:desc"], default: ["id:desc"] },
         }).product,
@@ -413,6 +415,7 @@ describe("E2E", () => {
       class TestController extends new RestControllerFactory<TestService>({
         restServiceClass: TestService,
         actions: ["list", "create", "retrieve", "replace", "update", "destroy"],
+        lookup: { field: "id" },
         queryDtoClass: new QueryDtoFactory<ParentEntity>({
           expand: { in: ["children"], default: ["children"] },
         }).product,
@@ -474,6 +477,7 @@ describe("E2E", () => {
       class TestController extends new RestControllerFactory<TestService>({
         restServiceClass: TestService,
         actions: ["list"],
+        lookup: { field: "id" },
         queryDtoClass: new QueryDtoFactory<ParentEntity>({
           filter: { in: ["id", "name"], default: ["name|eq:parent3"] },
         }).product,

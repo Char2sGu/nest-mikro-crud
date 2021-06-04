@@ -7,12 +7,11 @@ export interface RestController<
   CreateDto = Entity,
   UpdateDto = CreateDto,
   LookupField extends LookupableField<Entity> = LookupableField<Entity>,
-  Service extends RestService<
+  Service extends RestService<Entity, CreateDto, UpdateDto> = RestService<
     Entity,
     CreateDto,
-    UpdateDto,
-    LookupField
-  > = RestService<Entity, CreateDto, UpdateDto, LookupField>
+    UpdateDto
+  >
 > {
   readonly service: Service;
 

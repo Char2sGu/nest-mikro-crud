@@ -4,8 +4,7 @@ import { LookupableField } from "../types";
 export interface RestServiceFactoryOptions<
   Entity = any,
   CreateDto = Entity,
-  UpdateDto = CreateDto,
-  LookupField extends LookupableField<Entity> = LookupableField<Entity>
+  UpdateDto = CreateDto
 > {
   /**
    * The entity's constructor whose repository will be auto-injected.
@@ -23,8 +22,4 @@ export interface RestServiceFactoryOptions<
     create: Type<CreateDto>;
     update: Type<UpdateDto>;
   };
-  /**
-   * Choose the field used for entity lookup.
-   */
-  lookupField: LookupField;
 }

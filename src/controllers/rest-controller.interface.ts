@@ -16,23 +16,19 @@ export interface RestController<
 > {
   readonly service: Service;
 
-  list(
-    queries: QueryDto<Entity>,
-    user: unknown,
-    ...args: any[]
-  ): Promise<unknown>;
+  list(queries: QueryDto<Entity>, user: any, ...args: any[]): Promise<unknown>;
 
   create(
     queries: QueryDto<Entity>,
     data: CreateDto,
-    user: unknown,
+    user: any,
     ...args: any[]
   ): Promise<unknown>;
 
   retrieve(
     lookup: Entity[LookupField],
     queries: QueryDto<Entity>,
-    user: unknown,
+    user: any,
     ...args: any[]
   ): Promise<unknown>;
 
@@ -40,7 +36,7 @@ export interface RestController<
     lookup: Entity[LookupField],
     queries: QueryDto<Entity>,
     data: CreateDto,
-    user: unknown,
+    user: any,
     ...args: any[]
   ): Promise<unknown>;
 
@@ -48,14 +44,14 @@ export interface RestController<
     lookup: Entity[LookupField],
     queries: QueryDto<Entity>,
     data: UpdateDto,
-    user: unknown,
+    user: any,
     ...args: any[]
   ): Promise<unknown>;
 
   destroy(
     lookup: Entity[LookupField],
     queries: QueryDto<Entity>,
-    user: unknown,
+    user: any,
     ...args: any[]
   ): Promise<unknown>;
 }

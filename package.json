@@ -22,7 +22,7 @@
     "restful",
     "api",
     "typescript",
-    "typeorm"
+    "mikro-orm"
   ],
   "author": {
     "name": "Char2s",

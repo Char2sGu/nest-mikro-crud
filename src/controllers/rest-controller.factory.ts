@@ -302,13 +302,13 @@ export class RestControllerFactory<
       [methodDecorators, paramTypes, paramDecoratorSets],
     ] of Object.entries(table)) {
       const name = k as ActionName;
-      this.applyMethodDecorators(name, ...methodDecorators)
-        .defineParamTypes(name, ...paramTypes, reqUserType)
-        .applyParamDecoratorSets(
-          name,
-          ...paramDecoratorSets,
-          reqUserDecorators
-        );
+      if (this.options.actions.includes(name))
+        this.applyMethodDecorators(name, ...methodDecorators);
+      this.defineParamTypes(
+        name,
+        ...paramTypes,
+        reqUserType
+      ).applyParamDecoratorSets(name, ...paramDecoratorSets, reqUserDecorators);
     }
   }
 }

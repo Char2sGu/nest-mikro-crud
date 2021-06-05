@@ -304,6 +304,29 @@ describe("E2E", () => {
     });
   });
 
+  describe("Disabled Actions", () => {
+    @Controller()
+    class TestController extends new RestControllerFactory({
+      restServiceClass: TestService,
+      actions: [],
+      lookup: { field: "id" },
+    }).product {}
+
+    beforeEach(async () => {
+      await prepare(TestService, TestController);
+    });
+
+    describe("/ (GET)", () => {
+      beforeEach(async () => {
+        response = await requester.get("/");
+      });
+
+      it("should return status 404", () => {
+        expect(response.status).toBe(404);
+      });
+    });
+  });
+
   describe("Query Params", () => {
     describe("Limit & Offset", () => {
       @Controller()

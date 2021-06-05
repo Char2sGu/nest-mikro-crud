@@ -1,6 +1,6 @@
 import { IsString } from "class-validator";
 
-export class CreateChildEntityDto {
+export class CreatePageDto {
   @IsString()
   name!: string;
 }

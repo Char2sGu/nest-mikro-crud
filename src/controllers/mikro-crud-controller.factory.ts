@@ -1,3 +1,4 @@
+import { BaseEntity, FilterQuery } from "@mikro-orm/core";
 import {
   Body,
   Delete,
@@ -14,18 +15,16 @@ import {
   UsePipes,
   ValidationPipe,
 } from "@nestjs/common";
-import e from "express";
-import { FindConditions } from "typeorm";
 import { AbstractFactory } from "../abstract.factory";
-import { REST_FACTORY_METADATA_KEY, TS_TYPE_METADATA_KEY } from "../constants";
+import { FACTORY_METADATA_KEY, TS_TYPE_METADATA_KEY } from "../constants";
 import { ReqUser } from "../decorators";
 import { QueryDtoFactory } from "../dtos";
-import { RestService, RestServiceFactory } from "../services";
+import { MikroCrudService, MikroCrudServiceFactory } from "../services";
 import { ActionName, LookupableField } from "../types";
-import { RestControllerFactoryOptions } from "./rest-controller-factory-options.interface";
-import { RestController } from "./rest-controller.interface";
+import { MikroCrudControllerFactoryOptions } from "./mikro-crud-controller-factory-options.interface";
+import { MikroCrudController } from "./mikro-crud-controller.interface";
 
-type ServiceGenerics<Service> = Service extends RestService<
+type ServiceGenerics<Service> = Service extends MikroCrudService<
   infer Entity,
   infer CreateDto,
   infer UpdateDto
@@ -38,21 +37,25 @@ type ServiceGenerics<Service> = Service extends RestService<
   : never;
 
 // TODO: make the generic type `LookupField` literal
-export class RestControllerFactory<
-  Service extends RestService<Entity, CreateDto, UpdateDto> = RestService,
-  Entity = ServiceGenerics<Service>["Entity"],
+export class MikroCrudControllerFactory<
+  Service extends MikroCrudService<
+    Entity,
+    CreateDto,
+    UpdateDto
+  > = MikroCrudService,
+  Entity extends BaseEntity<any, any> = ServiceGenerics<Service>["Entity"],
   CreateDto = ServiceGenerics<Service>["CreateDto"],
   UpdateDto = ServiceGenerics<Service>["UpdateDto"],
   LookupField extends LookupableField<Entity> = LookupableField<Entity>
 > extends AbstractFactory<
-  RestController<Entity, CreateDto, UpdateDto, LookupField, Service>
+  MikroCrudController<Entity, CreateDto, UpdateDto, LookupField, Service>
 > {
   readonly serviceFactory;
   readonly options;
   readonly product;
 
   constructor(
-    options: RestControllerFactoryOptions<
+    options: MikroCrudControllerFactoryOptions<
       Entity,
       CreateDto,
       UpdateDto,
@@ -63,9 +66,9 @@ export class RestControllerFactory<
     super();
 
     this.serviceFactory = Reflect.getMetadata(
-      REST_FACTORY_METADATA_KEY,
-      options.restServiceClass
-    ) as RestServiceFactory<Entity, CreateDto, UpdateDto>;
+      FACTORY_METADATA_KEY,
+      options.serviceClass
+    ) as MikroCrudServiceFactory<Entity, CreateDto, UpdateDto>;
 
     this.options = this.standardizeOptions(options);
 
@@ -76,11 +79,11 @@ export class RestControllerFactory<
       UsePipes(new ValidationPipe(this.options.validationPipeOptions))
     );
 
-    Reflect.defineMetadata(REST_FACTORY_METADATA_KEY, this, this.product);
+    Reflect.defineMetadata(FACTORY_METADATA_KEY, this, this.product);
   }
 
   protected standardizeOptions(
-    options: RestControllerFactoryOptions<
+    options: MikroCrudControllerFactoryOptions<
       Entity,
       CreateDto,
       UpdateDto,
@@ -135,102 +138,96 @@ export class RestControllerFactory<
     const getLookupConditions = (value: unknown) =>
       ({
         [lookupField]: value,
-      } as unknown as FindConditions<Entity>);
+      } as unknown as FilterQuery<Entity>);
 
-    type Interface = RestController<
+    type Interface = MikroCrudController<
       Entity,
       CreateDto,
       UpdateDto,
       LookupField,
       Service
     >;
-    return class RestController implements Interface {
+    return class MikroCrudController implements Interface {
       readonly service!: Interface["service"];
 
       async list(
-        ...[
-          { limit, offset, expand, order, filter },
-          user,
-          ...args
-        ]: Parameters<Interface["list"]>
+        ...[{ limit, offset, order, filter }, user, ...args]: Parameters<
+          Interface["list"]
+        >
       ): Promise<unknown> {
         const action: ActionName = "list";
         await this.service.checkPermission({ action, user });
         const data = await this.service.list({
           limit,
           offset,
-          expand,
           order,
           filter,
           user,
         });
-        data.results = await Promise.all(
-          data.results.map((entity) => this.service.transform({ entity }))
-        );
         return data;
       }
 
       async create(
-        ...[{ expand }, data, user]: Parameters<Interface["create"]>
+        ...[data, user]: Parameters<Interface["create"]>
       ): Promise<unknown> {
         const action: ActionName = "create";
         await this.service.checkPermission({ action, user });
         let entity = await this.service.create({ data, user });
         const conditions = getLookupConditions(entity[lookupField]);
-        entity = await this.service.retrieve({ conditions, expand, user });
-        return await this.service.transform({ entity });
+        entity = await this.service.retrieve({ conditions, user });
+        return entity;
       }
 
       async retrieve(
-        ...[lookup, { expand }, user]: Parameters<Interface["retrieve"]>
+        ...[lookup, user]: Parameters<Interface["retrieve"]>
       ): Promise<unknown> {
         const action: ActionName = "retrieve";
         await this.service.checkPermission({ action, user });
         const conditions = getLookupConditions(lookup);
         let entity: Entity;
-        entity = await this.service.retrieve({ conditions, expand, user });
+        entity = await this.service.retrieve({ conditions, user });
         await this.service.checkPermission({ action, entity, user });
-        return await this.service.transform({ entity });
+        return entity;
       }
 
       async replace(
-        ...[lookup, { expand }, data, user]: Parameters<Interface["replace"]>
+        ...[lookup, data, user]: Parameters<Interface["replace"]>
       ): Promise<unknown> {
         const action: ActionName = "update";
         await this.service.checkPermission({ action, user });
         let conditions = getLookupConditions(lookup);
         let entity: Entity;
-        entity = await this.service.retrieve({ conditions, expand, user });
+        entity = await this.service.retrieve({ conditions, user });
         await this.service.checkPermission({ action, entity, user });
         await this.service.replace({ entity, data, user });
         conditions = getLookupConditions(entity[lookupField]); // lookup may be updated
-        entity = await this.service.retrieve({ conditions, expand, user });
-        return await this.service.transform({ entity });
+        entity = await this.service.retrieve({ conditions, user });
+        return entity;
       }
 
       async update(
-        ...[lookup, { expand }, data, user]: Parameters<Interface["update"]>
+        ...[lookup, data, user]: Parameters<Interface["update"]>
       ): Promise<unknown> {
         const action: ActionName = "update";
         await this.service.checkPermission({ action, user });
         let conditions = getLookupConditions(lookup);
         let entity: Entity;
-        entity = await this.service.retrieve({ conditions, expand, user });
+        entity = await this.service.retrieve({ conditions, user });
         await this.service.checkPermission({ action, entity, user });
         await this.service.update({ entity, data, user });
         conditions = getLookupConditions(entity[lookupField]); // lookup may be updated
-        entity = await this.service.retrieve({ conditions, expand, user });
-        return await this.service.transform({ entity });
+        entity = await this.service.retrieve({ conditions, user });
+        return entity;
       }
 
       async destroy(
-        ...[lookup, { expand }, user]: Parameters<Interface["destroy"]>
+        ...[lookup, user]: Parameters<Interface["destroy"]>
       ): Promise<unknown> {
         const action: ActionName = "destroy";
         await this.service.checkPermission({ action, user });
         const conditions = getLookupConditions(lookup);
         let entity: Entity;
-        entity = await this.service.retrieve({ conditions, expand, user });
+        entity = await this.service.retrieve({ conditions, user });
         await this.service.checkPermission({ action, entity, user });
         await this.service.destroy({ entity, user });
         return;
@@ -239,11 +236,11 @@ export class RestControllerFactory<
   }
 
   protected defineInjections() {
-    const { restServiceClass } = this.options;
+    const { serviceClass } = this.options;
 
-    this.defineType("service", restServiceClass).applyPropertyDecorators(
+    this.defineType("service", serviceClass).applyPropertyDecorators(
       "service" as any, // service is generic so the type cannot be inferred correctly
-      Inject(restServiceClass)
+      Inject(serviceClass)
     );
   }
 
@@ -274,27 +271,11 @@ export class RestControllerFactory<
       [MethodDecorator[], Type[], ParameterDecorator[][]]
     > = {
       list: [[Get()], [queryDtoClass], [[Queries]]],
-      create: [[Post()], [queryDtoClass, createDto], [[Queries], [Data]]],
-      retrieve: [
-        [Get(path)],
-        [lookupType, queryDtoClass],
-        [[Lookup], [Queries]],
-      ],
-      replace: [
-        [Put(path)],
-        [lookupType, queryDtoClass, createDto],
-        [[Lookup], [Queries], [Data]],
-      ],
-      update: [
-        [Patch(path)],
-        [lookupType, queryDtoClass, updateDto],
-        [[Lookup], [Queries], [Data]],
-      ],
-      destroy: [
-        [Delete(path), HttpCode(204)],
-        [lookupType, queryDtoClass],
-        [[Lookup], [Queries]],
-      ],
+      create: [[Post()], [createDto], [[Data]]],
+      retrieve: [[Get(path)], [lookupType], [[Lookup]]],
+      replace: [[Put(path)], [lookupType, createDto], [[Lookup], [Data]]],
+      update: [[Patch(path)], [lookupType, updateDto], [[Lookup], [Data]]],
+      destroy: [[Delete(path), HttpCode(204)], [lookupType], [[Lookup]]],
     };
 
     for (const [

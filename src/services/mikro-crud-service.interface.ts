@@ -1,33 +1,21 @@
-import {
-  FindConditions,
-  FindManyOptions,
-  FindOneOptions,
-  FindOperator,
-  Repository,
-} from "typeorm";
-import {
-  ActionName,
-  FilterOperator,
-  FilterQueryParam,
-  OrderQueryParam,
-  RelationPath,
-} from "../types";
+import { BaseEntity, EntityRepository, FindOptions } from "@mikro-orm/core";
+import { FilterQuery } from "@mikro-orm/core/typings";
+import { ActionName, FilterQueryParam, OrderQueryParam } from "../types";
 
-export interface RestService<
-  Entity = any,
+export interface MikroCrudService<
+  Entity extends BaseEntity<any, any> = any,
   CreateDto = Entity,
   UpdateDto = CreateDto
 > {
-  readonly repository: Repository<Entity>;
+  readonly repository: EntityRepository<Entity>;
 
   // ------------------------------------------------------------------------------------------
   // Entry Methods
 
   list(args: {
-    conditions?: FindConditions<Entity>[];
+    conditions?: FilterQuery<Entity>;
     limit?: number;
     offset?: number;
-    expand?: RelationPath<Entity>[];
     order?: OrderQueryParam<Entity>[];
     filter?: FilterQueryParam<Entity>[];
     user: any;
@@ -36,8 +24,7 @@ export interface RestService<
   create(args: { data: CreateDto; user: any }): Promise<Entity>;
 
   retrieve(args: {
-    conditions: FindConditions<Entity>;
-    expand?: RelationPath<Entity>[];
+    conditions: FilterQuery<Entity>;
     user: any;
   }): Promise<Entity>;
 
@@ -67,31 +54,9 @@ export interface RestService<
     user: any;
   }): Promise<void>;
 
-  /**
-   * Will be called in the controller to transform the entity
-   * before sending the response.
-   */
-  transform(args: { entity: Entity }): Promise<Entity>;
-
   // ------------------------------------------------------------------------------------------
 
-  finalizeQueryConditions(args: {
-    conditions: FindConditions<Entity>[];
-    user: any;
-  }): Promise<FindConditions<Entity>[]>;
-
-  /**
-   * Parse the "expand" query param into actual options.
-   * @param args
-   */
-  parseFieldExpansions(args: {
-    expand: RelationPath<Entity>[];
-  }): Promise<
-    Pick<
-      FindOneOptions<Entity>,
-      "relations" | "loadRelationIds" | "loadEagerRelations"
-    >
-  >;
+  setupFilters(args: { user: any }): Promise<FindOptions<Entity>["filters"]>;
 
   /**
    * Parse the "order" query param into actual options.
@@ -99,7 +64,7 @@ export interface RestService<
    */
   parseOrders(args: {
     order: OrderQueryParam<Entity>[];
-  }): Promise<FindManyOptions<Entity>["order"]>;
+  }): Promise<FindOptions<Entity>["orderBy"]>;
 
   /**
    * Parse the "filter" query param into actual conditions.
@@ -107,15 +72,5 @@ export interface RestService<
    */
   parseFilters(args: {
     filter: FilterQueryParam<Entity>[];
-  }): Promise<FindConditions<Entity>>;
-
-  /**
-   * Parse a string operator and the value into the actual TypeORM
-   * operator.
-   * @param args
-   */
-  parseFilterOperator(args: {
-    operator: FilterOperator;
-    value: string;
-  }): Promise<FindOperator<unknown>>;
+  }): Promise<FilterQuery<Entity>>;
 }

@@ -1,4 +1,5 @@
-import { Exclude, Transform, Type } from "class-transformer";
+import { BaseEntity } from "@mikro-orm/core";
+import { Exclude, Type } from "class-transformer";
 import {
   IsArray,
   IsIn,
@@ -10,13 +11,15 @@ import {
 } from "class-validator";
 import { AbstractFactory } from "../abstract.factory";
 import { FILTER_OPERATORS } from "../constants";
-import { OrderQueryParam, RelationPath } from "../types";
+import { OrderQueryParam } from "../types";
 import { QueryDtoFactoryOptions } from "./query-dto-factory-options.interface";
 import { QueryDto } from "./query-dto.interface";
 
 const deduplicate = (arr: unknown[]) => [...new Set(arr)];
 
-export class QueryDtoFactory<Entity> extends AbstractFactory<QueryDto<Entity>> {
+export class QueryDtoFactory<
+  Entity extends BaseEntity<any, any> = any
+> extends AbstractFactory<QueryDto<Entity>> {
   readonly options;
   readonly product;
 
@@ -47,20 +50,19 @@ export class QueryDtoFactory<Entity> extends AbstractFactory<QueryDto<Entity>> {
   }
 
   protected createRawClass() {
-    const { limit, offset, expand, order, filter } = this.options;
+    const { limit, offset, order, filter } = this.options;
 
     type Interface = QueryDto<Entity>;
     return class QueryDto implements Interface {
       limit? = limit?.default;
       offset? = offset?.default;
-      expand? = expand?.default;
       order? = order?.default;
       filter? = filter?.default;
     };
   }
 
   protected defineValidations() {
-    const { limit, offset, expand, order, filter } = this.options;
+    const { limit, offset, order, filter } = this.options;
 
     if (limit)
       this.defineType("limit", Number).applyPropertyDecorators(
@@ -80,15 +82,6 @@ export class QueryDtoFactory<Entity> extends AbstractFactory<QueryDto<Entity>> {
         IsNumber(),
         Min(1),
         ...(offset.max ? [Max(offset.max)] : [])
-      );
-
-    if (expand)
-      this.defineType("expand", Array).applyPropertyDecorators(
-        "expand",
-        Type(() => String),
-        IsOptional(),
-        IsArray(),
-        IsIn(expand.in, { each: true })
       );
 
     if (order)
@@ -115,8 +108,7 @@ export class QueryDtoFactory<Entity> extends AbstractFactory<QueryDto<Entity>> {
   }
 
   protected excludeDisabled() {
-    const { expand, order, filter } = this.options;
-    if (!expand) this.applyPropertyDecorators("expand", Exclude());
+    const { order, filter } = this.options;
     if (!order) this.applyPropertyDecorators("order", Exclude());
     if (!filter) this.applyPropertyDecorators("filter", Exclude());
   }

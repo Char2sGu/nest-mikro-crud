@@ -1,2 +1,2 @@
-export * from "./child.entity";
-export * from "./parent.entity";
+export * from "./page.entity";
+export * from "./book.entity";

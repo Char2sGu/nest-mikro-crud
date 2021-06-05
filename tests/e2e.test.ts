@@ -1,83 +1,73 @@
+import { EntityRepository, MikroORM } from "@mikro-orm/core";
+import { getRepositoryToken, MikroOrmModule } from "@mikro-orm/nestjs";
 import { Controller, Injectable, Provider, Type } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
-import { getRepositoryToken } from "@nestjs/typeorm";
 import {
+  MikroCrudControllerFactory,
+  MikroCrudServiceFactory,
   QueryDtoFactory,
-  RestControllerFactory,
-  RestServiceFactory,
 } from "src";
 import { Response } from "supertest";
-import { getConnection, Repository } from "typeorm";
-import { CreateParentEntityDto, UpdateParentEntityDto } from "./dtos";
-import { ChildEntity, ParentEntity } from "./entities";
-import { getRequester, getTypeOrmModules } from "./utils";
+import { CreateBookDto, UpdateParentEntityDto } from "./dtos";
+import { Book, Page } from "./entities";
+import { getRequester } from "./utils";
 
 describe("E2E", () => {
-  let parentRepository: Repository<ParentEntity>;
-  let childRepository: Repository<ChildEntity>;
+  let bookRepository: EntityRepository<Book>;
   let requester: ReturnType<typeof getRequester>;
   let response: Response;
-  let createParentDto: CreateParentEntityDto;
-  let updateParentDto: UpdateParentEntityDto;
-  let entity: ParentEntity;
+  let createBookDto: CreateBookDto;
+  let updateBookDto: UpdateParentEntityDto;
+  let entity: Book;
 
   @Injectable()
-  class TestService extends new RestServiceFactory({
-    entityClass: ParentEntity,
+  class TestService extends new MikroCrudServiceFactory({
+    entityClass: Book,
     dtoClasses: {
-      create: CreateParentEntityDto,
+      create: CreateBookDto,
       update: UpdateParentEntityDto,
     },
   }).product {}
 
   async function prepare(serviceClass: Provider, controllerClass: Type) {
     const module = await Test.createTestingModule({
-      imports: [...getTypeOrmModules(ParentEntity, ChildEntity)],
+      imports: [
+        MikroOrmModule.forRoot({
+          type: "sqlite",
+          dbName: ":memory:",
+          entities: [Book, Page],
+        }),
+        MikroOrmModule.forFeature([Book, Page]),
+      ],
       controllers: [controllerClass],
       providers: [serviceClass],
     }).compile();
 
     const app = await module.createNestApplication().init();
 
-    parentRepository = module.get(getRepositoryToken(ParentEntity));
-    childRepository = module.get(getRepositoryToken(ChildEntity));
+    await module.get(MikroORM).getSchemaGenerator().createSchema();
+    bookRepository = module.get(getRepositoryToken(Book));
     requester = getRequester(app);
 
-    for (let i = 1; i <= 5; i++)
-      await parentRepository.save({
+    for (let i = 1; i <= 5; i++) {
+      const entity = new Book().assign({
         name: "parent" + i,
-        secret: "secret",
+        price: i,
       });
+      await bookRepository.persistAndFlush(entity);
+    }
   }
 
-  function assertEntityFieldTypes({
-    entity,
-    expand = false,
-  }: {
-    entity: ParentEntity;
-    expand?: boolean;
-  }) {
+  function assertEntityFieldTypes({ entity }: { entity: Book }) {
     expect(typeof entity.id).toBe("number");
     expect(typeof entity.name).toBe("string");
-    expect(entity.secret).toBeUndefined();
-    entity.children.forEach((child) => {
-      if (!expand) expect(typeof child).toBe("number");
-      else {
-        expect(typeof child.id).toBe("number");
-        expect(typeof child.name).toBe("string");
-        expect(child.parent).toBeUndefined();
-      }
-    });
+    expect(entity.price).toBeUndefined();
   }
-
-  afterEach(async () => {
-    await getConnection().close();
-  });
 
   describe("Basic CRUD", () => {
     @Controller()
-    class TestController extends new RestControllerFactory<TestService>({
-      restServiceClass: TestService,
+    class TestController extends new MikroCrudControllerFactory<TestService>({
+      serviceClass: TestService,
       actions: ["list", "retrieve", "create", "replace", "update", "destroy"],
       lookup: { field: "id" },
     }).product {}
@@ -102,7 +92,7 @@ describe("E2E", () => {
 
         it(`should return 5 transformed entities`, () => {
           expect(response.body.results).toHaveLength(5);
-          response.body.results.forEach((entity: ParentEntity) =>
+          response.body.results.forEach((entity: Book) =>
             assertEntityFieldTypes({ entity })
           );
         });
@@ -112,8 +102,8 @@ describe("E2E", () => {
     describe("/ (POST)", () => {
       describe("Common", () => {
         beforeEach(async () => {
-          createParentDto = { name: "new", secret: "secret" };
-          response = await requester.post("/").send(createParentDto);
+          createBookDto = { name: "new", price: 123 };
+          response = await requester.post("/").send(createBookDto);
           entity = response.body;
         });
 
@@ -123,7 +113,7 @@ describe("E2E", () => {
 
         it("should return a transformed entity", () => {
           assertEntityFieldTypes({ entity });
-          expect(entity.name).toBe(createParentDto.name);
+          expect(entity.name).toBe(createBookDto.name);
         });
       });
 
@@ -176,12 +166,12 @@ describe("E2E", () => {
 
     describe("/:lookup/ (PUT)", () => {
       beforeEach(() => {
-        createParentDto = { name: "updated", secret: "secret" };
+        createBookDto = { name: "updated", price: 123 };
       });
 
       describe("Common", () => {
         beforeEach(async () => {
-          response = await requester.put("/1/").send(createParentDto);
+          response = await requester.put("/1/").send(createBookDto);
           entity = response.body;
         });
 
@@ -191,7 +181,7 @@ describe("E2E", () => {
 
         it("should return a transformed entity", () => {
           assertEntityFieldTypes({ entity });
-          expect(entity.name).toBe(createParentDto.name);
+          expect(entity.name).toBe(createBookDto.name);
         });
       });
 
@@ -215,7 +205,7 @@ describe("E2E", () => {
         ${"put"} | ${400}
       `("Illegal Lookup: $lookup", ({ lookup, code }) => {
         beforeEach(async () => {
-          response = await requester.put(`/${lookup}/`).send(createParentDto);
+          response = await requester.put(`/${lookup}/`).send(createBookDto);
         });
 
         it(`should return status ${code}`, () => {
@@ -226,12 +216,12 @@ describe("E2E", () => {
 
     describe("/:lookup/ (PATCH)", () => {
       beforeEach(() => {
-        updateParentDto = { name: "updated" };
+        updateBookDto = { name: "updated" };
       });
 
       describe("Common", () => {
         beforeEach(async () => {
-          response = await requester.patch("/1/").send(updateParentDto);
+          response = await requester.patch("/1/").send(updateBookDto);
           entity = response.body;
         });
 
@@ -241,7 +231,7 @@ describe("E2E", () => {
 
         it("should return a transformed entity", () => {
           assertEntityFieldTypes({ entity });
-          expect(entity.name).toBe(updateParentDto.name);
+          expect(entity.name).toBe(updateBookDto.name);
         });
       });
 
@@ -264,7 +254,7 @@ describe("E2E", () => {
         ${"str"} | ${400}
       `("Illegal Lookup: $lookup", ({ lookup, code }) => {
         beforeEach(async () => {
-          response = await requester.patch(`/${lookup}/`).send(updateParentDto);
+          response = await requester.patch(`/${lookup}/`).send(updateBookDto);
         });
 
         it(`should return status ${code}`, () => {
@@ -306,8 +296,8 @@ describe("E2E", () => {
 
   describe("Disabled Actions", () => {
     @Controller()
-    class TestController extends new RestControllerFactory({
-      restServiceClass: TestService,
+    class TestController extends new MikroCrudControllerFactory({
+      serviceClass: TestService,
       actions: [],
       lookup: { field: "id" },
     }).product {}
@@ -330,11 +320,11 @@ describe("E2E", () => {
   describe("Query Params", () => {
     describe("Limit & Offset", () => {
       @Controller()
-      class TestController extends new RestControllerFactory<TestService>({
-        restServiceClass: TestService,
+      class TestController extends new MikroCrudControllerFactory<TestService>({
+        serviceClass: TestService,
         actions: ["list"],
         lookup: { field: "id" },
-        queryDtoClass: new QueryDtoFactory<ParentEntity>({
+        queryDtoClass: new QueryDtoFactory<Book>({
           limit: { max: 3, default: 1 },
           offset: { max: 2, default: 1 },
         }).product,
@@ -387,11 +377,11 @@ describe("E2E", () => {
 
     describe("Order", () => {
       @Controller()
-      class TestController extends new RestControllerFactory<TestService>({
-        restServiceClass: TestService,
+      class TestController extends new MikroCrudControllerFactory<TestService>({
+        serviceClass: TestService,
         actions: ["list"],
         lookup: { field: "id" },
-        queryDtoClass: new QueryDtoFactory<ParentEntity>({
+        queryDtoClass: new QueryDtoFactory<Book>({
           order: { in: ["id:desc", "name:desc"], default: ["id:desc"] },
         }).product,
       }).product {}
@@ -433,75 +423,13 @@ describe("E2E", () => {
       });
     });
 
-    describe("Expand", () => {
-      @Controller()
-      class TestController extends new RestControllerFactory<TestService>({
-        restServiceClass: TestService,
-        actions: ["list", "create", "retrieve", "replace", "update", "destroy"],
-        lookup: { field: "id" },
-        queryDtoClass: new QueryDtoFactory<ParentEntity>({
-          expand: { in: ["children"], default: ["children"] },
-        }).product,
-      }).product {}
-
-      beforeEach(async () => {
-        await prepare(TestService, TestController);
-        createParentDto = { name: "new", secret: "secret" };
-        updateParentDto = { name: "updated" };
-
-        for (let i = 1; i <= 5; i++)
-          await childRepository.save({
-            parent: i as any,
-            name: "child" + i,
-          });
-      });
-
-      describe.each`
-        description             | getResponse                                                                     | getEntity
-        ${"/ (GET)"}            | ${(queries: {}) => requester.get("/").query(queries)}                           | ${(response: Response) => response.body.results[0]}
-        ${"/ (POST)"}           | ${(queries: {}) => requester.post("/").query(queries).send(createParentDto)}    | ${(response: Response) => response.body}
-        ${"/:lookup/ (GET)"}    | ${(queries: {}) => requester.get("/1/").query(queries)}                         | ${(response: Response) => response.body}
-        ${"/:lookup/ (PUT))"}   | ${(queries: {}) => requester.put("/1/").query(queries).send(createParentDto)}   | ${(response: Response) => response.body}
-        ${"/:lookup/ (PATCH))"} | ${(queries: {}) => requester.patch("/1/").query(queries).send(updateParentDto)} | ${(response: Response) => response.body}
-      `("$description", ({ getResponse, getEntity }) => {
-        describe.each`
-          expand
-          ${undefined}
-          ${["children"]}
-        `("Legal Expand: $expand", ({ expand }) => {
-          beforeEach(async () => {
-            response = await getResponse({ "expand[]": expand });
-            entity = getEntity(response);
-          });
-
-          it("should expand the field", () => {
-            assertEntityFieldTypes({ entity, expand: true });
-          });
-        });
-
-        describe.each`
-          queries
-          ${{ expand: ["children"] }}
-          ${{ "expand[]": ["xxxxx"] }}
-        `("Illegal Expand: $queries", ({ queries }) => {
-          beforeEach(async () => {
-            response = await getResponse(queries);
-          });
-
-          it("should return status 400", () => {
-            expect(response.status).toBe(400);
-          });
-        });
-      });
-    });
-
     describe("Filter", () => {
       @Controller()
-      class TestController extends new RestControllerFactory<TestService>({
-        restServiceClass: TestService,
+      class TestController extends new MikroCrudControllerFactory<TestService>({
+        serviceClass: TestService,
         actions: ["list"],
         lookup: { field: "id" },
-        queryDtoClass: new QueryDtoFactory<ParentEntity>({
+        queryDtoClass: new QueryDtoFactory<Book>({
           filter: { in: ["id", "name"], default: ["name|eq:parent3"] },
         }).product,
       }).product {}
@@ -512,29 +440,29 @@ describe("E2E", () => {
 
       describe("/ (GET)", () => {
         describe.each`
-          filter                            | count | firstId
-          ${undefined}                      | ${1}  | ${3}
-          ${["id|eq:"]}                     | ${0}  | ${undefined}
-          ${["id|eq:2"]}                    | ${1}  | ${2}
-          ${["id|gt:2"]}                    | ${3}  | ${3}
-          ${["name|gt:parent2"]}            | ${3}  | ${3}
-          ${["id|gte:2"]}                   | ${4}  | ${2}
-          ${["name|gte:parent2"]}           | ${4}  | ${2}
-          ${["name|in:"]}                   | ${0}  | ${undefined}
-          ${["name|in:parent2,parent3"]}    | ${2}  | ${2}
-          ${["id|lt:3"]}                    | ${2}  | ${1}
-          ${["name|lt:parent3"]}            | ${2}  | ${1}
-          ${["id|lte:3"]}                   | ${3}  | ${1}
-          ${["name|lte:parent3"]}           | ${3}  | ${1}
-          ${["id|ne:"]}                     | ${5}  | ${1}
-          ${["id|ne:1"]}                    | ${4}  | ${2}
-          ${["id|nin:1,2"]}                 | ${3}  | ${3}
-          ${["name|like:parent%"]}          | ${5}  | ${1}
-          ${["name|like:%rent5"]}           | ${1}  | ${5}
-          ${["name|like:%rent5"]}           | ${1}  | ${5}
-          ${["name|isnull:"]}               | ${0}  | ${undefined}
-          ${["name|notnull:"]}              | ${5}  | ${1}
-          ${["id|gt:1", "name|ne:parent2"]} | ${3}  | ${3}
+          filter                         | count | firstId
+          ${undefined}                   | ${1}  | ${3}
+          ${["id|eq:"]}                  | ${0}  | ${undefined}
+          ${["id|eq:2"]}                 | ${1}  | ${2}
+          ${["id|gt:2"]}                 | ${3}  | ${3}
+          ${["name|gt:parent2"]}         | ${3}  | ${3}
+          ${["id|gte:2"]}                | ${4}  | ${2}
+          ${["name|gte:parent2"]}        | ${4}  | ${2}
+          ${["name|in:"]}                | ${0}  | ${undefined}
+          ${["name|in:parent2,parent3"]} | ${2}  | ${2}
+          ${["id|lt:3"]}                 | ${2}  | ${1}
+          ${["name|lt:parent3"]}         | ${2}  | ${1}
+          ${["id|lte:3"]}                | ${3}  | ${1}
+          ${["name|lte:parent3"]}        | ${3}  | ${1}
+          ${["id|ne:"]}                  | ${5}  | ${1}
+          ${["id|ne:1"]}                 | ${4}  | ${2}
+          ${["id|nin:1,2"]}              | ${3}  | ${3}
+          ${["name|like:parent%"]}       | ${5}  | ${1}
+          ${["name|like:%rent5"]}        | ${1}  | ${5}
+          ${["name|like:%rent5"]}        | ${1}  | ${5}
+          ${["name|isnull:"]}            | ${0}  | ${undefined}
+          ${["name|notnull:"]}           | ${5}  | ${1}
+          ${["id|gt:1", "id|lt:3"]}      | ${1}  | ${2}
         `("Legal Filter: $filter", ({ filter, count, firstId }) => {
           beforeEach(async () => {
             response = await requester.get("/").query({ "filter[]": filter });

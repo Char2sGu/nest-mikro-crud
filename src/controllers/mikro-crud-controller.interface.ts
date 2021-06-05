@@ -1,39 +1,33 @@
+import { BaseEntity } from "@mikro-orm/core";
 import { QueryDto } from "../dtos";
-import { RestService } from "../services";
+import { MikroCrudService } from "../services";
 import { LookupableField } from "../types";
 
-export interface RestController<
-  Entity = any,
+export interface MikroCrudController<
+  Entity extends BaseEntity<any, any> = any,
   CreateDto = Entity,
   UpdateDto = CreateDto,
   LookupField extends LookupableField<Entity> = LookupableField<Entity>,
-  Service extends RestService<Entity, CreateDto, UpdateDto> = RestService<
+  Service extends MikroCrudService<
     Entity,
     CreateDto,
     UpdateDto
-  >
+  > = MikroCrudService<Entity, CreateDto, UpdateDto>
 > {
   readonly service: Service;
 
   list(queries: QueryDto<Entity>, user: any, ...args: any[]): Promise<unknown>;
 
-  create(
-    queries: QueryDto<Entity>,
-    data: CreateDto,
-    user: any,
-    ...args: any[]
-  ): Promise<unknown>;
+  create(data: CreateDto, user: any, ...args: any[]): Promise<unknown>;
 
   retrieve(
     lookup: Entity[LookupField],
-    queries: QueryDto<Entity>,
     user: any,
     ...args: any[]
   ): Promise<unknown>;
 
   replace(
     lookup: Entity[LookupField],
-    queries: QueryDto<Entity>,
     data: CreateDto,
     user: any,
     ...args: any[]
@@ -41,7 +35,6 @@ export interface RestController<
 
   update(
     lookup: Entity[LookupField],
-    queries: QueryDto<Entity>,
     data: UpdateDto,
     user: any,
     ...args: any[]
@@ -49,7 +42,6 @@ export interface RestController<
 
   destroy(
     lookup: Entity[LookupField],
-    queries: QueryDto<Entity>,
     user: any,
     ...args: any[]
   ): Promise<unknown>;

@@ -56,13 +56,17 @@ export interface MikroCrudService<
 
   // ------------------------------------------------------------------------------------------
 
-  setupFilters(args: { user: any }): Promise<FindOptions<Entity>["filters"]>;
+  /**
+   * Decide which MikroORM filters to enable and what arguments to pass to the filters.
+   * @param args
+   */
+  decideFilters(args: { user: any }): Promise<FindOptions<Entity>["filters"]>;
 
   /**
    * Parse the "order" query param into actual options.
    * @param args
    */
-  parseOrders(args: {
+  parseOrderQueryParams(args: {
     order: OrderQueryParam<Entity>[];
   }): Promise<FindOptions<Entity>["orderBy"]>;
 
@@ -70,7 +74,7 @@ export interface MikroCrudService<
    * Parse the "filter" query param into actual conditions.
    * @param args
    */
-  parseFilters(args: {
+  parseFilterQueryParams(args: {
     filter: FilterQueryParam<Entity>[];
   }): Promise<FilterQuery<Entity>>;
 }

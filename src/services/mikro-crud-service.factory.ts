@@ -48,14 +48,14 @@ export class MikroCrudServiceFactory<
         filter = [],
         user,
       }: Parameters<Interface["list"]>[0]) {
-        const filterConditions = await this.parseFilters({ filter });
+        const filterConditions = await this.parseFilterQueryParams({ filter });
         const [results, total] = await this.repository.findAndCount(
           { $and: [conditions, filterConditions] } as FilterQuery<Entity>,
           {
             limit,
             offset,
-            orderBy: await this.parseOrders({ order }),
-            filters: await this.setupFilters({ user }),
+            orderBy: await this.parseOrderQueryParams({ order }),
+            filters: await this.decideFilters({ user }),
           }
         );
         return { total, results };
@@ -75,7 +75,7 @@ export class MikroCrudServiceFactory<
         user,
       }: Parameters<Interface["retrieve"]>[0]) {
         const entity = await this.repository.findOneOrFail(conditions, {
-          filters: await this.setupFilters({ user }),
+          filters: await this.decideFilters({ user }),
           failHandler: () => new NotFoundException(),
         });
         return entity;
@@ -115,20 +115,20 @@ export class MikroCrudServiceFactory<
         return;
       }
 
-      async setupFilters({
+      async decideFilters({
         user,
-      }: Parameters<Interface["setupFilters"]>[0]): ReturnType<
-        Interface["setupFilters"]
+      }: Parameters<Interface["decideFilters"]>[0]): ReturnType<
+        Interface["decideFilters"]
       > {
         return {
           crud: { user },
         };
       }
 
-      async parseOrders({
+      async parseOrderQueryParams({
         order,
-      }: Parameters<Interface["parseOrders"]>[0]): ReturnType<
-        Interface["parseOrders"]
+      }: Parameters<Interface["parseOrderQueryParams"]>[0]): ReturnType<
+        Interface["parseOrderQueryParams"]
       > {
         const orderOptions: FindOptions<Entity>["orderBy"] = {};
         order.forEach((raw) => {
@@ -141,10 +141,10 @@ export class MikroCrudServiceFactory<
         return orderOptions;
       }
 
-      async parseFilters({
+      async parseFilterQueryParams({
         filter: rawFilters,
-      }: Parameters<Interface["parseFilters"]>[0]): ReturnType<
-        Interface["parseFilters"]
+      }: Parameters<Interface["parseFilterQueryParams"]>[0]): ReturnType<
+        Interface["parseFilterQueryParams"]
       > {
         const conditions: Partial<
           Record<EntityField<Entity>, OperatorMap<unknown>>

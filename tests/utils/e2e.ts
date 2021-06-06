@@ -6,7 +6,8 @@ import supertest from "supertest";
 
 export async function prepareE2E(
   metadata: ModuleMetadata,
-  entities: EntityName<AnyEntity>[]
+  entities: EntityName<AnyEntity>[],
+  debug?: boolean
 ) {
   const module = await Test.createTestingModule({
     ...metadata,
@@ -15,13 +16,15 @@ export async function prepareE2E(
         type: "sqlite",
         dbName: ":memory:",
         entities,
+        debug,
       }),
       MikroOrmModule.forFeature(entities),
       ...(metadata.imports ?? []),
     ],
   }).compile();
 
-  await module.get(MikroORM).getSchemaGenerator().createSchema();
+  const schemaGenerator = module.get(MikroORM).getSchemaGenerator();
+  await schemaGenerator.execute(await schemaGenerator.generate());
 
   const app = await module.createNestApplication().init();
   const requester = supertest(app.getHttpServer());

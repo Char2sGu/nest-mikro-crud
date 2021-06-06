@@ -1,4 +1,4 @@
-import { BaseEntity, FilterQuery, FindOptions, wrap } from "@mikro-orm/core";
+import { BaseEntity, FilterQuery, FindOptions } from "@mikro-orm/core";
 import { OperatorMap } from "@mikro-orm/core/typings";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { NotFoundException } from "@nestjs/common";
@@ -74,11 +74,10 @@ export class MikroCrudServiceFactory<
         conditions = {},
         user,
       }: Parameters<Interface["retrieve"]>[0]) {
-        const entity = await this.repository.findOneOrFail(conditions, {
+        return await this.repository.findOneOrFail(conditions, {
           filters: await this.decideEntityFilters({ user }),
           failHandler: () => new NotFoundException(),
         });
-        return entity;
       }
 
       async replace({
@@ -87,7 +86,7 @@ export class MikroCrudServiceFactory<
       }: Parameters<Interface["replace"]>[0]): ReturnType<
         Interface["replace"]
       > {
-        wrap(entity).assign(data, { merge: true });
+        entity.assign(data, { merge: true });
         await this.repository.flush();
         return entity;
       }
@@ -96,7 +95,7 @@ export class MikroCrudServiceFactory<
         entity,
         data,
       }: Parameters<Interface["update"]>[0]): ReturnType<Interface["update"]> {
-        wrap(entity).assign(data, { merge: true });
+        entity.assign(data, { merge: true });
         await this.repository.flush();
         return entity;
       }
@@ -109,6 +108,7 @@ export class MikroCrudServiceFactory<
       async checkPermission({
         action,
         entity,
+        user,
       }: Parameters<Interface["checkPermission"]>[0]): ReturnType<
         Interface["checkPermission"]
       > {
@@ -120,9 +120,7 @@ export class MikroCrudServiceFactory<
       }: Parameters<Interface["decideEntityFilters"]>[0]): ReturnType<
         Interface["decideEntityFilters"]
       > {
-        return {
-          crud: { user },
-        };
+        return { crud: { user } };
       }
 
       async parseOrderQueryParams({

@@ -60,7 +60,9 @@ export interface MikroCrudService<
    * Decide which MikroORM filters to enable and what arguments to pass to the filters.
    * @param args
    */
-  decideFilters(args: { user: any }): Promise<FindOptions<Entity>["filters"]>;
+  decideEntityFilters(args: {
+    user: any;
+  }): Promise<FindOptions<Entity>["filters"]>;
 
   /**
    * Parse the "order" query param into actual options.

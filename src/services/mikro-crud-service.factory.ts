@@ -55,7 +55,7 @@ export class MikroCrudServiceFactory<
             limit,
             offset,
             orderBy: await this.parseOrderQueryParams({ order }),
-            filters: await this.decideFilters({ user }),
+            filters: await this.decideEntityFilters({ user }),
           }
         );
         return { total, results };
@@ -75,7 +75,7 @@ export class MikroCrudServiceFactory<
         user,
       }: Parameters<Interface["retrieve"]>[0]) {
         const entity = await this.repository.findOneOrFail(conditions, {
-          filters: await this.decideFilters({ user }),
+          filters: await this.decideEntityFilters({ user }),
           failHandler: () => new NotFoundException(),
         });
         return entity;
@@ -115,10 +115,10 @@ export class MikroCrudServiceFactory<
         return;
       }
 
-      async decideFilters({
+      async decideEntityFilters({
         user,
-      }: Parameters<Interface["decideFilters"]>[0]): ReturnType<
-        Interface["decideFilters"]
+      }: Parameters<Interface["decideEntityFilters"]>[0]): ReturnType<
+        Interface["decideEntityFilters"]
       > {
         return {
           crud: { user },

@@ -135,7 +135,7 @@ export class MikroCrudControllerFactory<
       lookup: { field: lookupField },
     } = this.options;
 
-    const getLookupConditions = (value: unknown) =>
+    const getLookupCondition = (value: unknown) =>
       ({
         [lookupField]: value,
       } as unknown as FilterQuery<Entity>);
@@ -172,10 +172,9 @@ export class MikroCrudControllerFactory<
       ): Promise<unknown> {
         const action: ActionName = "create";
         await this.service.checkPermission({ action, user });
-        let entity = await this.service.create({ data, user });
-        const conditions = getLookupConditions(entity[lookupField]);
-        entity = await this.service.retrieve({ conditions, user });
-        return entity;
+        const entity = await this.service.create({ data, user });
+        const conditions = entity.toReference();
+        return await this.service.retrieve({ conditions, user });
       }
 
       async retrieve(
@@ -183,9 +182,8 @@ export class MikroCrudControllerFactory<
       ): Promise<unknown> {
         const action: ActionName = "retrieve";
         await this.service.checkPermission({ action, user });
-        const conditions = getLookupConditions(lookup);
-        let entity: Entity;
-        entity = await this.service.retrieve({ conditions, user });
+        const conditions = getLookupCondition(lookup);
+        const entity = await this.service.retrieve({ conditions, user });
         await this.service.checkPermission({ action, entity, user });
         return entity;
       }
@@ -195,14 +193,12 @@ export class MikroCrudControllerFactory<
       ): Promise<unknown> {
         const action: ActionName = "update";
         await this.service.checkPermission({ action, user });
-        let conditions = getLookupConditions(lookup);
-        let entity: Entity;
-        entity = await this.service.retrieve({ conditions, user });
+        let conditions = getLookupCondition(lookup);
+        const entity = await this.service.retrieve({ conditions, user });
         await this.service.checkPermission({ action, entity, user });
         await this.service.replace({ entity, data, user });
-        conditions = getLookupConditions(entity[lookupField]); // lookup may be updated
-        entity = await this.service.retrieve({ conditions, user });
-        return entity;
+        conditions = entity.toReference();
+        return await this.service.retrieve({ conditions, user });
       }
 
       async update(
@@ -210,14 +206,12 @@ export class MikroCrudControllerFactory<
       ): Promise<unknown> {
         const action: ActionName = "update";
         await this.service.checkPermission({ action, user });
-        let conditions = getLookupConditions(lookup);
-        let entity: Entity;
-        entity = await this.service.retrieve({ conditions, user });
+        let conditions = getLookupCondition(lookup);
+        const entity = await this.service.retrieve({ conditions, user });
         await this.service.checkPermission({ action, entity, user });
         await this.service.update({ entity, data, user });
-        conditions = getLookupConditions(entity[lookupField]); // lookup may be updated
-        entity = await this.service.retrieve({ conditions, user });
-        return entity;
+        conditions = entity.toReference();
+        return await this.service.retrieve({ conditions, user });
       }
 
       async destroy(
@@ -225,9 +219,8 @@ export class MikroCrudControllerFactory<
       ): Promise<unknown> {
         const action: ActionName = "destroy";
         await this.service.checkPermission({ action, user });
-        const conditions = getLookupConditions(lookup);
-        let entity: Entity;
-        entity = await this.service.retrieve({ conditions, user });
+        const conditions = getLookupCondition(lookup);
+        const entity = await this.service.retrieve({ conditions, user });
         await this.service.checkPermission({ action, entity, user });
         await this.service.destroy({ entity, user });
         return;

@@ -136,9 +136,7 @@ export class MikroCrudControllerFactory<
     } = this.options;
 
     const getLookupCondition = (value: unknown) =>
-      ({
-        [lookupField]: value,
-      } as unknown as FilterQuery<Entity>);
+      ({ [lookupField]: value } as unknown as FilterQuery<Entity>);
 
     type Interface = MikroCrudController<
       Entity,

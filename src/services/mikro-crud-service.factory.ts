@@ -1,5 +1,10 @@
-import { BaseEntity, FilterQuery, FindOptions } from "@mikro-orm/core";
-import { OperatorMap } from "@mikro-orm/core/typings";
+import {
+  BaseEntity,
+  Collection,
+  FilterQuery,
+  FindOptions,
+} from "@mikro-orm/core";
+import { EntityMetadata, OperatorMap } from "@mikro-orm/core/typings";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { NotFoundException } from "@nestjs/common";
 import { AbstractFactory } from "../abstract.factory";
@@ -113,6 +118,25 @@ export class MikroCrudServiceFactory<
         Interface["checkPermission"]
       > {
         return;
+      }
+
+      async initCollections({
+        entity,
+      }: Parameters<Interface["initCollections"]>[0]): ReturnType<
+        Interface["initCollections"]
+      > {
+        const { relations } = entity[
+          "__meta" as keyof typeof entity
+        ] as unknown as EntityMetadata;
+
+        await Promise.all(
+          relations.map(async ({ name }) => {
+            const item = entity[name as EntityField<Entity>];
+            if (item instanceof Collection) await item.init();
+          })
+        );
+
+        return entity;
       }
 
       async decideEntityFilters({

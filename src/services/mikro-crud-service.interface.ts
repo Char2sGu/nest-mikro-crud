@@ -57,6 +57,12 @@ export interface MikroCrudService<
   // ------------------------------------------------------------------------------------------
 
   /**
+   * Init all the collections of the entity.
+   * @param args
+   */
+  initCollections(args: { entity: Entity }): Promise<Entity>;
+
+  /**
    * Decide which MikroORM filters to enable and what arguments to pass to the filters.
    * @param args
    */

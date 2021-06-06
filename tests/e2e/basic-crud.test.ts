@@ -17,9 +17,13 @@ describe("Basic CRUD", () => {
   let entity: Book;
 
   function assertEntityFieldTypes({ entity }: { entity: Book }) {
-    expect(typeof entity.id).toBe("number");
-    expect(typeof entity.name).toBe("string");
-    expect(entity.price).toBeUndefined();
+    const { id, name, price, pages, ...more } = entity;
+    expect(typeof id).toBe("number");
+    expect(typeof name).toBe("string");
+    expect(price).toBeUndefined();
+    expect(pages).toBeInstanceOf(Array);
+    [...pages].forEach((page) => expect(typeof page).toBe("number"));
+    expect(more).toEqual({});
   }
 
   @Injectable()
@@ -32,7 +36,7 @@ describe("Basic CRUD", () => {
   }).product {}
 
   @Controller()
-  class TestController extends new MikroCrudControllerFactory<TestService>({
+  class TestController extends new MikroCrudControllerFactory({
     serviceClass: TestService,
     actions: ["list", "retrieve", "create", "replace", "update", "destroy"],
     lookup: { field: "id" },
@@ -47,16 +51,24 @@ describe("Basic CRUD", () => {
       [Book, Page]
     ));
 
-    const bookRepository: EntityRepository<Book> = module.get(
-      getRepositoryToken(Book)
-    );
+    const [bookRepo, pageRepo] = [
+      module.get<EntityRepository<Book>>(getRepositoryToken(Book)),
+      module.get<EntityRepository<Page>>(getRepositoryToken(Page)),
+    ];
     for (let i = 1; i <= 5; i++) {
-      const entity = new Book().assign({
+      const book = bookRepo.create({
         name: "parent" + i,
         price: i,
       });
-      await bookRepository.persistAndFlush(entity);
+      const page = pageRepo.create({
+        book,
+        text: "text" + i,
+      });
+      bookRepo.persist(book);
+      pageRepo.persist(page);
     }
+    await bookRepo.flush();
+    await pageRepo.flush();
   });
 
   describe("/ (GET)", () => {

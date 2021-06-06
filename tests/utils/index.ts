@@ -1,2 +1,2 @@
-export * from "./get-requester";
+export * from "./e2e";
 export * from "./type-helpers";

@@ -1,9 +1,9 @@
 import { Type } from "@nestjs/common";
 import { TS_PARAM_TYPES_METADATA_KEY, TS_TYPE_METADATA_KEY } from "./constants";
-import { ExtractKeys } from "./utils";
+import { ExtractKey } from "./utils";
 
 type AllNames<T> = string & keyof T;
-type MethodNames<T> = string & ExtractKeys<T, (...args: any[]) => any>;
+type MethodNames<T> = string & ExtractKey<T, (...args: any[]) => any>;
 type PropertyNames<T> = Exclude<AllNames<T>, MethodNames<T>>;
 
 export abstract class AbstractFactory<T> {

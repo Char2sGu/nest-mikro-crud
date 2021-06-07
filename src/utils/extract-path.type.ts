@@ -1,4 +1,4 @@
-import { Values } from "./values.type";
+import { ValueOf } from "./value-of.type";
 
 /**
  * Extract all the keys that meet the condition in the target and its sub-objects and
@@ -22,13 +22,13 @@ import { Values } from "./values.type";
  * type T = ExtractNestedKeys<O, string | number, string, "/">;
  * // "b" | "a/length" | "c/e" | "c/d/length" | "c/f/h" | "c/f/g/length"
  */
-export type ExtractNestedKeys<
+export type ExtractPath<
   Target,
   Condition,
   Exclusion = never,
   Separator extends string = ".",
   Root = Target
-> = Values<
+> = ValueOf<
   {
     [K in string & keyof Target]:
       | (Target[K] extends Exclusion
@@ -39,7 +39,7 @@ export type ExtractNestedKeys<
       | (Target[K] extends Root
           ? never
           : // @ts-expect-error - this IS NOT an infinite loop!!!!
-            `${K}${Separator}${ExtractNestedKeys<
+            `${K}${Separator}${ExtractPath<
               Target[K],
               Condition,
               Exclusion,

@@ -1,4 +1,4 @@
-import { BaseEntity, FilterQuery } from "@mikro-orm/core";
+import { BaseEntity } from "@mikro-orm/core";
 import {
   Body,
   Delete,
@@ -135,9 +135,6 @@ export class MikroCrudControllerFactory<
       lookup: { field: lookupField },
     } = this.options;
 
-    const getLookupCondition = (value: unknown) =>
-      ({ [lookupField]: value } as unknown as FilterQuery<Entity>);
-
     type Interface = MikroCrudController<
       Entity,
       CreateDto,
@@ -185,7 +182,7 @@ export class MikroCrudControllerFactory<
       ): Promise<unknown> {
         const action: ActionName = "retrieve";
         await this.service.checkPermission({ action, user });
-        const conditions = getLookupCondition(lookup);
+        const conditions = { [lookupField]: lookup };
         const entity = await this.service.retrieve({ conditions, user });
         await this.service.checkPermission({ action, entity, user });
         return await this.service.markRelationsUnpopulated({ entity });
@@ -196,7 +193,7 @@ export class MikroCrudControllerFactory<
       ): Promise<unknown> {
         const action: ActionName = "update";
         await this.service.checkPermission({ action, user });
-        const conditions = getLookupCondition(lookup);
+        const conditions = { [lookupField]: lookup };
         const entity = await this.service.retrieve({ conditions, user });
         await this.service.checkPermission({ action, entity, user });
         await this.service.replace({ entity, data, user });
@@ -208,7 +205,7 @@ export class MikroCrudControllerFactory<
       ): Promise<unknown> {
         const action: ActionName = "update";
         await this.service.checkPermission({ action, user });
-        const conditions = getLookupCondition(lookup);
+        const conditions = { [lookupField]: lookup };
         const entity = await this.service.retrieve({ conditions, user });
         await this.service.checkPermission({ action, entity, user });
         await this.service.update({ entity, data, user });
@@ -220,7 +217,7 @@ export class MikroCrudControllerFactory<
       ): Promise<unknown> {
         const action: ActionName = "destroy";
         await this.service.checkPermission({ action, user });
-        const conditions = getLookupCondition(lookup);
+        const conditions = { [lookupField]: lookup };
         const entity = await this.service.retrieve({ conditions, user });
         await this.service.checkPermission({ action, entity, user });
         await this.service.destroy({ entity, user });

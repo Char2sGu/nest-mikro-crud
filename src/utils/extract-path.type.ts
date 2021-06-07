@@ -1,5 +1,5 @@
 import { ValueOf } from "./value-of.type";
-import { ItemTypeIfArray } from "./item-type-if-array.type";
+import { ItemTypeIfIterable } from "./item-type-if-iterable.type";
 
 /**
  * Extract all the keys that meet the condition in the target and its sub-objects and
@@ -27,16 +27,16 @@ export type ExtractPath<
 > = ValueOf<
   {
     [K in string & keyof Target]:
-      | (ItemTypeIfArray<Target[K]> extends Exclusion
+      | (ItemTypeIfIterable<Target[K]> extends Exclusion
           ? never
-          : ItemTypeIfArray<Target[K]> extends Condition
+          : ItemTypeIfIterable<Target[K]> extends Condition
           ? K
           : never)
-      | (ItemTypeIfArray<Target[K]> extends Root
+      | (ItemTypeIfIterable<Target[K]> extends Root
           ? never
           : // @ts-expect-error - this IS NOT an infinite loop!!!!
             `${K}${Separator}${ExtractPath<
-              ItemTypeIfArray<Target[K]>,
+              ItemTypeIfIterable<Target[K]>,
               Condition,
               Exclusion,
               Separator,

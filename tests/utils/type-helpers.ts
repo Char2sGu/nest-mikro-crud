@@ -30,5 +30,5 @@ export function m(v: unknown) {
  */
 export const buildKeyChecker =
   <T>() =>
-  (name: `${string}${Extract<keyof T, string>}${string}`) =>
+  (name: `${string}${string & keyof T}${string}`) =>
     name;

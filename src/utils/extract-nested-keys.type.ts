@@ -30,7 +30,7 @@ export type ExtractNestedKeys<
   Root = Target
 > = Values<
   {
-    [K in Extract<keyof Target, string>]:
+    [K in string & keyof Target]:
       | (Target[K] extends Exclusion
           ? never
           : Target[K] extends Condition

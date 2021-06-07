@@ -7,6 +7,7 @@ import {
   Inject,
   Param,
   ParseIntPipe,
+  ParseUUIDPipe,
   Patch,
   Post,
   Put,
@@ -20,7 +21,7 @@ import { FACTORY_METADATA_KEY, TS_TYPE_METADATA_KEY } from "../constants";
 import { ReqUser } from "../decorators";
 import { QueryDtoFactory } from "../dtos";
 import { MikroCrudService, MikroCrudServiceFactory } from "../services";
-import { ActionName, LookupableField } from "../types";
+import { ActionName, LookupableField, PkType } from "../types";
 import { MikroCrudControllerFactoryOptions } from "./mikro-crud-controller-factory-options.interface";
 import { MikroCrudController } from "./mikro-crud-controller.interface";
 
@@ -105,11 +106,13 @@ export class MikroCrudControllerFactory<
         ...lookup,
         type:
           lookup.type ??
-          (Reflect.getMetadata(
+          ((Reflect.getMetadata(
             TS_TYPE_METADATA_KEY,
             this.serviceFactory.options.entityClass.prototype,
             lookup.field
-          ) as typeof lookup.type)!,
+          ) == Number
+            ? "number"
+            : "uuid") as PkType),
         name: lookup.name ?? "lookup",
       },
       requestUser: {
@@ -239,6 +242,7 @@ export class MikroCrudControllerFactory<
     const {
       lookup: { type: lookupType, name: lookupParamName },
     } = this.options;
+    const lookupInternalType = lookupType == "number" ? Number : String;
 
     const {
       dtoClasses: { create: createDto, update: updateDto },
@@ -252,7 +256,11 @@ export class MikroCrudControllerFactory<
 
     const Lookup = Param(
       lookupParamName,
-      ...(lookupType == Number ? [ParseIntPipe] : [])
+      ...(lookupType == "number"
+        ? [ParseIntPipe]
+        : lookupType == "uuid"
+        ? [ParseUUIDPipe]
+        : [])
     );
     const Queries = Query();
     const Data = Body();
@@ -263,10 +271,22 @@ export class MikroCrudControllerFactory<
     > = {
       list: [[Get()], [queryDtoClass], [[Queries]]],
       create: [[Post()], [createDto], [[Data]]],
-      retrieve: [[Get(path)], [lookupType], [[Lookup]]],
-      replace: [[Put(path)], [lookupType, createDto], [[Lookup], [Data]]],
-      update: [[Patch(path)], [lookupType, updateDto], [[Lookup], [Data]]],
-      destroy: [[Delete(path), HttpCode(204)], [lookupType], [[Lookup]]],
+      retrieve: [[Get(path)], [lookupInternalType], [[Lookup]]],
+      replace: [
+        [Put(path)],
+        [lookupInternalType, createDto],
+        [[Lookup], [Data]],
+      ],
+      update: [
+        [Patch(path)],
+        [lookupInternalType, updateDto],
+        [[Lookup], [Data]],
+      ],
+      destroy: [
+        [Delete(path), HttpCode(204)],
+        [lookupInternalType],
+        [[Lookup]],
+      ],
     };
 
     for (const [

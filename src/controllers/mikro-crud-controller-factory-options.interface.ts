@@ -2,7 +2,7 @@ import { AnyEntity } from "@mikro-orm/core";
 import { Type, ValidationPipeOptions } from "@nestjs/common";
 import { QueryDto } from "../dtos";
 import { MikroCrudService } from "../services";
-import { ActionName, LookupableField } from "../types";
+import { ActionName, LookupableField, PkType } from "../types";
 
 export interface MikroCrudControllerFactoryOptions<
   Entity extends AnyEntity = any,
@@ -33,9 +33,10 @@ export interface MikroCrudControllerFactoryOptions<
      */
     field: LookupField;
     /**
-     * Specify the data type of field to lookup.
+     * Specify the data type of field to lookup. Will be inferred from the metadata
+     * type if not specified: Number -> "number", String -> "uuid"
      */
-    type?: typeof Number | typeof String;
+    type?: PkType;
     /**
      * Specify the parameter name for entity lookup in the URL
      */

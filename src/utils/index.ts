@@ -4,3 +4,4 @@ export * from "./extract-path.type";
 export * from "./item-type-if-array.type";
 export * from "./resolved.type";
 export * from "./value-of.type";
+export * from "./walk-path.func";

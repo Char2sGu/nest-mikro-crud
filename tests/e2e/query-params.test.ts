@@ -24,16 +24,18 @@ describe("Query Params", () => {
       providers: [TestService],
     }));
 
-    const bookRepository: EntityRepository<Book> = module.get(
+    const bookRepo = module.get<EntityRepository<Book>>(
       getRepositoryToken(Book)
     );
     for (let i = 1; i <= 5; i++) {
-      const entity = new Book().assign({
+      const book = bookRepo.create({
         name: "parent" + i,
         price: i,
+        summary: { text: "summary" + i },
       });
-      await bookRepository.persistAndFlush(entity);
+      bookRepo.persist(book);
     }
+    await bookRepo.flush();
   }
 
   @Injectable()
@@ -109,7 +111,10 @@ describe("Query Params", () => {
       actions: ["list"],
       lookup: { field: "id" },
       queryDtoClass: new QueryDtoFactory<Book>({
-        order: { in: ["id:desc", "name:desc"], default: ["id:desc"] },
+        order: {
+          in: ["id:desc", "name:desc", "summary.text"],
+          default: ["id:desc"],
+        },
       }).product,
     }).product {}
 
@@ -119,10 +124,11 @@ describe("Query Params", () => {
 
     describe("/ (GET)", () => {
       describe.each`
-        order            | firstId
-        ${undefined}     | ${5}
-        ${["id:desc"]}   | ${5}
-        ${["name:desc"]} | ${5}
+        order                    | firstId
+        ${undefined}             | ${5}
+        ${["id:desc"]}           | ${5}
+        ${["name:desc"]}         | ${5}
+        ${["summary.text:desc"]} | ${5}
       `("Legal Order: $order", ({ order, firstId }) => {
         beforeEach(async () => {
           response = await requester.get("/").query({ "order[]": order });

@@ -3,12 +3,15 @@ import {
   Collection,
   FilterQuery,
   FindOptions,
+  QueryOrderMap,
   Reference,
   ReferenceType,
 } from "@mikro-orm/core";
 import { AnyEntity, OperatorMap } from "@mikro-orm/core/typings";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { NotFoundException } from "@nestjs/common";
+import { ScalarPath } from "src/types";
+import { walkPath } from "src/utils";
 import { AbstractFactory } from "../abstract.factory";
 import { FACTORY_METADATA_KEY } from "../constants";
 import { EntityField, FilterOperator } from "../types";
@@ -171,11 +174,15 @@ export class MikroCrudServiceFactory<
       > {
         const orderOptions: FindOptions<Entity>["orderBy"] = {};
         order.forEach((raw) => {
-          const [field, order] = raw.split(":") as [
-            EntityField<Entity>,
+          const [path, order] = raw.split(":") as [
+            ScalarPath<Entity>,
             "asc" | "desc"
           ];
-          orderOptions[field] = order;
+          walkPath(
+            orderOptions,
+            path,
+            (obj: QueryOrderMap, key: string) => (obj[key] = order)
+          );
         });
         return orderOptions;
       }

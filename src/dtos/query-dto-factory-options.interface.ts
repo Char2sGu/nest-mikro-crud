@@ -1,4 +1,9 @@
-import { EntityField, FilterQueryParam, OrderQueryParam } from "../types";
+import {
+  EntityField,
+  FilterQueryParam,
+  OrderQueryParam,
+  ScalarPath,
+} from "../types";
 
 export interface QueryDtoFactoryOptions<Entity> {
   limit?: {
@@ -10,7 +15,7 @@ export interface QueryDtoFactoryOptions<Entity> {
     default?: number;
   };
   order?: {
-    in: (OrderQueryParam<Entity> | EntityField<Entity>)[];
+    in: (OrderQueryParam<Entity> | ScalarPath<Entity>)[];
     default?: OrderQueryParam<Entity>[];
   };
   filter?: {

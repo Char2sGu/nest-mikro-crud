@@ -1,5 +1,3 @@
-import { EntityField } from "./entity-field.type";
+import { ScalarPath } from "./scalar-path.type";
 
-export type OrderQueryParam<Entity> = `${EntityField<Entity>}:${
-  | "asc"
-  | "desc"}`;
+export type OrderQueryParam<Entity> = `${ScalarPath<Entity>}:${"asc" | "desc"}`;

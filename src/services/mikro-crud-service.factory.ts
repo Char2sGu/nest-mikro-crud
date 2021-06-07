@@ -1,5 +1,4 @@
 import {
-  BaseEntity,
   Collection,
   FilterQuery,
   FindOptions,
@@ -23,7 +22,7 @@ import { MikroCrudServiceFactoryOptions } from "./mikro-crud-service-factory-opt
 import { MikroCrudService } from "./mikro-crud-service.interface";
 
 export class MikroCrudServiceFactory<
-  Entity extends BaseEntity<any, any> = any,
+  Entity extends AnyEntity = any,
   CreateDto = Entity,
   UpdateDto = CreateDto
 > extends AbstractFactory<MikroCrudService<Entity, CreateDto, UpdateDto>> {

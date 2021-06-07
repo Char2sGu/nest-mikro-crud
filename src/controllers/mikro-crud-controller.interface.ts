@@ -1,10 +1,10 @@
-import { BaseEntity } from "@mikro-orm/core";
+import { AnyEntity } from "@mikro-orm/core";
 import { QueryDto } from "../dtos";
 import { MikroCrudService } from "../services";
 import { LookupableField } from "../types";
 
 export interface MikroCrudController<
-  Entity extends BaseEntity<any, any> = any,
+  Entity extends AnyEntity = any,
   CreateDto = Entity,
   UpdateDto = CreateDto,
   LookupField extends LookupableField<Entity> = LookupableField<Entity>,

@@ -1,8 +1,8 @@
-import { BaseEntity } from "@mikro-orm/core";
+import { AnyEntity } from "@mikro-orm/core";
 import { Type } from "@nestjs/common";
 
 export interface MikroCrudServiceFactoryOptions<
-  Entity extends BaseEntity<any, any> = any,
+  Entity extends AnyEntity = any,
   CreateDto = Entity,
   UpdateDto = CreateDto
 > {

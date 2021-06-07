@@ -1,4 +1,4 @@
-import { BaseEntity } from "@mikro-orm/core";
+import { AnyEntity } from "@mikro-orm/core";
 import {
   Body,
   Delete,
@@ -43,7 +43,7 @@ export class MikroCrudControllerFactory<
     CreateDto,
     UpdateDto
   > = MikroCrudService,
-  Entity extends BaseEntity<any, any> = ServiceGenerics<Service>["Entity"],
+  Entity extends AnyEntity = ServiceGenerics<Service>["Entity"],
   CreateDto = ServiceGenerics<Service>["CreateDto"],
   UpdateDto = ServiceGenerics<Service>["UpdateDto"],
   LookupField extends LookupableField<Entity> = LookupableField<Entity>

@@ -1,4 +1,4 @@
-import { BaseEntity } from "@mikro-orm/core";
+import { AnyEntity } from "@mikro-orm/core";
 import { Exclude, Type } from "class-transformer";
 import {
   IsArray,
@@ -18,7 +18,7 @@ import { QueryDto } from "./query-dto.interface";
 const deduplicate = (arr: unknown[]) => [...new Set(arr)];
 
 export class QueryDtoFactory<
-  Entity extends BaseEntity<any, any> = any
+  Entity extends AnyEntity = any
 > extends AbstractFactory<QueryDto<Entity>> {
   readonly options;
   readonly product;

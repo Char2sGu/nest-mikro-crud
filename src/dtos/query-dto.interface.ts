@@ -1,7 +1,7 @@
-import { BaseEntity } from "@mikro-orm/core";
-import { FilterQueryParam, OrderQueryParam, RelationPath } from "../types";
+import { AnyEntity } from "@mikro-orm/core";
+import { FilterQueryParam, OrderQueryParam } from "../types";
 
-export interface QueryDto<Entity extends BaseEntity<any, any> = any> {
+export interface QueryDto<Entity extends AnyEntity = any> {
   limit?: number;
   offset?: number;
   order?: OrderQueryParam<Entity>[];

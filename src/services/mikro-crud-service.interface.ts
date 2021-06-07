@@ -1,5 +1,6 @@
-import { BaseEntity, EntityRepository, FindOptions } from "@mikro-orm/core";
+import { EntityRepository, FindOptions } from "@mikro-orm/core";
 import {
+  AnyEntity,
   EntityMetadata,
   FilterQuery,
   NonFunctionPropertyNames,
@@ -12,7 +13,7 @@ import { ActionName, FilterQueryParam, OrderQueryParam } from "../types";
  * this Service to achieve the functions he wants.
  */
 export interface MikroCrudService<
-  Entity extends BaseEntity<any, any> = any,
+  Entity extends AnyEntity = any,
   CreateDto = Entity,
   UpdateDto = CreateDto
 > {

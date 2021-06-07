@@ -40,7 +40,8 @@
     "class-validator": "^0.13.1",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^6.0.0",
-    "@mikro-orm/core": "^4.0.0"
+    "@mikro-orm/core": "^4.0.0",
+    "@mikro-orm/nestjs": "^4.0.0"
   },
   "dependencies": {},
   "devDependencies": {

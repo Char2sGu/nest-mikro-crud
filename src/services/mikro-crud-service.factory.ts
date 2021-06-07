@@ -7,14 +7,18 @@ import {
   Reference,
   ReferenceType,
 } from "@mikro-orm/core";
-import { AnyEntity, OperatorMap } from "@mikro-orm/core/typings";
+import {
+  AnyEntity,
+  NonFunctionPropertyNames,
+  OperatorMap,
+} from "@mikro-orm/core/typings";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { NotFoundException } from "@nestjs/common";
 import { ScalarPath } from "src/types";
 import { walkPath } from "src/utils";
 import { AbstractFactory } from "../abstract.factory";
 import { FACTORY_METADATA_KEY } from "../constants";
-import { EntityField, FilterOperator } from "../types";
+import { FilterOperator } from "../types";
 import { MikroCrudServiceFactoryOptions } from "./mikro-crud-service-factory-options.interface";
 import { MikroCrudService } from "./mikro-crud-service.interface";
 
@@ -63,7 +67,7 @@ export class MikroCrudServiceFactory<
               reference == ReferenceType.ONE_TO_MANY ||
               reference == ReferenceType.MANY_TO_MANY
           )
-          .map(({ name }) => name as EntityField<Entity>);
+          .map(({ name }) => name as NonFunctionPropertyNames<Entity>);
       }
 
       async list({
@@ -193,13 +197,13 @@ export class MikroCrudServiceFactory<
         Interface["parseFilterQueryParams"]
       > {
         const conditions: Partial<
-          Record<EntityField<Entity>, OperatorMap<unknown>>
+          Record<NonFunctionPropertyNames<Entity>, OperatorMap<unknown>>
         > = {};
 
         rawFilters.forEach(async (raw) => {
           const [, field, rawOp, value] = /^(.*)\|(.+):(.*)$/.exec(raw)! as [
             string,
-            EntityField<Entity>,
+            NonFunctionPropertyNames<Entity>,
             FilterOperator,
             string
           ] &

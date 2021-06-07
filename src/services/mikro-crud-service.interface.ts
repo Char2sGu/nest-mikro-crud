@@ -1,11 +1,10 @@
 import { BaseEntity, EntityRepository, FindOptions } from "@mikro-orm/core";
-import { EntityMetadata, FilterQuery } from "@mikro-orm/core/typings";
 import {
-  ActionName,
-  EntityField,
-  FilterQueryParam,
-  OrderQueryParam,
-} from "../types";
+  EntityMetadata,
+  FilterQuery,
+  NonFunctionPropertyNames,
+} from "@mikro-orm/core/typings";
+import { ActionName, FilterQueryParam, OrderQueryParam } from "../types";
 
 /**
  * This Service is designed to be used for various purposes, not just for processing CRUD requests,
@@ -19,7 +18,7 @@ export interface MikroCrudService<
 > {
   readonly repository: EntityRepository<Entity>;
   readonly entityMeta: EntityMetadata;
-  readonly collectionFields: EntityField<Entity>[];
+  readonly collectionFields: NonFunctionPropertyNames<Entity>[];
 
   // ------------------------------------------------------------------------------------------
   // Entry Methods

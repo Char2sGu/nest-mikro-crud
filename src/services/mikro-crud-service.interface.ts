@@ -7,6 +7,11 @@ import {
   OrderQueryParam,
 } from "../types";
 
+/**
+ * This Service is designed to be used for various purposes, not just for processing CRUD requests,
+ * I made its API as universal and composable as possible so that users can easily override and extend
+ * this Service to achieve the functions he wants.
+ */
 export interface MikroCrudService<
   Entity extends BaseEntity<any, any> = any,
   CreateDto = Entity,

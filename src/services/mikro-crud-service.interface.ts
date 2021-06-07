@@ -30,25 +30,29 @@ export interface MikroCrudService<
     offset?: number;
     order?: OrderQueryParam<Entity>[];
     filter?: FilterQueryParam<Entity>[];
-    user: any;
+    user?: any;
   }): Promise<{ total: number; results: Entity[] }>;
 
-  create(args: { data: CreateDto; user: any }): Promise<Entity>;
+  create(args: { data: CreateDto; user?: any }): Promise<Entity>;
 
   retrieve(args: {
     conditions: FilterQuery<Entity>;
-    user: any;
+    user?: any;
   }): Promise<Entity>;
 
   replace(args: {
     entity: Entity;
     data: CreateDto;
-    user: any;
+    user?: any;
   }): Promise<Entity>;
 
-  update(args: { entity: Entity; data: UpdateDto; user: any }): Promise<Entity>;
+  update(args: {
+    entity: Entity;
+    data: UpdateDto;
+    user?: any;
+  }): Promise<Entity>;
 
-  destroy(args: { entity: Entity; user: any }): Promise<Entity>;
+  destroy(args: { entity: Entity; user?: any }): Promise<Entity>;
 
   save(): Promise<void>;
 
@@ -65,7 +69,7 @@ export interface MikroCrudService<
   checkPermission(args: {
     action: ActionName;
     entity?: Entity;
-    user: any;
+    user?: any;
   }): Promise<void>;
 
   /**
@@ -81,7 +85,7 @@ export interface MikroCrudService<
    * @param args
    */
   decideEntityFilters(args: {
-    user: any;
+    user?: any;
   }): Promise<FindOptions<Entity>["filters"]>;
 
   /**

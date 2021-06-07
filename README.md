@@ -140,7 +140,10 @@ class MyEntity {
 By default, the MikroORM's entity filters with name `"crud"` will be enabled.
 
 ```ts
-@Filter({ name: "crud", cond: (user: User) => ({ owner: user }) })
+@Filter({
+  name: "crud",
+  cond: ({ user }: { user: User }) => ({ owner: user }),
+})
 @Entity()
 class Book extends BaseEntity<Book, "id"> {
   @PrimaryKey()

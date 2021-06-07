@@ -1,5 +1,5 @@
 import { Type } from "class-transformer";
-import { IsArray, IsInt, IsString } from "class-validator";
+import { IsInt, IsString } from "class-validator";
 
 export class CreateBookDto {
   @IsString()
@@ -8,4 +8,8 @@ export class CreateBookDto {
   @Type()
   @IsInt()
   price!: number;
+
+  @Type()
+  @IsInt()
+  summary!: number;
 }

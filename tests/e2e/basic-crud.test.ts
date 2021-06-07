@@ -6,7 +6,7 @@ import { MikroCrudControllerFactory, MikroCrudServiceFactory } from "src";
 import supertest, { Response } from "supertest";
 import { prepareE2E } from "../utils";
 import { CreateBookDto, UpdateParentEntityDto } from "./dtos";
-import { Book, Page } from "./entities";
+import { Book, Page, Summary } from "./entities";
 
 describe("Basic CRUD", () => {
   let module: TestingModule;
@@ -17,12 +17,13 @@ describe("Basic CRUD", () => {
   let entity: Book;
 
   function assertEntityFieldTypes({ entity }: { entity: Book }) {
-    const { id, name, price, pages, ...more } = entity;
+    const { id, name, price, pages, summary, ...more } = entity;
     expect(typeof id).toBe("number");
     expect(typeof name).toBe("string");
     expect(price).toBeUndefined();
     expect(pages).toBeInstanceOf(Array);
     [...pages].forEach((page) => expect(typeof page).toBe("number"));
+    expect(typeof summary).toBe("number");
     expect(more).toEqual({});
   }
 
@@ -43,17 +44,15 @@ describe("Basic CRUD", () => {
   }).product {}
 
   beforeEach(async () => {
-    ({ module, requester } = await prepareE2E(
-      {
-        controllers: [TestController],
-        providers: [TestService],
-      },
-      [Book, Page]
-    ));
+    ({ module, requester } = await prepareE2E({
+      controllers: [TestController],
+      providers: [TestService],
+    }));
 
-    const [bookRepo, pageRepo] = [
+    const [bookRepo, pageRepo, summaryRepo] = [
       module.get<EntityRepository<Book>>(getRepositoryToken(Book)),
       module.get<EntityRepository<Page>>(getRepositoryToken(Page)),
+      module.get<EntityRepository<Summary>>(getRepositoryToken(Summary)),
     ];
     for (let i = 1; i <= 5; i++) {
       const book = bookRepo.create({
@@ -64,11 +63,23 @@ describe("Basic CRUD", () => {
         book,
         text: "text" + i,
       });
+      const summary = summaryRepo.create({
+        book,
+        text: "summary" + i,
+      });
       bookRepo.persist(book);
       pageRepo.persist(page);
+      summaryRepo.persist(summary);
     }
+    summaryRepo.persist(
+      summaryRepo.create({
+        id: 6,
+        text: "new",
+      })
+    );
     await bookRepo.flush();
     await pageRepo.flush();
+    await summaryRepo.flush();
   });
 
   describe("/ (GET)", () => {
@@ -97,7 +108,7 @@ describe("Basic CRUD", () => {
   describe("/ (POST)", () => {
     describe("Common", () => {
       beforeEach(async () => {
-        createBookDto = { name: "new", price: 123 };
+        createBookDto = { name: "new", price: 123, summary: 6 };
         response = await requester.post("/").send(createBookDto);
         entity = response.body;
       });
@@ -161,7 +172,7 @@ describe("Basic CRUD", () => {
 
   describe("/:lookup/ (PUT)", () => {
     beforeEach(() => {
-      createBookDto = { name: "updated", price: 123 };
+      createBookDto = { name: "updated", price: 123, summary: 1 };
     });
 
     describe("Common", () => {

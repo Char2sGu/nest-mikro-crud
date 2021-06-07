@@ -3,10 +3,12 @@ import {
   Collection,
   Entity,
   OneToMany,
+  OneToOne,
   PrimaryKey,
   Property,
 } from "@mikro-orm/core";
 import { Page } from "./page.entity";
+import { Summary } from "./summary.entity";
 
 @Entity()
 export class Book extends BaseEntity<Book, "id"> {
@@ -16,9 +18,21 @@ export class Book extends BaseEntity<Book, "id"> {
   @Property()
   name!: string;
 
-  @Property({ hidden: true })
+  @Property({
+    hidden: true,
+  })
   price!: number;
 
-  @OneToMany({ entity: () => Page, mappedBy: (page) => page.book })
+  @OneToMany({
+    entity: () => Page,
+    mappedBy: (page) => page.book,
+  })
   pages = new Collection<Page>(this);
+
+  @OneToOne({
+    entity: () => Summary,
+    mappedBy: (summary) => summary.book,
+    owner: true,
+  })
+  summary!: Summary;
 }

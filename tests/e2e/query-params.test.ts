@@ -10,7 +10,7 @@ import {
 import supertest, { Response } from "supertest";
 import { prepareE2E } from "tests/utils";
 import { CreateBookDto, UpdateParentEntityDto } from "./dtos";
-import { Book, Page } from "./entities";
+import { Book } from "./entities";
 
 describe("Query Params", () => {
   let module: TestingModule;
@@ -19,10 +19,10 @@ describe("Query Params", () => {
   let entity: Book;
 
   async function prepare(controllerClass: Type) {
-    ({ module, requester } = await prepareE2E(
-      { controllers: [controllerClass], providers: [TestService] },
-      [Book, Page]
-    ));
+    ({ module, requester } = await prepareE2E({
+      controllers: [controllerClass],
+      providers: [TestService],
+    }));
 
     const bookRepository: EntityRepository<Book> = module.get(
       getRepositoryToken(Book)

@@ -3,7 +3,7 @@ import { MikroCrudControllerFactory, MikroCrudServiceFactory } from "src";
 import supertest, { Response } from "supertest";
 import { prepareE2E } from "../utils";
 import { CreateBookDto, UpdateParentEntityDto } from "./dtos";
-import { Book, Page } from "./entities";
+import { Book } from "./entities";
 
 describe("Disabled Actions", () => {
   let requester: supertest.SuperTest<supertest.Test>;
@@ -26,13 +26,10 @@ describe("Disabled Actions", () => {
   }).product {}
 
   beforeEach(async () => {
-    ({ requester } = await prepareE2E(
-      {
-        controllers: [TestController],
-        providers: [TestService],
-      },
-      [Book, Page]
-    ));
+    ({ requester } = await prepareE2E({
+      controllers: [TestController],
+      providers: [TestService],
+    }));
   });
 
   describe("/ (GET)", () => {

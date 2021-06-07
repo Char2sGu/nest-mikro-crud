@@ -1,19 +1,20 @@
 import {
   BaseEntity,
   Entity,
-  ManyToOne,
+  OneToOne,
   PrimaryKey,
   Property,
 } from "@mikro-orm/core";
 import { Book } from "./book.entity";
 
 @Entity()
-export class Page extends BaseEntity<Page, "id"> {
+export class Summary extends BaseEntity<Summary, "id"> {
   @PrimaryKey()
   id!: number;
 
-  @ManyToOne({
+  @OneToOne({
     entity: () => Book,
+    mappedBy: (book) => book.summary,
   })
   book!: Book;
 

@@ -18,7 +18,7 @@ import { QueryDto } from "./query-dto.interface";
 const deduplicate = (arr: unknown[]) => [...new Set(arr)];
 
 export class QueryDtoFactory<
-  Entity extends AnyEntity = any
+  Entity extends AnyEntity<Entity> = any
 > extends AbstractFactory<QueryDto<Entity>> {
   readonly options;
   readonly product;

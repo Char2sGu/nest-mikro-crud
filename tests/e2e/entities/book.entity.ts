@@ -1,5 +1,4 @@
 import {
-  BaseEntity,
   Collection,
   Entity,
   OneToMany,
@@ -11,7 +10,7 @@ import { Page } from "./page.entity";
 import { Summary } from "./summary.entity";
 
 @Entity()
-export class Book extends BaseEntity<Book, "id"> {
+export class Book {
   @PrimaryKey()
   id!: number;
 

@@ -2,7 +2,7 @@ import { AnyEntity } from "@mikro-orm/core";
 import { Type } from "@nestjs/common";
 
 export interface MikroCrudServiceFactoryOptions<
-  Entity extends AnyEntity = any,
+  Entity extends AnyEntity<Entity> = any,
   CreateDto = Entity,
   UpdateDto = CreateDto
 > {

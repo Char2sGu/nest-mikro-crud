@@ -1,14 +1,8 @@
-import {
-  BaseEntity,
-  Entity,
-  OneToOne,
-  PrimaryKey,
-  Property,
-} from "@mikro-orm/core";
+import { Entity, OneToOne, PrimaryKey, Property } from "@mikro-orm/core";
 import { Book } from "./book.entity";
 
 @Entity()
-export class Summary extends BaseEntity<Summary, "id"> {
+export class Summary {
   @PrimaryKey()
   id!: number;
 

@@ -5,6 +5,7 @@ import {
   QueryOrderMap,
   Reference,
   ReferenceType,
+  wrap,
 } from "@mikro-orm/core";
 import {
   AnyEntity,
@@ -22,7 +23,7 @@ import { MikroCrudServiceFactoryOptions } from "./mikro-crud-service-factory-opt
 import { MikroCrudService } from "./mikro-crud-service.interface";
 
 export class MikroCrudServiceFactory<
-  Entity extends AnyEntity = any,
+  Entity extends AnyEntity<Entity> = any,
   CreateDto = Entity,
   UpdateDto = CreateDto
 > extends AbstractFactory<MikroCrudService<Entity, CreateDto, UpdateDto>> {
@@ -116,16 +117,14 @@ export class MikroCrudServiceFactory<
       }: Parameters<Interface["replace"]>[0]): ReturnType<
         Interface["replace"]
       > {
-        entity.assign(data, { merge: true });
-        return entity;
+        return wrap(entity).assign(data, { merge: true });
       }
 
       async update({
         entity,
         data,
       }: Parameters<Interface["update"]>[0]): ReturnType<Interface["update"]> {
-        entity.assign(data, { merge: true });
-        return entity;
+        return wrap(entity).assign(data, { merge: true });
       }
 
       async destroy({
@@ -156,14 +155,14 @@ export class MikroCrudServiceFactory<
       }: Parameters<Interface["markRelationsUnpopulated"]>[0]): ReturnType<
         Interface["markRelationsUnpopulated"]
       > {
-        this.entityMeta.relations.forEach(({ name }) =>
-          (
-            entity[name as keyof typeof entity] as unknown as
-              | Reference<AnyEntity>
-              | Collection<AnyEntity>
-              | undefined
-          )?.populated(false)
-        );
+        this.entityMeta.relations.forEach(({ name }) => {
+          const value = entity[name as keyof typeof entity];
+          if (!value) return;
+          (value instanceof Reference || value instanceof Collection
+            ? value
+            : wrap(value)
+          ).populated(false);
+        });
         return entity;
       }
 

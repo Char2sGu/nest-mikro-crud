@@ -44,7 +44,7 @@ export class MikroCrudControllerFactory<
     CreateDto,
     UpdateDto
   > = MikroCrudService,
-  Entity extends AnyEntity = ServiceGenerics<Service>["Entity"],
+  Entity extends AnyEntity<Entity> = ServiceGenerics<Service>["Entity"],
   CreateDto = ServiceGenerics<Service>["CreateDto"],
   UpdateDto = ServiceGenerics<Service>["UpdateDto"],
   LookupField extends LookupableField<Entity> = LookupableField<Entity>

@@ -13,7 +13,7 @@ import { ActionName, FilterQueryParam, OrderQueryParam } from "../types";
  * this Service to achieve the functions he wants.
  */
 export interface MikroCrudService<
-  Entity extends AnyEntity = any,
+  Entity extends AnyEntity<Entity> = any,
   CreateDto = Entity,
   UpdateDto = CreateDto
 > {

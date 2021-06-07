@@ -5,7 +5,7 @@ import { MikroCrudService } from "../services";
 import { ActionName, LookupableField, PkType } from "../types";
 
 export interface MikroCrudControllerFactoryOptions<
-  Entity extends AnyEntity = any,
+  Entity extends AnyEntity<Entity> = any,
   CreateDto = Entity,
   UpdateDto = CreateDto,
   LookupField extends LookupableField<Entity> = LookupableField<Entity>,

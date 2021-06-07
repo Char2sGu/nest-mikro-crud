@@ -168,6 +168,7 @@ export class MikroCrudControllerFactory<
               await this.service.markRelationsUnpopulated({ entity })
           )
         );
+        await this.service.save();
         return { total, results };
       }
 
@@ -177,7 +178,9 @@ export class MikroCrudControllerFactory<
         const action: ActionName = "create";
         await this.service.checkPermission({ action, user });
         const entity = await this.service.create({ data, user });
-        return await this.service.markRelationsUnpopulated({ entity });
+        await this.service.markRelationsUnpopulated({ entity });
+        await this.service.save();
+        return entity;
       }
 
       async retrieve(
@@ -188,7 +191,9 @@ export class MikroCrudControllerFactory<
         const conditions = { [lookupField]: lookup };
         const entity = await this.service.retrieve({ conditions, user });
         await this.service.checkPermission({ action, entity, user });
-        return await this.service.markRelationsUnpopulated({ entity });
+        await this.service.markRelationsUnpopulated({ entity });
+        await this.service.save();
+        return entity;
       }
 
       async replace(
@@ -200,7 +205,9 @@ export class MikroCrudControllerFactory<
         const entity = await this.service.retrieve({ conditions, user });
         await this.service.checkPermission({ action, entity, user });
         await this.service.replace({ entity, data, user });
-        return await this.service.markRelationsUnpopulated({ entity });
+        await this.service.markRelationsUnpopulated({ entity });
+        await this.service.save();
+        return entity;
       }
 
       async update(
@@ -212,7 +219,9 @@ export class MikroCrudControllerFactory<
         const entity = await this.service.retrieve({ conditions, user });
         await this.service.checkPermission({ action, entity, user });
         await this.service.update({ entity, data, user });
-        return await this.service.markRelationsUnpopulated({ entity });
+        await this.service.markRelationsUnpopulated({ entity });
+        await this.service.save();
+        return entity;
       }
 
       async destroy(
@@ -224,6 +233,7 @@ export class MikroCrudControllerFactory<
         const entity = await this.service.retrieve({ conditions, user });
         await this.service.checkPermission({ action, entity, user });
         await this.service.destroy({ entity, user });
+        await this.service.save();
         return;
       }
     };

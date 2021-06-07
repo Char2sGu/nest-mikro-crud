@@ -96,7 +96,6 @@ export class MikroCrudServiceFactory<
       }: Parameters<Interface["create"]>[0]): ReturnType<Interface["create"]> {
         const entity = this.repository.create(data);
         this.repository.persist(entity);
-        await this.repository.flush();
         return entity;
       }
 
@@ -118,7 +117,6 @@ export class MikroCrudServiceFactory<
         Interface["replace"]
       > {
         entity.assign(data, { merge: true });
-        await this.repository.flush();
         return entity;
       }
 
@@ -127,13 +125,20 @@ export class MikroCrudServiceFactory<
         data,
       }: Parameters<Interface["update"]>[0]): ReturnType<Interface["update"]> {
         entity.assign(data, { merge: true });
-        await this.repository.flush();
         return entity;
       }
 
-      async destroy({ entity }: Parameters<Interface["destroy"]>[0]) {
-        await this.repository.remove(entity).flush();
+      async destroy({
+        entity,
+      }: Parameters<Interface["destroy"]>[0]): ReturnType<
+        Interface["destroy"]
+      > {
+        this.repository.remove(entity);
         return entity;
+      }
+
+      async save(): ReturnType<Interface["save"]> {
+        await this.repository.flush();
       }
 
       async checkPermission({

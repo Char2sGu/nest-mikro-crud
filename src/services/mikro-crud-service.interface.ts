@@ -50,6 +50,8 @@ export interface MikroCrudService<
 
   destroy(args: { entity: Entity; user: any }): Promise<Entity>;
 
+  save(): Promise<void>;
+
   /**
    * When the action is _list_ or _create_, it will be called once with
    * `{ action: "<the-action-name>" }` before performing the action.

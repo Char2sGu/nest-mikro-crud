@@ -40,11 +40,11 @@ export class BooksService extends new MikroCrudServiceFactory({
 }).product {}
 ```
 
+- `Collection` fields will always be populated
+- Primary keys are ensured to be in the JSON response instead of actual data by marking all the relation fields as unpopulated.
+- _Replace_ actions use the same DTO class as _Create_ actions.
+
 You find that few options are passed to the factory, right? Actually, these options passed to the factory are only the parts necessary to create the class. Most of the configurable things are implemented by overriding its composable methods.
-
-`Collection` fields will always be populated. No matter what relation fields you populated in the overridden methods, the response will ensure that only primary keys is outputted.
-
-_Replace_ actions use the same DTO class as _Create_ actions.
 
 ## Creating the Controller
 
@@ -199,7 +199,7 @@ class UsersService /* extends... */ {
 
 ## Additional Operations in Database CRUD
 
-There are six CRUD methods in the service: `.list()`, `.create()`, `.retrieve()`, `.replace()`, `.update()`, `.destroy()`. Each routing method in the controller corresponds to a CRUD method? **Incorrect**! As mentioned before, the methods in the service are **composable**, so each CRUD method is only responsible for its own CRUD operation. In the controller, each routing method may call **multiple** CRUD methods.
+There are seven CRUD methods in the service: `.list()`, `.create()`, `.retrieve()`, `.replace()`, `.update()`, `.destroy()` and `.save()`. As mentioned before, the methods in the service are **composable**, so each CRUD method is only responsible for its own CRUD operation. In the controller, each routing method will call **multiple** CRUD methods. `.save()` will be always called at the end of every routing methods to flush the repository.
 
 So when you would like to create multiple related entities when creating an entity, you could override `.create()`.  
 Correspondingly, you could override `.update()` if you want to update related entities when updating an entity.

@@ -1,11 +1,11 @@
-import { ValueOf } from "./value-of.type";
 import { ItemTypeIfIterable } from "./item-type-if-iterable.type";
+import { ValueOf } from "./value-of.type";
 
 /**
  * Extract all the keys that meet the condition in the target and its sub-objects and
  * connect the keys using the separator.
  *
- * @param Root - **DO NOT** specify this type!!! Used to prevent circular references.
+ * @param Visited - **DO NOT** specify this type!!! Used to prevent circular references.
  *
  * @example
  * type ObjType = {
@@ -23,7 +23,7 @@ export type ExtractPath<
   Condition,
   Exclusion = never,
   Separator extends string = ".",
-  Root = Target
+  Visited = Target
 > = ValueOf<
   {
     [K in string & keyof Target]:
@@ -32,7 +32,7 @@ export type ExtractPath<
           : ItemTypeIfIterable<Target[K]> extends Condition
           ? K
           : never)
-      | (ItemTypeIfIterable<Target[K]> extends Root
+      | (ItemTypeIfIterable<Target[K]> extends Visited
           ? never
           : // @ts-expect-error - this IS NOT an infinite loop!!!!
             `${K}${Separator}${ExtractPath<
@@ -40,7 +40,7 @@ export type ExtractPath<
               Condition,
               Exclusion,
               Separator,
-              Root
+              Visited | ItemTypeIfIterable<Target[K]>
             >}`);
   }
 >;

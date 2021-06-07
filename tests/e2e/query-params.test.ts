@@ -163,7 +163,10 @@ describe("Query Params", () => {
       actions: ["list"],
       lookup: { field: "id" },
       queryDtoClass: new QueryDtoFactory<Book>({
-        filter: { in: ["id", "name"], default: ["name|eq:parent3"] },
+        filter: {
+          in: ["id", "name", "summary.text"],
+          default: ["name|eq:parent3"],
+        },
       }).product,
     }).product {}
 
@@ -173,29 +176,30 @@ describe("Query Params", () => {
 
     describe("/ (GET)", () => {
       describe.each`
-        filter                         | count | firstId
-        ${undefined}                   | ${1}  | ${3}
-        ${["id|eq:"]}                  | ${0}  | ${undefined}
-        ${["id|eq:2"]}                 | ${1}  | ${2}
-        ${["id|gt:2"]}                 | ${3}  | ${3}
-        ${["name|gt:parent2"]}         | ${3}  | ${3}
-        ${["id|gte:2"]}                | ${4}  | ${2}
-        ${["name|gte:parent2"]}        | ${4}  | ${2}
-        ${["name|in:"]}                | ${0}  | ${undefined}
-        ${["name|in:parent2,parent3"]} | ${2}  | ${2}
-        ${["id|lt:3"]}                 | ${2}  | ${1}
-        ${["name|lt:parent3"]}         | ${2}  | ${1}
-        ${["id|lte:3"]}                | ${3}  | ${1}
-        ${["name|lte:parent3"]}        | ${3}  | ${1}
-        ${["id|ne:"]}                  | ${5}  | ${1}
-        ${["id|ne:1"]}                 | ${4}  | ${2}
-        ${["id|nin:1,2"]}              | ${3}  | ${3}
-        ${["name|like:parent%"]}       | ${5}  | ${1}
-        ${["name|like:%rent5"]}        | ${1}  | ${5}
-        ${["name|like:%rent5"]}        | ${1}  | ${5}
-        ${["name|isnull:"]}            | ${0}  | ${undefined}
-        ${["name|notnull:"]}           | ${5}  | ${1}
-        ${["id|gt:1", "id|lt:3"]}      | ${1}  | ${2}
+        filter                          | count | firstId
+        ${undefined}                    | ${1}  | ${3}
+        ${["id|eq:"]}                   | ${0}  | ${undefined}
+        ${["id|eq:2"]}                  | ${1}  | ${2}
+        ${["id|gt:2"]}                  | ${3}  | ${3}
+        ${["name|gt:parent2"]}          | ${3}  | ${3}
+        ${["id|gte:2"]}                 | ${4}  | ${2}
+        ${["name|gte:parent2"]}         | ${4}  | ${2}
+        ${["name|in:"]}                 | ${0}  | ${undefined}
+        ${["name|in:parent2,parent3"]}  | ${2}  | ${2}
+        ${["id|lt:3"]}                  | ${2}  | ${1}
+        ${["name|lt:parent3"]}          | ${2}  | ${1}
+        ${["id|lte:3"]}                 | ${3}  | ${1}
+        ${["name|lte:parent3"]}         | ${3}  | ${1}
+        ${["id|ne:"]}                   | ${5}  | ${1}
+        ${["id|ne:1"]}                  | ${4}  | ${2}
+        ${["id|nin:1,2"]}               | ${3}  | ${3}
+        ${["name|like:parent%"]}        | ${5}  | ${1}
+        ${["name|like:%rent5"]}         | ${1}  | ${5}
+        ${["name|like:%rent5"]}         | ${1}  | ${5}
+        ${["name|isnull:"]}             | ${0}  | ${undefined}
+        ${["name|notnull:"]}            | ${5}  | ${1}
+        ${["id|gt:1", "id|lt:3"]}       | ${1}  | ${2}
+        ${["summary.text|eq:summary1"]} | ${1}  | ${1}
       `("Legal Filter: $filter", ({ filter, count, firstId }) => {
         beforeEach(async () => {
           response = await requester.get("/").query({ "filter[]": filter });

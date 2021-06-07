@@ -1,5 +1,6 @@
-import { NonFunctionPropertyNames } from "@mikro-orm/core/typings";
+import { NonFunctionPropertyNames, Scalar } from "@mikro-orm/core/typings";
 import { FilterOperator } from "./filter-operator.type";
+import { ScalarPath } from "./scalar-path.type";
 
-export type FilterQueryParam<Entity> = `${string &
-  NonFunctionPropertyNames<Entity>}|${FilterOperator}:${string}`;
+export type FilterQueryParam<Entity> =
+  `${ScalarPath<Entity>}|${FilterOperator}:${string}`;

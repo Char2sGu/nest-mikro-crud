@@ -15,7 +15,7 @@ export interface QueryDtoFactoryOptions<Entity> {
     default?: OrderQueryParam<Entity>[];
   };
   filter?: {
-    in: NonFunctionPropertyNames<Entity>[];
+    in: ScalarPath<Entity>[];
     default?: FilterQueryParam<Entity>[];
   };
 }

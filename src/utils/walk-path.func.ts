@@ -1,7 +1,7 @@
 export function walkPath(
   obj: Record<string, unknown>,
   path: string,
-  callback: (obj: Record<string, any>, key: string) => unknown
+  callback?: (obj: Record<string, any>, key: string) => unknown
 ) {
   /**The keys to approach the target object */
   const keys = path.split(".");
@@ -10,6 +10,6 @@ export function walkPath(
   // approach the target object
   keys.forEach((key) => (obj = (obj[key] as typeof obj) ?? (obj[key] = {})));
 
-  callback(obj, key);
+  if (callback) callback(obj, key);
   return obj[key];
 }

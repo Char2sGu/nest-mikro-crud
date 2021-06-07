@@ -201,9 +201,9 @@ export class MikroCrudServiceFactory<
         > = {};
 
         rawFilters.forEach(async (raw) => {
-          const [, field, rawOp, value] = /^(.*)\|(.+):(.*)$/.exec(raw)! as [
+          const [, path, rawOp, value] = /^(.*)\|(.+):(.*)$/.exec(raw)! as [
             string,
-            NonFunctionPropertyNames<Entity>,
+            ScalarPath<Entity>,
             FilterOperator,
             string
           ] &
@@ -212,8 +212,11 @@ export class MikroCrudServiceFactory<
           const parseMultiValues = () =>
             value.split(/(?<!\\),/).map((v) => v.replace("\\,", ","));
 
-          const fieldConditions: OperatorMap<unknown> =
-            conditions[field] ?? (conditions[field] = {});
+          const fieldConditions = walkPath(
+            conditions,
+            path,
+            (obj, key) => (obj[key] = obj[key] ?? {})
+          ) as OperatorMap<unknown>;
 
           if (rawOp == "isnull") fieldConditions.$eq = null;
           else if (rawOp == "notnull") fieldConditions.$ne = null;

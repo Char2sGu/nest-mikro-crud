@@ -61,17 +61,13 @@ export interface MikroCrudService<
     user: any;
   }): Promise<void>;
 
-  // ------------------------------------------------------------------------------------------
-
-  // getCollectionFieldNames(args: {
-  //   entity: Entity;
-  // }): Promise<EntityField<Entity>[]>;
-
   /**
    * Mark the relation fields of the entity unpopulated so that they will be serialized to
    * a primary key or an array of primary keys instead the actual data.
    */
   markRelationsUnpopulated(args: { entity: Entity }): Promise<Entity>;
+
+  // ------------------------------------------------------------------------------------------
 
   /**
    * Decide which MikroORM filters to enable and what arguments to pass to the filters.

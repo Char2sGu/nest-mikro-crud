@@ -164,7 +164,8 @@ export class MikroCrudControllerFactory<
         });
         await Promise.all(
           results.map(
-            async (entity) => await this.service.initCollections({ entity })
+            async (entity) =>
+              await this.service.markRelationsUnpopulated({ entity })
           )
         );
         return { total, results };
@@ -176,7 +177,7 @@ export class MikroCrudControllerFactory<
         const action: ActionName = "create";
         await this.service.checkPermission({ action, user });
         const entity = await this.service.create({ data, user });
-        return await this.service.initCollections({ entity });
+        return await this.service.markRelationsUnpopulated({ entity });
       }
 
       async retrieve(
@@ -187,7 +188,7 @@ export class MikroCrudControllerFactory<
         const conditions = getLookupCondition(lookup);
         const entity = await this.service.retrieve({ conditions, user });
         await this.service.checkPermission({ action, entity, user });
-        return await this.service.initCollections({ entity });
+        return await this.service.markRelationsUnpopulated({ entity });
       }
 
       async replace(
@@ -199,7 +200,7 @@ export class MikroCrudControllerFactory<
         const entity = await this.service.retrieve({ conditions, user });
         await this.service.checkPermission({ action, entity, user });
         await this.service.replace({ entity, data, user });
-        return await this.service.initCollections({ entity });
+        return await this.service.markRelationsUnpopulated({ entity });
       }
 
       async update(
@@ -211,7 +212,7 @@ export class MikroCrudControllerFactory<
         const entity = await this.service.retrieve({ conditions, user });
         await this.service.checkPermission({ action, entity, user });
         await this.service.update({ entity, data, user });
-        return await this.service.initCollections({ entity });
+        return await this.service.markRelationsUnpopulated({ entity });
       }
 
       async destroy(

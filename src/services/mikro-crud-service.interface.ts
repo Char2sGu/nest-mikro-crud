@@ -1,6 +1,11 @@
 import { BaseEntity, EntityRepository, FindOptions } from "@mikro-orm/core";
-import { FilterQuery } from "@mikro-orm/core/typings";
-import { ActionName, FilterQueryParam, OrderQueryParam } from "../types";
+import { EntityMetadata, FilterQuery } from "@mikro-orm/core/typings";
+import {
+  ActionName,
+  EntityField,
+  FilterQueryParam,
+  OrderQueryParam,
+} from "../types";
 
 export interface MikroCrudService<
   Entity extends BaseEntity<any, any> = any,
@@ -8,6 +13,8 @@ export interface MikroCrudService<
   UpdateDto = CreateDto
 > {
   readonly repository: EntityRepository<Entity>;
+  readonly entityMeta: EntityMetadata;
+  readonly collectionFields: EntityField<Entity>[];
 
   // ------------------------------------------------------------------------------------------
   // Entry Methods
@@ -56,11 +63,15 @@ export interface MikroCrudService<
 
   // ------------------------------------------------------------------------------------------
 
+  // getCollectionFieldNames(args: {
+  //   entity: Entity;
+  // }): Promise<EntityField<Entity>[]>;
+
   /**
-   * Init all the collections of the entity.
-   * @param args
+   * Mark the relation fields of the entity unpopulated so that they will be serialized to
+   * a primary key or an array of primary keys instead the actual data.
    */
-  initCollections(args: { entity: Entity }): Promise<Entity>;
+  markRelationsUnpopulated(args: { entity: Entity }): Promise<Entity>;
 
   /**
    * Decide which MikroORM filters to enable and what arguments to pass to the filters.

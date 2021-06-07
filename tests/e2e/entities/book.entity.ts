@@ -19,6 +19,6 @@ export class Book extends BaseEntity<Book, "id"> {
   @Property({ hidden: true })
   price!: number;
 
-  @OneToMany({ entity: () => Page, mappedBy: (child) => child.book })
+  @OneToMany({ entity: () => Page, mappedBy: (page) => page.book })
   pages = new Collection<Page>(this);
 }

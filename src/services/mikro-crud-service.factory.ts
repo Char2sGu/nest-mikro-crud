@@ -3,8 +3,10 @@ import {
   Collection,
   FilterQuery,
   FindOptions,
+  Reference,
+  ReferenceType,
 } from "@mikro-orm/core";
-import { EntityMetadata, OperatorMap } from "@mikro-orm/core/typings";
+import { AnyEntity, OperatorMap } from "@mikro-orm/core/typings";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { NotFoundException } from "@nestjs/common";
 import { AbstractFactory } from "../abstract.factory";
@@ -41,9 +43,25 @@ export class MikroCrudServiceFactory<
   }
 
   protected createRawClass() {
+    const { entityClass } = this.options;
+
     type Interface = MikroCrudService<Entity, CreateDto, UpdateDto>;
     return class MikroCrudService implements Interface {
       readonly repository!: Interface["repository"];
+      readonly entityMeta: Interface["entityMeta"];
+      readonly collectionFields: Interface["collectionFields"];
+
+      constructor() {
+        this.entityMeta = (new entityClass() as AnyEntity).__helper!.__meta;
+
+        this.collectionFields = this.entityMeta.relations
+          .filter(
+            ({ reference }) =>
+              reference == ReferenceType.ONE_TO_MANY ||
+              reference == ReferenceType.MANY_TO_MANY
+          )
+          .map(({ name }) => name as EntityField<Entity>);
+      }
 
       async list({
         conditions = {},
@@ -61,6 +79,7 @@ export class MikroCrudServiceFactory<
             offset,
             orderBy: await this.parseOrderQueryParams({ order }),
             filters: await this.decideEntityFilters({ user }),
+            populate: this.collectionFields,
           }
         );
         return { total, results };
@@ -82,6 +101,7 @@ export class MikroCrudServiceFactory<
         return await this.repository.findOneOrFail(conditions, {
           filters: await this.decideEntityFilters({ user }),
           failHandler: () => new NotFoundException(),
+          populate: this.collectionFields,
         });
       }
 
@@ -120,22 +140,18 @@ export class MikroCrudServiceFactory<
         return;
       }
 
-      async initCollections({
+      async markRelationsUnpopulated({
         entity,
-      }: Parameters<Interface["initCollections"]>[0]): ReturnType<
-        Interface["initCollections"]
+      }: Parameters<Interface["markRelationsUnpopulated"]>[0]): ReturnType<
+        Interface["markRelationsUnpopulated"]
       > {
-        const { relations } = entity[
-          "__meta" as keyof typeof entity
-        ] as unknown as EntityMetadata;
-
-        await Promise.all(
-          relations.map(async ({ name }) => {
-            const item = entity[name as EntityField<Entity>];
-            if (item instanceof Collection) await item.init();
-          })
+        this.entityMeta.relations.forEach(({ name }) =>
+          (
+            entity[name as keyof typeof entity] as unknown as
+              | Reference<AnyEntity>
+              | Collection<AnyEntity>
+          ).populated(false)
         );
-
         return entity;
       }
 

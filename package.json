@@ -1,7 +1,7 @@
 {
   "name": "nest-mikro-crud",
   "version": "0.0.0",
-  "description": "Flexible RESTful CRUD API builder",
+  "description": "Easily build RESTful CRUD APIs for production.",
   "main": "lib/index.js",
   "scripts": {
     "test": "jest",

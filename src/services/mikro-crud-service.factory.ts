@@ -150,7 +150,8 @@ export class MikroCrudServiceFactory<
             entity[name as keyof typeof entity] as unknown as
               | Reference<AnyEntity>
               | Collection<AnyEntity>
-          ).populated(false)
+              | undefined
+          )?.populated(false)
         );
         return entity;
       }

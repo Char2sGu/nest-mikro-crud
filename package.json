@@ -1,6 +1,6 @@
 {
   "name": "nest-restful",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Flexible RESTful CRUD API builder",
   "main": "lib/index.js",
   "scripts": {

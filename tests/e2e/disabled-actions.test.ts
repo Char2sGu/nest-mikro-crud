@@ -2,7 +2,7 @@ import { Controller, Injectable } from "@nestjs/common";
 import { MikroCrudControllerFactory, MikroCrudServiceFactory } from "src";
 import supertest, { Response } from "supertest";
 import { prepareE2E } from "../utils";
-import { CreateBookDto, UpdateParentEntityDto } from "./dtos";
+import { CreateBookDto, UpdateBookDto } from "./dtos";
 import { Book } from "./entities";
 
 describe("Disabled Actions", () => {
@@ -14,7 +14,7 @@ describe("Disabled Actions", () => {
     entityClass: Book,
     dtoClasses: {
       create: CreateBookDto,
-      update: UpdateParentEntityDto,
+      update: UpdateBookDto,
     },
   }).product {}
 

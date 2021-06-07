@@ -11,7 +11,7 @@ import { TestingModule } from "@nestjs/testing";
 import { MikroCrudControllerFactory, MikroCrudServiceFactory } from "src";
 import supertest, { Response } from "supertest";
 import { prepareE2E } from "tests/utils";
-import { CreateBookDto, UpdateParentEntityDto } from "./dtos";
+import { CreateBookDto, UpdateBookDto } from "./dtos";
 
 @Filter({ name: "crud", cond: { id: 1 } })
 @Entity()
@@ -30,7 +30,7 @@ describe("Entity Filter", () => {
     entityClass: Filtered,
     dtoClasses: {
       create: CreateBookDto,
-      update: UpdateParentEntityDto,
+      update: UpdateBookDto,
     },
   }).product {}
 

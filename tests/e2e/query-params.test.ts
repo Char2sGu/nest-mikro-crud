@@ -9,7 +9,7 @@ import {
 } from "src";
 import supertest, { Response } from "supertest";
 import { prepareE2E } from "tests/utils";
-import { CreateBookDto, UpdateParentEntityDto } from "./dtos";
+import { CreateBookDto, UpdateBookDto } from "./dtos";
 import { Book } from "./entities";
 
 describe("Query Params", () => {
@@ -43,7 +43,7 @@ describe("Query Params", () => {
     entityClass: Book,
     dtoClasses: {
       create: CreateBookDto,
-      update: UpdateParentEntityDto,
+      update: UpdateBookDto,
     },
   }).product {}
 

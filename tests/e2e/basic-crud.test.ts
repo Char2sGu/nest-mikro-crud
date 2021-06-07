@@ -5,7 +5,7 @@ import { TestingModule } from "@nestjs/testing";
 import { MikroCrudControllerFactory, MikroCrudServiceFactory } from "src";
 import supertest, { Response } from "supertest";
 import { prepareE2E } from "../utils";
-import { CreateBookDto, UpdateParentEntityDto } from "./dtos";
+import { CreateBookDto, UpdateBookDto } from "./dtos";
 import { Book, Page, Summary } from "./entities";
 
 describe("Basic CRUD", () => {
@@ -13,7 +13,7 @@ describe("Basic CRUD", () => {
   let requester: supertest.SuperTest<supertest.Test>;
   let response: Response;
   let createBookDto: CreateBookDto;
-  let updateBookDto: UpdateParentEntityDto;
+  let updateBookDto: UpdateBookDto;
   let entity: Book;
 
   function assertEntityFieldTypes({ entity }: { entity: Book }) {
@@ -32,7 +32,7 @@ describe("Basic CRUD", () => {
     entityClass: Book,
     dtoClasses: {
       create: CreateBookDto,
-      update: UpdateParentEntityDto,
+      update: UpdateBookDto,
     },
   }).product {}
 

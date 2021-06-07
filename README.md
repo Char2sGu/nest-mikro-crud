@@ -4,7 +4,7 @@
 
 # Features
 
-- Super strongly typed (generic types & template literal types)
+- [**Super strong template literal types and generic types**](#creating-the-controller)
 - Common query parameters implemented (limit, offset, order, filter)
 - Methods are designed to be extensible and composable
 - Production security problems considered
@@ -44,7 +44,15 @@ You find that few options are passed to the factory, right? Actually, these opti
 
 `Collection` fields will always be populated. No matter what relation fields you populated in the overridden methods, the response will ensure that only primary keys is outputted.
 
+_Replace_ actions use the same DTO class as _Create_ actions.
+
 ## Creating the Controller
+
+---
+
+There are some wonderful types which are able to get **literal types** of **all** the nested circular relation fields' paths and scalar fields' paths like `"owner.books.author"`, you can feel it in the `queryDtoClass.order` and `queryDtoClass.filter` options.
+
+---
 
 ```ts
 @Controller("api/books")
@@ -77,11 +85,13 @@ export class BooksController extends new MikroCrudControllerFactory<BooksService
       offset: { max: 100000 },
       order: {
         // can be either a path or a path + order.
+        // literal types completely supported
         in: ["name", "price", "writer.name:asc"],
         default: ["price:desc"],
       },
       filter: {
         // allowed fields
+        // literal types completely supported
         in: ["name", "price", "writer.name"],
         default: ["price|gte:50", "price|lte:100"],
       },
@@ -93,7 +103,7 @@ export class BooksController extends new MikroCrudControllerFactory<BooksService
      */
     requestUser: { type: User, decorators: [RequestUser()] },
     /**
-     * custom options to pass to the validation pipe
+     * Customize the options to pass to the validation pipe
      * `transform` and `transformOptions.exposeDefaultValues` will be forced to be `true`
      */
     validationPipeOptions: {},

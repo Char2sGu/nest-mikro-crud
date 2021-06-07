@@ -2,7 +2,7 @@
 
 Easily build RESTful CRUD APIs
 
-**NOTE**: v0.x are unstable versions, which means there may be breaking changes even though only the minor version grows. See the commit history for detailed changes.
+**NOTE**: This package has been renamed to `nest-mikro-orm` which replaced TypeORM with MikroORM.
 
 # Features
 
@@ -25,7 +25,6 @@ class UsersService extends new RestServiceFactory({
     create: CreateUserDto,
     update: UpdateUserDto,
   },
-  lookupField: "id",
 }).product {}
 ```
 
@@ -34,17 +33,16 @@ class UsersService extends new RestServiceFactory({
 class UsersController extends new RestControllerFactory<UsersService>({
   restServiceClass: UsersService,
   actions: ["list", "create", "retrieve", "replace", "update", "destroy"],
-  lookupParam: "userId", // default: "lookup"
+  lookup: { field: "id" },
   queryDtoClass: new QueryDtoFactory<User>({
     limit: { default: 50, max: 200 },
     offset: { max: 10000 },
     order: {
       in: ["id", "name", "age"],
       default: ["id:desc"],
-      mandatory: ["name:asc", "age:asc"],
     },
     expand: { in: ["department", "department.manager"] },
-    filter: { in: ["id", "name", "age"], mandatory: ["age|gte:18"] },
+    filter: { in: ["id", "name", "age"] },
   }).product,
 }).product {}
 ```
@@ -60,58 +58,20 @@ class UsersController extends new RestControllerFactory<UsersService>({
 
 | Filter Query          | Find Operator               |
 | --------------------- | --------------------------- |
-| name\|contains:QCX    | `Like("%QCX%")`             |
-| name\|endsWith:X      | `Like("%X")`                |
 | name\|eq:QCX          | `Equal("QCX")`              |
 | age\|gt:16            | `MoreThan(16)`              |
 | age\|gte:16           | `MoreThanOrEqual(16)`       |
-| name\|icontains:QCX   | `ILike("%QCX%")`            |
-| name\|iendswith:X     | `ILike("%X")`               |
 | name\|in:Q,C,X,\\,\\, | `In(["Q", "C", "X", ",,"])` |
-| name\|isnull:true     | `IsNull()`                  |
-| name\|isnull:false    | `Not(IsNull())`             |
-| name\|istartswith:Q   | `ILike("Q%")`               |
 | age\|lt:60            | `LessThan(60)`              |
 | age\|lte:60           | `LessThanOrEqual(60)`       |
 | name\|ne:QCX          | `Not("QCX")`                |
-| name\|startswith:Q    | `Like("Q%")`                |
+| name\|nin:Q,C,X       | `Not(In(["Q", "C", "X"]))`  |
+| name\|like:%C%        | `Like("%C%")`               |
+| name\|ilike:%C%       | `ILike("%C%")`              |
+| name\|isnull:         | `IsNull()`                  |
+| name\|notnull:        | `Not(IsNull())`             |
 
-## Forcing Advanced Query Conditions
-
-You can force conditions by pass the mandatory value of `filter` param when creating the query DTO, but it is in the controller level, which means the conditions will not work when calling the service's method outside the controller, and is not possible to force complex conditions.
-
-```ts
-class UsersService /*extends ...*/ {
-  async finalizeQueryConditions({
-    conditions,
-  }: {
-    conditions: FindConditions<User>;
-  }) {
-    return [
-      { ...conditions, isActive: true },
-      { ...conditions, isActive: false, persist: true },
-    ];
-  }
-}
-```
-
-To force conditions based on the request user, see [Context Data](#context-data).
-
-## Context Data
-
-Context Data provides a way to get anything you want through [custom decorators](https://docs.nestjs.com/custom-decorators).
-
-```ts
-class UsersController extends new RestControllerFactory({
-  // ...
-  contextOptions: {
-    user: { type: User, decorators: [ReqUser()] },
-  },
-  // ...
-}).product {}
-```
-
-`ReqUser()` here is a custom decorator which is able to get the user from the request. This means that `user` will be always available in each method of the service.
+## Forcing Query Conditions
 
 ```ts
 class UsersService /*extends ...*/ {
@@ -122,12 +82,35 @@ class UsersService /*extends ...*/ {
     conditions: FindConditions<User>;
     user: User;
   }) {
-    return [
-      { ...conditions, boss: user, isActive: true },
-      { ...conditions, boss: user, isActive: false, persist: true },
-    ];
+    return conditions.map((conditions) => ({
+      ...conditions,
+      isActive: true,
+      owner: user,
+    }));
   }
 }
+```
+
+## Forcing Orders
+
+```ts
+class UsersService /* extends ... */ {
+  async parseOrders(args: any) {
+    return { ...(await super.parseOrders(args)), age: "ASC" };
+  }
+}
+```
+
+## Custom Request User
+
+By default, the request user will be picked from `request.user` using a [custom decorator](https://docs.nestjs.com/custom-decorators), and the metadata type of the user is `Object`. This behavior can be configured by specifying by `requestUser` option.
+
+```ts
+class UsersController extends new RestControllerFactory({
+  // ...
+  requestUser: { type: User, decorators: [RequestUser()] },
+  // ...
+}).product {}
 ```
 
 ## Additional Decorators
@@ -200,8 +183,6 @@ class UsersController /*extends ...*/ {
 When the action is _list_ or _create_, the service's `.checkPermission()` will be called once with `{ action: "<the-action-name>" }` before performing the action.  
 In other cases it will be called twice, once is with `{ action: "<the-action-name>" }` before loading the target entity and once is with `{ action: "<the-action-name>", entity: <the-target-entity> }` before performing the action.
 
-Here is an example with [Context Data](#context-data):
-
 ```ts
 async checkPermission({
   action,
@@ -269,7 +250,7 @@ class TestService /* extends ... */ {
 
 ## Reusability
 
-It is recommended to create your own factory to reuse wonderful overridings by performing the overriding in the factory's protected `.createRawClass()` method.
+It is recommended to create your own factory to reuse wonderful overridings by overriding the methods in the factory's protected `.createRawClass()` method.
 
 ```ts
 class OwnServiceFactory<
@@ -280,10 +261,14 @@ class OwnServiceFactory<
 > extends RestServiceFactory<Entity, CreateDto, UpdateDto, LookupField> {
   protected createRawClass() {
     return class RestService extends super.createRawClass() {
-      // write your own code here
+      // override methods here
     };
   }
 }
 ```
 
 **DONT** use mixins because metadata may be lost.
+
+---
+
+The service's methods are all designed to be able to be easily overridden to implement better things, you can find more usages by reading the source code.

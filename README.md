@@ -149,10 +149,12 @@ class MyEntity {
 
 By default, the MikroORM's entity filters with name `"crud"` will be enabled.
 
+**NOTE**: `user` parameter is picked from `request.user` by default, and may be `undefined`. You can custom where to pick the user in the controller's `requestUser` [option](#creating-the-controller).
+
 ```ts
 @Filter({
   name: "crud",
-  cond: ({ user }: { user?: User }) => ({ owner: user }),
+  cond: ({ user }: { user: User }) => ({ owner: user }),
 })
 @Entity()
 class Book extends BaseEntity<Book, "id"> {

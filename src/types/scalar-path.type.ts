@@ -1,5 +1,5 @@
 import { Scalar } from "@mikro-orm/core/typings";
-import { ExtractPath } from "src/utils";
+import { ExtractPath } from "../utils";
 
 /**
  * _`String.length` is not excluded because excluding it will cause performance problems_

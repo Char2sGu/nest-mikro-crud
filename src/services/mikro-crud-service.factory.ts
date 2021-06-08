@@ -14,11 +14,10 @@ import {
 } from "@mikro-orm/core/typings";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { NotFoundException } from "@nestjs/common";
-import { ScalarPath } from "src/types";
-import { walkPath } from "src/utils";
 import { AbstractFactory } from "../abstract.factory";
 import { FACTORY_METADATA_KEY } from "../constants";
-import { FilterOperator } from "../types";
+import { FilterOperator, ScalarPath } from "../types";
+import { walkPath } from "../utils";
 import { MikroCrudServiceFactoryOptions } from "./mikro-crud-service-factory-options.interface";
 import { MikroCrudService } from "./mikro-crud-service.interface";
 

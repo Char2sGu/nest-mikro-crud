@@ -240,18 +240,15 @@ In Nest.js, decorators have different behavior when decorating different things.
 
 So we see if a routing method is overridden, it will lose all its metadata and should be applied the decorators again.
 
-For example, to custom the _list_ action's response:
+For example, to override the _Update_ action's routing method:
 
 ```ts
 class UsersController /*extends ...*/ {
   // The url parameter name is based on what you have specified in the controller factory options
   @Patch(":userId") // decorators should be applied again
-  async list(/* ... */) {
-    const data = await super.list(/* ... */);
-    return {
-      ...data,
-      you_could: "put anything here",
-    };
+  // params do not need decorators
+  async update(lookup: number, data: UpdateUserDto, user: User) {
+    // ...
   }
 }
 ```

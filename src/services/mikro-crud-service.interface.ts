@@ -1,6 +1,7 @@
 import { EntityRepository, FindOptions } from "@mikro-orm/core";
 import {
   AnyEntity,
+  EntityData,
   EntityMetadata,
   FilterQuery,
   NonFunctionPropertyNames,
@@ -33,7 +34,10 @@ export interface MikroCrudService<
     user?: any;
   }): Promise<{ total: number; results: Entity[] }>;
 
-  create(args: { data: CreateDto; user?: any }): Promise<Entity>;
+  create(args: {
+    data: CreateDto | EntityData<Entity>;
+    user?: any;
+  }): Promise<Entity>;
 
   retrieve(args: {
     conditions: FilterQuery<Entity>;
@@ -42,13 +46,13 @@ export interface MikroCrudService<
 
   replace(args: {
     entity: Entity;
-    data: CreateDto;
+    data: CreateDto | EntityData<Entity>;
     user?: any;
   }): Promise<Entity>;
 
   update(args: {
     entity: Entity;
-    data: UpdateDto;
+    data: UpdateDto | EntityData<Entity>;
     user?: any;
   }): Promise<Entity>;
 

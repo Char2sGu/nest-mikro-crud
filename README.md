@@ -201,6 +201,8 @@ class UsersService /* extends... */ {
 
 There are seven CRUD methods in the service: `.list()`, `.create()`, `.retrieve()`, `.replace()`, `.update()`, `.destroy()` and `.save()`. As mentioned before, the methods in the service are **composable**, so each CRUD method is only responsible for its own CRUD operation. In the controller, each routing method will call **multiple** CRUD methods. `.save()` will be always called at the end of every routing methods to flush the repository.
 
+**NOTE**: `repository.flush()` will flush changes of all the entities, not only the repository entity.
+
 So when you would like to create multiple related entities when creating an entity, you could override `.create()`.  
 Correspondingly, you could override `.update()` if you want to update related entities when updating an entity.
 

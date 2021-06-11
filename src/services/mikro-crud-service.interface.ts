@@ -1,4 +1,4 @@
-import { EntityRepository, FindOptions } from "@mikro-orm/core";
+import { EntityRepository, FindOneOptions, FindOptions } from "@mikro-orm/core";
 import {
   AnyEntity,
   EntityData,
@@ -25,24 +25,26 @@ export interface MikroCrudService<
   // ------------------------------------------------------------------------------------------
   // Entry Methods
 
-  list(args: {
-    conditions?: FilterQuery<Entity>;
-    limit?: number;
-    offset?: number;
-    order?: OrderQueryParam<Entity>[];
-    filter?: FilterQueryParam<Entity>[];
-    user?: any;
-  }): Promise<{ total: number; results: Entity[] }>;
+  list(
+    args: Pick<FindOptions<Entity>, "limit" | "offset" | "refresh"> & {
+      conditions?: FilterQuery<Entity>;
+      order?: OrderQueryParam<Entity>[];
+      filter?: FilterQueryParam<Entity>[];
+      user?: any;
+    }
+  ): Promise<{ total: number; results: Entity[] }>;
 
   create(args: {
     data: CreateDto | EntityData<Entity>;
     user?: any;
   }): Promise<Entity>;
 
-  retrieve(args: {
-    conditions: FilterQuery<Entity>;
-    user?: any;
-  }): Promise<Entity>;
+  retrieve(
+    args: Pick<FindOneOptions<Entity>, "refresh"> & {
+      conditions: FilterQuery<Entity>;
+      user?: any;
+    }
+  ): Promise<Entity>;
 
   replace(args: {
     entity: Entity;

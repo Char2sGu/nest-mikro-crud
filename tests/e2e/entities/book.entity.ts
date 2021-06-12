@@ -18,6 +18,11 @@ export class Book {
   name!: string;
 
   @Property({
+    nullable: true,
+  })
+  alias!: string | null;
+
+  @Property({
     hidden: true,
   })
   price!: number;

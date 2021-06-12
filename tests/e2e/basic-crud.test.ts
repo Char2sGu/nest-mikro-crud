@@ -17,9 +17,10 @@ describe("Basic CRUD", () => {
   let entity: Book;
 
   function assertEntityFieldTypes({ entity }: { entity: Book }) {
-    const { id, name, price, pages, summary, ...more } = entity;
+    const { id, name, alias, price, pages, summary, ...more } = entity;
     expect(typeof id).toBe("number");
     expect(typeof name).toBe("string");
+    expect(alias).toBe(null);
     expect(price).toBeUndefined();
     expect(pages).toBeInstanceOf(Array);
     [...pages].forEach((page) => expect(typeof page).toBe("number"));

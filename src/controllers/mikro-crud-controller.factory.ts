@@ -177,8 +177,14 @@ export class MikroCrudControllerFactory<
       ): Promise<unknown> {
         const action: ActionName = "create";
         await this.service.checkPermission({ action, user });
-        const entity = await this.service.create({ data, user });
-        await this.service.markRelationsUnpopulated({ entity });
+        let entity = await this.service.create({ data, user });
+        await this.service.save();
+        entity = await this.service.markRelationsUnpopulated({
+          entity: await this.service.retrieve({
+            conditions: entity,
+            refresh: true,
+          }),
+        });
         await this.service.save();
         return entity;
       }
@@ -202,10 +208,16 @@ export class MikroCrudControllerFactory<
         const action: ActionName = "update";
         await this.service.checkPermission({ action, user });
         const conditions = { [lookupField]: lookup };
-        const entity = await this.service.retrieve({ conditions, user });
+        let entity = await this.service.retrieve({ conditions, user });
         await this.service.checkPermission({ action, entity, user });
         await this.service.replace({ entity, data, user });
-        await this.service.markRelationsUnpopulated({ entity });
+        await this.service.save();
+        entity = await this.service.markRelationsUnpopulated({
+          entity: await this.service.retrieve({
+            conditions: entity,
+            refresh: true,
+          }),
+        });
         await this.service.save();
         return entity;
       }
@@ -216,10 +228,16 @@ export class MikroCrudControllerFactory<
         const action: ActionName = "update";
         await this.service.checkPermission({ action, user });
         const conditions = { [lookupField]: lookup };
-        const entity = await this.service.retrieve({ conditions, user });
+        let entity = await this.service.retrieve({ conditions, user });
         await this.service.checkPermission({ action, entity, user });
         await this.service.update({ entity, data, user });
-        await this.service.markRelationsUnpopulated({ entity });
+        await this.service.save();
+        await this.service.markRelationsUnpopulated({
+          entity: await this.service.retrieve({
+            conditions: entity,
+            refresh: true,
+          }),
+        });
         await this.service.save();
         return entity;
       }

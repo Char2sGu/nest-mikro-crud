@@ -179,12 +179,11 @@ export class MikroCrudControllerFactory<
         await this.service.checkPermission({ action, user });
         let entity = await this.service.create({ data, user });
         await this.service.save();
-        entity = await this.service.markRelationsUnpopulated({
-          entity: await this.service.retrieve({
-            conditions: entity,
-            refresh: true,
-          }),
+        entity = await this.service.retrieve({
+          conditions: entity,
+          refresh: true,
         });
+        await this.service.markRelationsUnpopulated({ entity });
         await this.service.save();
         return entity;
       }
@@ -212,12 +211,11 @@ export class MikroCrudControllerFactory<
         await this.service.checkPermission({ action, entity, user });
         await this.service.replace({ entity, data, user });
         await this.service.save();
-        entity = await this.service.markRelationsUnpopulated({
-          entity: await this.service.retrieve({
-            conditions: entity,
-            refresh: true,
-          }),
+        entity = await this.service.retrieve({
+          conditions: entity,
+          refresh: true,
         });
+        await this.service.markRelationsUnpopulated({ entity });
         await this.service.save();
         return entity;
       }
@@ -232,12 +230,11 @@ export class MikroCrudControllerFactory<
         await this.service.checkPermission({ action, entity, user });
         await this.service.update({ entity, data, user });
         await this.service.save();
-        await this.service.markRelationsUnpopulated({
-          entity: await this.service.retrieve({
-            conditions: entity,
-            refresh: true,
-          }),
+        entity = await this.service.retrieve({
+          conditions: entity,
+          refresh: true,
         });
+        await this.service.markRelationsUnpopulated({ entity });
         await this.service.save();
         return entity;
       }

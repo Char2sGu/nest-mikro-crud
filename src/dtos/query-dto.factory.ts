@@ -51,7 +51,7 @@ export class QueryDtoFactory<
   }
 
   protected createRawClass() {
-    const { limit, offset, order, filter } = this.options;
+    const { limit, offset, order, filter, expand } = this.options;
 
     type Interface = QueryDto<Entity>;
     return class QueryDto implements Interface {
@@ -59,11 +59,12 @@ export class QueryDtoFactory<
       offset? = offset?.default;
       order? = order?.default;
       filter? = filter?.default;
+      expand? = expand?.default;
     };
   }
 
   protected defineValidations() {
-    const { limit, offset, order, filter } = this.options;
+    const { limit, offset, order, filter, expand } = this.options;
 
     if (limit)
       this.defineType("limit", Number).applyPropertyDecorators(
@@ -106,10 +107,23 @@ export class QueryDtoFactory<
           { each: true }
         )
       );
+
+    if (expand)
+      this.defineType("expand", Array).applyPropertyDecorators(
+        "expand",
+        Type(() => String),
+        IsOptional(),
+        IsArray(),
+        IsIn(expand.in, { each: true })
+      );
   }
 
   protected excludeDisabled() {
-    const names: (keyof QueryDtoFactoryOptions<Entity>)[] = ["order", "filter"];
+    const names: (keyof QueryDtoFactoryOptions<Entity>)[] = [
+      "order",
+      "filter",
+      "expand",
+    ];
     for (const name of names)
       if (!this.options[name]) this.applyPropertyDecorators(name, Exclude());
   }

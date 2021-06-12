@@ -18,16 +18,23 @@ export interface MikroCrudController<
 
   list(queries: QueryDto<Entity>, user: any, ...args: any[]): Promise<unknown>;
 
-  create(data: CreateDto, user: any, ...args: any[]): Promise<unknown>;
+  create(
+    queries: QueryDto<Entity>,
+    data: CreateDto,
+    user: any,
+    ...args: any[]
+  ): Promise<unknown>;
 
   retrieve(
     lookup: Entity[LookupField],
+    queries: QueryDto<Entity>,
     user: any,
     ...args: any[]
   ): Promise<unknown>;
 
   replace(
     lookup: Entity[LookupField],
+    queries: QueryDto<Entity>,
     data: CreateDto,
     user: any,
     ...args: any[]
@@ -35,6 +42,7 @@ export interface MikroCrudController<
 
   update(
     lookup: Entity[LookupField],
+    queries: QueryDto<Entity>,
     data: UpdateDto,
     user: any,
     ...args: any[]

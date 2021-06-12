@@ -149,7 +149,7 @@ export class MikroCrudControllerFactory<
       readonly service!: Interface["service"];
 
       async list(
-        ...[{ limit, offset, order, filter }, user]: Parameters<
+        ...[{ limit, offset, order, filter, expand }, user]: Parameters<
           Interface["list"]
         >
       ): Promise<unknown> {
@@ -160,12 +160,13 @@ export class MikroCrudControllerFactory<
           offset,
           order,
           filter,
+          expand,
           user,
         });
         await Promise.all(
           results.map(
             async (entity) =>
-              await this.service.adjustPopulationStatus({ entity })
+              await this.service.adjustPopulationStatus({ entity, expand })
           )
         );
         await this.service.save();
@@ -173,7 +174,7 @@ export class MikroCrudControllerFactory<
       }
 
       async create(
-        ...[data, user]: Parameters<Interface["create"]>
+        ...[{ expand }, data, user]: Parameters<Interface["create"]>
       ): Promise<unknown> {
         const action: ActionName = "create";
         await this.service.checkPermission({ action, user });
@@ -181,60 +182,75 @@ export class MikroCrudControllerFactory<
         await this.service.save();
         entity = await this.service.retrieve({
           conditions: entity,
+          expand,
           refresh: true,
         });
-        await this.service.adjustPopulationStatus({ entity });
+        await this.service.adjustPopulationStatus({ entity, expand });
         await this.service.save();
         return entity;
       }
 
       async retrieve(
-        ...[lookup, user]: Parameters<Interface["retrieve"]>
+        ...[lookup, { expand }, user]: Parameters<Interface["retrieve"]>
       ): Promise<unknown> {
         const action: ActionName = "retrieve";
         await this.service.checkPermission({ action, user });
         const conditions = { [lookupField]: lookup };
-        const entity = await this.service.retrieve({ conditions, user });
+        const entity = await this.service.retrieve({
+          conditions,
+          expand,
+          user,
+        });
         await this.service.checkPermission({ action, entity, user });
-        await this.service.adjustPopulationStatus({ entity });
+        await this.service.adjustPopulationStatus({ entity, expand });
         await this.service.save();
         return entity;
       }
 
       async replace(
-        ...[lookup, data, user]: Parameters<Interface["replace"]>
+        ...[lookup, { expand }, data, user]: Parameters<Interface["replace"]>
       ): Promise<unknown> {
         const action: ActionName = "update";
         await this.service.checkPermission({ action, user });
         const conditions = { [lookupField]: lookup };
-        let entity = await this.service.retrieve({ conditions, user });
+        let entity = await this.service.retrieve({
+          conditions,
+          expand,
+          user,
+        });
         await this.service.checkPermission({ action, entity, user });
         await this.service.replace({ entity, data, user });
         await this.service.save();
         entity = await this.service.retrieve({
           conditions: entity,
+          expand,
           refresh: true,
         });
-        await this.service.adjustPopulationStatus({ entity });
+        await this.service.adjustPopulationStatus({ entity, expand });
         await this.service.save();
         return entity;
       }
 
       async update(
-        ...[lookup, data, user]: Parameters<Interface["update"]>
+        ...[lookup, { expand }, data, user]: Parameters<Interface["update"]>
       ): Promise<unknown> {
         const action: ActionName = "update";
         await this.service.checkPermission({ action, user });
         const conditions = { [lookupField]: lookup };
-        let entity = await this.service.retrieve({ conditions, user });
+        let entity = await this.service.retrieve({
+          conditions,
+          expand,
+          user,
+        });
         await this.service.checkPermission({ action, entity, user });
         await this.service.update({ entity, data, user });
         await this.service.save();
         entity = await this.service.retrieve({
           conditions: entity,
+          expand,
           refresh: true,
         });
-        await this.service.adjustPopulationStatus({ entity });
+        await this.service.adjustPopulationStatus({ entity, expand });
         await this.service.save();
         return entity;
       }
@@ -295,17 +311,21 @@ export class MikroCrudControllerFactory<
       [MethodDecorator[], Type[], ParameterDecorator[][]]
     > = {
       list: [[Get()], [queryDtoClass], [[Queries]]],
-      create: [[Post()], [createDto], [[Data]]],
-      retrieve: [[Get(path)], [lookupInternalType], [[Lookup]]],
+      create: [[Post()], [queryDtoClass, createDto], [[Queries], [Data]]],
+      retrieve: [
+        [Get(path)],
+        [lookupInternalType, queryDtoClass],
+        [[Lookup], [Queries]],
+      ],
       replace: [
         [Put(path)],
-        [lookupInternalType, createDto],
-        [[Lookup], [Data]],
+        [lookupInternalType, queryDtoClass, createDto],
+        [[Lookup], [Queries], [Data]],
       ],
       update: [
         [Patch(path)],
-        [lookupInternalType, updateDto],
-        [[Lookup], [Data]],
+        [lookupInternalType, queryDtoClass, updateDto],
+        [[Lookup], [Queries], [Data]],
       ],
       destroy: [
         [Delete(path), HttpCode(204)],

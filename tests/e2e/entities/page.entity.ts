@@ -1,5 +1,13 @@
-import { Entity, ManyToOne, PrimaryKey, Property } from "@mikro-orm/core";
+import {
+  Collection,
+  Entity,
+  ManyToOne,
+  OneToMany,
+  PrimaryKey,
+  Property,
+} from "@mikro-orm/core";
 import { Book } from "./book.entity";
+import { Line } from "./line.entity";
 
 @Entity()
 export class Page {
@@ -11,6 +19,12 @@ export class Page {
   })
   book!: Book;
 
+  @OneToMany({
+    entity: () => Line,
+    mappedBy: (line) => line.page,
+  })
+  lines = new Collection<Line>(this);
+
   @Property()
-  text!: string;
+  number!: number;
 }

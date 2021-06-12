@@ -62,7 +62,7 @@ describe("Basic CRUD", () => {
       });
       const page = pageRepo.create({
         book,
-        text: "text" + i,
+        number: i,
       });
       const summary = summaryRepo.create({
         book,

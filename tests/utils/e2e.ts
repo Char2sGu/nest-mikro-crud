@@ -3,15 +3,14 @@ import { MikroOrmModule } from "@mikro-orm/nestjs";
 import { ModuleMetadata } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import supertest from "supertest";
-import { Book, Page } from "tests/e2e/entities";
-import { Summary } from "tests/e2e/entities/summary.entity";
+import { Book, Line, Page, Summary } from "tests/e2e/entities";
 
 export async function prepareE2E(
   metadata: ModuleMetadata,
   entities: EntityName<AnyEntity>[] = [],
   debug?: boolean
 ) {
-  entities.push(Book, Page, Summary);
+  entities.push(Book, Page, Summary, Line);
 
   const module = await Test.createTestingModule({
     ...metadata,

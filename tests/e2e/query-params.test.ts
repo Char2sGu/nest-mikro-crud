@@ -10,7 +10,7 @@ import {
 import supertest, { Response } from "supertest";
 import { prepareE2E } from "tests/utils";
 import { CreateBookDto, UpdateBookDto } from "./dtos";
-import { Book } from "./entities";
+import { Book, Line, Page } from "./entities";
 
 describe("Query Params", () => {
   let module: TestingModule;
@@ -24,9 +24,11 @@ describe("Query Params", () => {
       providers: [TestService],
     }));
 
-    const bookRepo = module.get<EntityRepository<Book>>(
-      getRepositoryToken(Book)
-    );
+    const [bookRepo, pageRepo, lineRepo] = [
+      module.get<EntityRepository<Book>>(getRepositoryToken(Book)),
+      module.get<EntityRepository<Page>>(getRepositoryToken(Page)),
+      module.get<EntityRepository<Line>>(getRepositoryToken(Line)),
+    ];
     for (let i = 1; i <= 5; i++) {
       const book = bookRepo.create({
         name: "parent" + i,
@@ -34,7 +36,20 @@ describe("Query Params", () => {
         summary: { text: "summary" + i },
       });
       bookRepo.persist(book);
+
+      const page = pageRepo.create({
+        book,
+        number: i,
+      });
+      pageRepo.persist(page);
+
+      const line = lineRepo.create({
+        page,
+        text: "text" + i,
+      });
+      lineRepo.persist(line);
     }
+
     await bookRepo.flush();
   }
 
@@ -212,6 +227,56 @@ describe("Query Params", () => {
         it(`should make the first id ${firstId}`, () => {
           entity = response.body.results[0];
           expect(entity?.id).toBe(firstId);
+        });
+      });
+    });
+  });
+
+  describe("Expand", () => {
+    @Controller()
+    class TestController extends new MikroCrudControllerFactory<TestService>({
+      serviceClass: TestService,
+      actions: ["retrieve"],
+      lookup: { field: "id" },
+      queryDtoClass: new QueryDtoFactory<Book>({
+        expand: {
+          in: ["pages.lines.page"],
+        },
+      }).product,
+    }).product {}
+
+    beforeEach(async () => {
+      await prepare(TestController);
+    });
+
+    describe("/:id/ (GET)", () => {
+      describe("Legal Expand", () => {
+        beforeEach(async () => {
+          response = await requester
+            .get("/1/")
+            .query({ "expand[]": ["pages.lines.page"] });
+        });
+
+        it("should expand the specified relation fields", () => {
+          const entity: Book = response.body;
+          expect(entity.pages[0].lines[0].page.id).toBeDefined();
+        });
+      });
+
+      describe.each`
+        queries
+        ${{ expand: "pages.lines.page" }}
+        ${{ "expand[]": "" }}
+        ${{ "expand[]": "unknown" }}
+        ${{ "expand[]": "pages" }}
+        ${{ "expand[]": "pages.lines" }}
+      `("Illegal Expand: $queries", ({ queries }) => {
+        beforeEach(async () => {
+          response = await requester.get("/1/").query(queries);
+        });
+
+        it("should return status 400", () => {
+          expect(response.status).toBe(400);
         });
       });
     });

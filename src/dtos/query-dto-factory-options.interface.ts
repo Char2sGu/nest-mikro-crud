@@ -1,5 +1,9 @@
-import { NonFunctionPropertyNames } from "@mikro-orm/core/typings";
-import { FilterQueryParam, OrderQueryParam, ScalarPath } from "../types";
+import {
+  FilterQueryParam,
+  OrderQueryParam,
+  RelationPath,
+  ScalarPath,
+} from "../types";
 
 export interface QueryDtoFactoryOptions<Entity> {
   limit?: {
@@ -17,5 +21,9 @@ export interface QueryDtoFactoryOptions<Entity> {
   filter?: {
     in: ScalarPath<Entity>[];
     default?: FilterQueryParam<Entity>[];
+  };
+  expand?: {
+    in: RelationPath<Entity>[];
+    default?: RelationPath<Entity>[];
   };
 }

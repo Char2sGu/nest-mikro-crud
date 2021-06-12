@@ -2,6 +2,7 @@ import {
   Collection,
   FilterQuery,
   FindOptions,
+  IdentifiedReference,
   QueryOrderMap,
   Reference,
   ReferenceType,
@@ -16,7 +17,7 @@ import { InjectRepository } from "@mikro-orm/nestjs";
 import { NotFoundException } from "@nestjs/common";
 import { AbstractFactory } from "../abstract.factory";
 import { FACTORY_METADATA_KEY } from "../constants";
-import { FilterOperator, ScalarPath } from "../types";
+import { FilterOperator, RelationPath, ScalarPath } from "../types";
 import { walkPath } from "../utils";
 import { MikroCrudServiceFactoryOptions } from "./mikro-crud-service-factory-options.interface";
 import { MikroCrudService } from "./mikro-crud-service.interface";
@@ -77,6 +78,7 @@ export class MikroCrudServiceFactory<
         offset,
         order = [],
         filter = [],
+
         expand = [],
         refresh,
         user,
@@ -158,19 +160,57 @@ export class MikroCrudServiceFactory<
       }
 
       async adjustPopulationStatus({
-        entity,
+        entity: rootEntity,
+        expand = [],
       }: Parameters<Interface["adjustPopulationStatus"]>[0]): ReturnType<
         Interface["adjustPopulationStatus"]
       > {
-        this.entityMeta.relations.forEach(({ name }) => {
-          const value = entity[name as keyof typeof entity];
-          if (!value) return;
-          (value instanceof Reference || value instanceof Collection
-            ? value
-            : wrap(value)
-          ).populated(false);
-        });
-        return entity;
+        function digIn(entity: AnyEntity, relationNode?: RelationPath<Entity>) {
+          const entityMeta = entity.__helper!.__meta;
+          entityMeta.relations.forEach(({ name }) => {
+            const value = entity[name];
+            const relationPath = (
+              relationNode ? `${relationNode}.${name}` : name
+            ) as RelationPath<Entity>;
+            const shouldPopulate = expand.some((path) =>
+              path.startsWith(relationPath)
+            );
+
+            // It is possible for a collection/reference/entity which need to be marked as populated to appear
+            // multiple times in different places in part of which they need to be marked as unpopulated, so it
+            // is neccesary to call `.populated(true)` to ensure they are not be marked as unpopulated in deeper
+            // places unexpectedly.
+            if (value instanceof Collection) {
+              const collection: Collection<AnyEntity> = value;
+              if (!shouldPopulate) {
+                collection.populated(false);
+              } else {
+                for (const entity of collection) digIn(entity, relationPath);
+                collection.populated(true);
+              }
+            } else if (value instanceof Reference) {
+              const reference: IdentifiedReference<AnyEntity> = value;
+              if (!shouldPopulate) {
+                reference.populated(false);
+              } else {
+                digIn(reference.getEntity(), relationPath);
+                reference.populated(true);
+              }
+            } else {
+              const entity: AnyEntity<unknown> = value;
+              const wrappedEntity = wrap(entity);
+              if (!shouldPopulate) {
+                wrappedEntity.populated(false);
+              } else {
+                digIn(entity, relationPath);
+                wrappedEntity.populated(true);
+              }
+            }
+          });
+          return entity;
+        }
+
+        return digIn(rootEntity) as typeof rootEntity;
       }
 
       async decideEntityFilters({

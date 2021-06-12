@@ -149,7 +149,7 @@ export class MikroCrudControllerFactory<
       readonly service!: Interface["service"];
 
       async list(
-        ...[{ limit, offset, order, filter }, user, ...args]: Parameters<
+        ...[{ limit, offset, order, filter }, user]: Parameters<
           Interface["list"]
         >
       ): Promise<unknown> {

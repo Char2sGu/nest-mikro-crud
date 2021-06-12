@@ -75,6 +75,7 @@ export class MikroCrudServiceFactory<
         offset,
         order = [],
         filter = [],
+        expand = [],
         refresh,
         user,
       }: Parameters<Interface["list"]>[0]) {
@@ -86,7 +87,7 @@ export class MikroCrudServiceFactory<
             offset,
             orderBy: await this.parseOrderQueryParams({ order }),
             filters: await this.decideEntityFilters({ user }),
-            populate: this.collectionFields,
+            populate: [...this.collectionFields, ...expand] as string[],
             refresh,
           }
         );
@@ -103,13 +104,14 @@ export class MikroCrudServiceFactory<
 
       async retrieve({
         conditions = {},
+        expand = [],
         refresh,
         user,
       }: Parameters<Interface["retrieve"]>[0]) {
         return await this.repository.findOneOrFail(conditions, {
           filters: await this.decideEntityFilters({ user }),
           failHandler: () => new NotFoundException(),
-          populate: this.collectionFields,
+          populate: [...this.collectionFields, ...expand] as string[],
           refresh,
         });
       }

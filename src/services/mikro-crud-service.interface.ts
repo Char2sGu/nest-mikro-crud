@@ -6,7 +6,12 @@ import {
   FilterQuery,
   NonFunctionPropertyNames,
 } from "@mikro-orm/core/typings";
-import { ActionName, FilterQueryParam, OrderQueryParam } from "../types";
+import {
+  ActionName,
+  FilterQueryParam,
+  OrderQueryParam,
+  RelationPath,
+} from "../types";
 
 /**
  * This Service is designed to be used for various purposes, not just for processing CRUD requests,
@@ -31,6 +36,7 @@ export interface MikroCrudService<
     offset?: number;
     order?: OrderQueryParam<Entity>[];
     filter?: FilterQueryParam<Entity>[];
+    expand?: RelationPath<Entity>[];
     refresh?: boolean;
     user?: any;
   }): Promise<{ total: number; results: Entity[] }>;
@@ -42,6 +48,7 @@ export interface MikroCrudService<
 
   retrieve(args: {
     conditions: FilterQuery<Entity>;
+    expand?: RelationPath<Entity>[];
     refresh: boolean;
     user?: any;
   }): Promise<Entity>;

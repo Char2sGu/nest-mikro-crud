@@ -58,7 +58,9 @@ export class MikroCrudServiceFactory<
       readonly collectionFields: Interface["collectionFields"];
 
       constructor() {
-        this.entityMeta = (new entityClass() as AnyEntity).__helper!.__meta;
+        this.entityMeta = (
+          new entityClass() as AnyEntity<unknown>
+        ).__helper!.__meta;
 
         this.collectionFields = this.entityMeta.relations
           .filter(

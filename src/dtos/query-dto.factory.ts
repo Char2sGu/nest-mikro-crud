@@ -109,8 +109,8 @@ export class QueryDtoFactory<
   }
 
   protected excludeDisabled() {
-    const { order, filter } = this.options;
-    if (!order) this.applyPropertyDecorators("order", Exclude());
-    if (!filter) this.applyPropertyDecorators("filter", Exclude());
+    const names: (keyof QueryDtoFactoryOptions<Entity>)[] = ["order", "filter"];
+    for (const name of names)
+      if (!this.options[name]) this.applyPropertyDecorators(name, Exclude());
   }
 }

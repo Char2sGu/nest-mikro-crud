@@ -49,7 +49,7 @@ export interface MikroCrudService<
   retrieve(args: {
     conditions: FilterQuery<Entity>;
     expand?: RelationPath<Entity>[];
-    refresh: boolean;
+    refresh?: boolean;
     user?: any;
   }): Promise<Entity>;
 

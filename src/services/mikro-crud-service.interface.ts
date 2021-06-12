@@ -88,8 +88,9 @@ export interface MikroCrudService<
   /**
    * Mark the relation fields of the entity unpopulated so that they will be serialized to
    * a primary key or an array of primary keys instead the actual data.
+   * @param args
    */
-  markRelationsUnpopulated(args: { entity: Entity }): Promise<Entity>;
+  adjustPopulationStatus(args: { entity: Entity }): Promise<Entity>;
 
   // ------------------------------------------------------------------------------------------
 

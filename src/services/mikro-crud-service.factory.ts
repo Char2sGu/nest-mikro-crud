@@ -155,10 +155,10 @@ export class MikroCrudServiceFactory<
         return;
       }
 
-      async markRelationsUnpopulated({
+      async adjustPopulationStatus({
         entity,
-      }: Parameters<Interface["markRelationsUnpopulated"]>[0]): ReturnType<
-        Interface["markRelationsUnpopulated"]
+      }: Parameters<Interface["adjustPopulationStatus"]>[0]): ReturnType<
+        Interface["adjustPopulationStatus"]
       > {
         this.entityMeta.relations.forEach(({ name }) => {
           const value = entity[name as keyof typeof entity];

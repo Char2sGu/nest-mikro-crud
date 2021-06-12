@@ -165,7 +165,7 @@ export class MikroCrudControllerFactory<
         await Promise.all(
           results.map(
             async (entity) =>
-              await this.service.markRelationsUnpopulated({ entity })
+              await this.service.adjustPopulationStatus({ entity })
           )
         );
         await this.service.save();
@@ -183,7 +183,7 @@ export class MikroCrudControllerFactory<
           conditions: entity,
           refresh: true,
         });
-        await this.service.markRelationsUnpopulated({ entity });
+        await this.service.adjustPopulationStatus({ entity });
         await this.service.save();
         return entity;
       }
@@ -196,7 +196,7 @@ export class MikroCrudControllerFactory<
         const conditions = { [lookupField]: lookup };
         const entity = await this.service.retrieve({ conditions, user });
         await this.service.checkPermission({ action, entity, user });
-        await this.service.markRelationsUnpopulated({ entity });
+        await this.service.adjustPopulationStatus({ entity });
         await this.service.save();
         return entity;
       }
@@ -215,7 +215,7 @@ export class MikroCrudControllerFactory<
           conditions: entity,
           refresh: true,
         });
-        await this.service.markRelationsUnpopulated({ entity });
+        await this.service.adjustPopulationStatus({ entity });
         await this.service.save();
         return entity;
       }
@@ -234,7 +234,7 @@ export class MikroCrudControllerFactory<
           conditions: entity,
           refresh: true,
         });
-        await this.service.markRelationsUnpopulated({ entity });
+        await this.service.adjustPopulationStatus({ entity });
         await this.service.save();
         return entity;
       }

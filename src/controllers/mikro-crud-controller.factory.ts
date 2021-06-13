@@ -139,6 +139,11 @@ export class MikroCrudControllerFactory<
       lookup: { field: lookupField },
     } = this.options;
 
+    const getPkCondition = (entity: AnyEntity) => {
+      const pkField = entity.__helper!.__meta.primaryKeys[0];
+      return { [pkField]: entity[pkField] };
+    };
+
     type Interface = MikroCrudController<
       Entity,
       CreateDto,
@@ -180,7 +185,7 @@ export class MikroCrudControllerFactory<
         let entity = await this.service.create({ data, user });
         await this.service.save();
         entity = await this.service.retrieve({
-          conditions: entity,
+          conditions: getPkCondition(entity),
           expand,
           refresh: true,
           user,
@@ -226,7 +231,7 @@ export class MikroCrudControllerFactory<
         await this.service.replace({ entity, data, user });
         await this.service.save();
         entity = await this.service.retrieve({
-          conditions: entity,
+          conditions: getPkCondition(entity),
           expand,
           refresh: true,
           user,
@@ -253,7 +258,7 @@ export class MikroCrudControllerFactory<
         await this.service.update({ entity, data, user });
         await this.service.save();
         entity = await this.service.retrieve({
-          conditions: entity,
+          conditions: getPkCondition(entity),
           expand,
           refresh: true,
           user,

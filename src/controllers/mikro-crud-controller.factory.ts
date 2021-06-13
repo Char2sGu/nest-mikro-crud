@@ -225,6 +225,7 @@ export class MikroCrudControllerFactory<
           conditions: entity,
           expand,
           refresh: true,
+          user,
         });
         await this.service.adjustPopulationStatus({ entity, expand });
         await this.service.save();
@@ -249,6 +250,7 @@ export class MikroCrudControllerFactory<
           conditions: entity,
           expand,
           refresh: true,
+          user,
         });
         await this.service.adjustPopulationStatus({ entity, expand });
         await this.service.save();

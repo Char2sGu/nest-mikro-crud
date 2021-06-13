@@ -159,7 +159,6 @@ export class MikroCrudControllerFactory<
           Interface["list"]
         >
       ): Promise<unknown> {
-        const action: ActionName = "list";
         const { total, results } = await this.service.list({
           limit,
           offset,
@@ -181,7 +180,6 @@ export class MikroCrudControllerFactory<
       async create(
         ...[{ expand }, data, user]: Parameters<Interface["create"]>
       ): Promise<unknown> {
-        const action: ActionName = "create";
         let entity = await this.service.create({ data, user });
         await this.service.save();
         entity = await this.service.retrieve({
@@ -198,7 +196,6 @@ export class MikroCrudControllerFactory<
       async retrieve(
         ...[lookup, { expand }, user]: Parameters<Interface["retrieve"]>
       ): Promise<unknown> {
-        const action: ActionName = "retrieve";
         const conditions = { [lookupField]: lookup };
         const entity = await this.service
           .retrieve({
@@ -217,7 +214,6 @@ export class MikroCrudControllerFactory<
       async replace(
         ...[lookup, { expand }, data, user]: Parameters<Interface["replace"]>
       ): Promise<unknown> {
-        const action: ActionName = "update";
         const conditions = { [lookupField]: lookup };
         let entity = await this.service
           .retrieve({
@@ -244,7 +240,6 @@ export class MikroCrudControllerFactory<
       async update(
         ...[lookup, { expand }, data, user]: Parameters<Interface["update"]>
       ): Promise<unknown> {
-        const action: ActionName = "update";
         const conditions = { [lookupField]: lookup };
         let entity = await this.service
           .retrieve({
@@ -271,7 +266,6 @@ export class MikroCrudControllerFactory<
       async destroy(
         ...[lookup, user]: Parameters<Interface["destroy"]>
       ): Promise<unknown> {
-        const action: ActionName = "destroy";
         const conditions = { [lookupField]: lookup };
         const entity = await this.service
           .retrieve({ conditions, user })

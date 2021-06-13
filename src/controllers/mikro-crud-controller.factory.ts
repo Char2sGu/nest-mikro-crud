@@ -5,6 +5,7 @@ import {
   Get,
   HttpCode,
   Inject,
+  NotFoundException,
   Param,
   ParseIntPipe,
   ParseUUIDPipe,
@@ -196,11 +197,15 @@ export class MikroCrudControllerFactory<
         const action: ActionName = "retrieve";
         await this.service.checkPermission({ action, user });
         const conditions = { [lookupField]: lookup };
-        const entity = await this.service.retrieve({
-          conditions,
-          expand,
-          user,
-        });
+        const entity = await this.service
+          .retrieve({
+            conditions,
+            expand,
+            user,
+          })
+          .catch(() => {
+            throw new NotFoundException();
+          });
         await this.service.checkPermission({ action, entity, user });
         await this.service.adjustPopulationStatus({ entity, expand });
         await this.service.save();
@@ -213,11 +218,15 @@ export class MikroCrudControllerFactory<
         const action: ActionName = "update";
         await this.service.checkPermission({ action, user });
         const conditions = { [lookupField]: lookup };
-        let entity = await this.service.retrieve({
-          conditions,
-          expand,
-          user,
-        });
+        let entity = await this.service
+          .retrieve({
+            conditions,
+            expand,
+            user,
+          })
+          .catch(() => {
+            throw new NotFoundException();
+          });
         await this.service.checkPermission({ action, entity, user });
         await this.service.replace({ entity, data, user });
         await this.service.save();
@@ -238,11 +247,15 @@ export class MikroCrudControllerFactory<
         const action: ActionName = "update";
         await this.service.checkPermission({ action, user });
         const conditions = { [lookupField]: lookup };
-        let entity = await this.service.retrieve({
-          conditions,
-          expand,
-          user,
-        });
+        let entity = await this.service
+          .retrieve({
+            conditions,
+            expand,
+            user,
+          })
+          .catch(() => {
+            throw new NotFoundException();
+          });
         await this.service.checkPermission({ action, entity, user });
         await this.service.update({ entity, data, user });
         await this.service.save();
@@ -263,7 +276,11 @@ export class MikroCrudControllerFactory<
         const action: ActionName = "destroy";
         await this.service.checkPermission({ action, user });
         const conditions = { [lookupField]: lookup };
-        const entity = await this.service.retrieve({ conditions, user });
+        const entity = await this.service
+          .retrieve({ conditions, user })
+          .catch(() => {
+            throw new NotFoundException();
+          });
         await this.service.checkPermission({ action, entity, user });
         await this.service.destroy({ entity, user });
         await this.service.save();

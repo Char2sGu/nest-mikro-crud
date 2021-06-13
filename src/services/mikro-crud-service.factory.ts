@@ -14,7 +14,6 @@ import {
   OperatorMap,
 } from "@mikro-orm/core/typings";
 import { InjectRepository } from "@mikro-orm/nestjs";
-import { NotFoundException } from "@nestjs/common";
 import { AbstractFactory } from "../abstract.factory";
 import { FACTORY_METADATA_KEY } from "../constants";
 import { FilterOperator, RelationPath, ScalarPath } from "../types";
@@ -114,7 +113,6 @@ export class MikroCrudServiceFactory<
       }: Parameters<Interface["retrieve"]>[0]) {
         return await this.repository.findOneOrFail(conditions, {
           filters: await this.decideEntityFilters({ user }),
-          failHandler: () => new NotFoundException(),
           populate: [...this.collectionFields, ...expand] as string[],
           refresh,
         });

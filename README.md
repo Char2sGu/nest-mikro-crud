@@ -243,7 +243,10 @@ class BooksService /* extends... */ {
     user: User;
   }) {
     const book = await super.create({ data: { ...data, owner: user } });
-    const author = await this.authorsService.create({ data: { user, book } });
+    const author = await this.authorsService.create({
+      data: { user, book },
+      user,
+    });
     return book;
   }
 }

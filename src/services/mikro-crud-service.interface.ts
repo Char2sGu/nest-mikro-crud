@@ -6,12 +6,7 @@ import {
   FilterQuery,
   NonFunctionPropertyNames,
 } from "@mikro-orm/core/typings";
-import {
-  ActionName,
-  FilterQueryParam,
-  OrderQueryParam,
-  RelationPath,
-} from "../types";
+import { FilterQueryParam, OrderQueryParam, RelationPath } from "../types";
 
 /**
  * This Service is designed to be used for various purposes, not just for processing CRUD requests,
@@ -68,22 +63,6 @@ export interface MikroCrudService<
   destroy(args: { entity: Entity; user?: any }): Promise<Entity>;
 
   save(): Promise<void>;
-
-  /**
-   * When the action is _list_ or _create_, it will be called once with
-   * `{ action: "<the-action-name>" }` before performing the action.
-   *
-   * In other cases it will be called twice, once is with `{ action: "<the-action-name>" }`
-   * before loading the target entity and once is with
-   * `{ action: "<the-action-name>", entity: <the-target-entity> }` before performing the
-   * action.
-   * @param args
-   */
-  checkPermission(args: {
-    action: ActionName;
-    entity?: Entity;
-    user?: any;
-  }): Promise<void>;
 
   /**
    * Mark only the specified relations as populated to shape the JSON response.

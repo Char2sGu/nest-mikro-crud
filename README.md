@@ -189,37 +189,6 @@ By default, `Collection` fields of the entity will be populated mandatorily. The
 
 You could populate any relations when handling the request and don't need to worry there will be extra relations expanded unexpectedly in the response. All the entities will be processed before responding to ensure only the relations mentioned in the `expand` query param are marked as _populated_ to shape the response, therefore, although `Collection` fields are populated mandatorily, they will be only an array of primary keys in the response if they are not mentioned in the `expand` query param.
 
-## Access Control
-
-The service's `.checkPermission()` is usually called two times during a request, one is before performing any database operations, the other is before performing the operation on the entity. Therefore, in the first call, the parameter `entity` will be undefined, but not in the second call.
-
-By default, it is an empty method.
-
-**NOTE**: In _List_ and _Create_ actions it will be called only once.
-
-```ts
-class UsersService /* extends... */ {
-  async checkPermission({
-    action,
-    entity: targetUser,
-    user,
-  }: {
-    action: ActionName;
-    entity?: User;
-    user?: User;
-  }) {
-    if (targetUser) {
-      if (action == "update") {
-        // forbid the user to update anyone except himself
-        if (targetUser.id != user.id) throw new ForbiddenException();
-        // forbid to update if updated recently
-        if (targetUser.isUpdatedRecently) throw new ForbiddenException();
-      }
-    }
-  }
-}
-```
-
 ## Additional Operations During Database CRUD
 
 There are seven CRUD methods in the service: `.list()`, `.create()`, `.retrieve()`, `.replace()`, `.update()`, `.destroy()` and `.save()`. As mentioned before, the methods in the service are **composable**, so each CRUD method is only responsible for its own CRUD operation. **Multiple** CRUD methods will be called in a routing method.

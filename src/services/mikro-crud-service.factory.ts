@@ -147,16 +147,6 @@ export class MikroCrudServiceFactory<
         await this.repository.flush();
       }
 
-      async checkPermission({
-        action,
-        entity,
-        user,
-      }: Parameters<Interface["checkPermission"]>[0]): ReturnType<
-        Interface["checkPermission"]
-      > {
-        return;
-      }
-
       async adjustPopulationStatus({
         entity: rootEntity,
         expand = [],

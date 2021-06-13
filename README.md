@@ -40,9 +40,7 @@ export class BooksService extends new MikroCrudServiceFactory({
 }).product {}
 ```
 
-- `Collection` fields will always be populated
-- Primary keys are ensured to be in the JSON response instead of actual data by marking all the relation fields as unpopulated.
-- _Replace_ actions use the same DTO class as _Create_ actions.
+**NOTE**: _Replace_ actions use the same DTO class as _Create_ actions.
 
 You find that few options are passed to the factory, right? Actually, these options passed to the factory are only the parts necessary to create the class. Most of the configurable things are implemented by overriding its composable methods.
 
@@ -50,7 +48,7 @@ You find that few options are passed to the factory, right? Actually, these opti
 
 ---
 
-There are some wonderful types which are able to get **literal types** of **all** the nested circular relation fields' paths and scalar fields' paths like `"owner.books.author"`, you can feel it in the `queryDtoClass.order` and `queryDtoClass.filter` options.
+There are some wonderful types which are able to get **literal types** of **all** the nested circular relation fields' paths and scalar fields' paths like `"owner.books.author"`. Enjoy them in the `queryDtoClass.order`, `queryDtoClass.filter` and `queryDtoClass.expand` options.
 
 ---
 
@@ -95,6 +93,12 @@ export class BooksController extends new MikroCrudControllerFactory<BooksService
         in: ["name", "price", "writer.name"],
         default: ["price|gte:50", "price|lte:100"],
       },
+      expand: {
+        // allowed fields
+        // literal types completely supported
+        in: ["writer", "writer.profile"],
+        default: ["writer"],
+      },
     }).product,
     /**
      * `type`: the metadata type of the user parameter in routing methods, default `Object`.
@@ -130,7 +134,7 @@ export class BooksController extends new MikroCrudControllerFactory<BooksService
 | isnull   | Is Null               |
 | notnull  | Not Null              |
 
-## Exclude Fields from the Response
+## Excluding Fields from the Response
 
 See MikroORM's [docs](https://mikro-orm.io/docs/serializing/#hidden-properties)
 
@@ -147,14 +151,17 @@ class MyEntity {
 
 ## Mandatory Filtering
 
-By default, the MikroORM's entity filters with name `"crud"` will be enabled.
+By default, the MikroORM's entity filters with name `"crud"` will be enabled. The `user` parameter is picked from `request.user` by default, which is customizable through the [`requestUser` option](<[option](#creating-the-controller)>).
 
-**NOTE**: `user` parameter is picked from `request.user` by default, and may be `undefined`. You can custom where to pick the user in the controller's `requestUser` [option](#creating-the-controller).
+**NOTE**: `user` may be `undefined` if no auth guards are used.
 
 ```ts
 @Filter({
   name: "crud",
-  cond: ({ user }: { user: User }) => ({ owner: user }),
+  cond: ({ user }: { user: User }) => ({
+    owner: user,
+    writer: { age: { $gte: 18 } }, // MikroORM will join the required relations automatically
+  }),
 })
 @Entity()
 class Book extends BaseEntity<Book, "id"> {
@@ -166,13 +173,27 @@ class Book extends BaseEntity<Book, "id"> {
 }
 ```
 
-You could enable any filters by overriding the service's `.decideEntityFilters()` method.
+You could dicide which filters to enable and what parameters to pass to the filters by overriding the service's `.decideEntityFilters()` method.
 
-## Access Controlling
+```ts
+class BooksService /* extends ... */ {
+  async decideEntityFilters({ user }: { user: User }) {
+    return { filterName: { these_are: "parameters" } };
+  }
+}
+```
+
+## Populating Relations
+
+By default, `Collection` fields of the entity will be populated mandatorily. The user can populate relations by passing the `expand` query param like `book.owner.profile`, and you could specify which fields is allowed to be expanded by specifying the `expand.in` option when creating the query DTO.
+
+You could populate any relations when handling the request and don't need to worry there will be extra relations expanded unexpectedly in the response. All the entities will be processed before responding to ensure only the relations mentioned in the `expand` query param are marked as _populated_ to shape the response, therefore, although `Collection` fields are populated mandatorily, they will be only an array of primary keys in the response if they are not mentioned in the `expand` query param.
+
+## Access Control
 
 The service's `.checkPermission()` is usually called two times during a request, one is before performing any database operations, the other is before performing the operation on the entity. Therefore, in the first call, the parameter `entity` will be undefined, but not in the second call.
 
-By default, it is an empty method which returns directly.
+By default, it is an empty method.
 
 **NOTE**: In _List_ and _Create_ actions it will be called only once.
 
@@ -199,39 +220,58 @@ class UsersService /* extends... */ {
 }
 ```
 
-## Additional Operations in Database CRUD
+## Additional Operations During Database CRUD
 
-There are seven CRUD methods in the service: `.list()`, `.create()`, `.retrieve()`, `.replace()`, `.update()`, `.destroy()` and `.save()`. As mentioned before, the methods in the service are **composable**, so each CRUD method is only responsible for its own CRUD operation. In the controller, each routing method will call **multiple** CRUD methods. `.save()` will be always called at the end of every routing methods to flush the repository.
+There are seven CRUD methods in the service: `.list()`, `.create()`, `.retrieve()`, `.replace()`, `.update()`, `.destroy()` and `.save()`. As mentioned before, the methods in the service are **composable**, so each CRUD method is only responsible for its own CRUD operation. **Multiple** CRUD methods will be called in a routing method.
 
-**NOTE**: `repository.flush()` will flush changes of all the entities, not only the repository entity.  
-**NOTE**: `.save()` will be called one more time after perform the opration to the entity in _Create_, _Replace_ and _Update_ actions.
+`.save()` will be always called once at the end of each routing method to flush the repository. In _Create_, _Replace_, _Update_ actions, it will be called one more time right after the entity is created/updated.
 
-So when you would like to create multiple related entities when creating an entity, you could override `.create()`.  
-Correspondingly, you could override `.update()` if you want to update related entities when updating an entity.
+**NOTE**: `repository.flush()` will flush changes of **all the managed entities**, which means `booksRepo.flush()` will also flush changes of `User` entities.
 
-**NOTE**: `.replace()` has the same code with `.update()` by default, while _Replace_ actions will call `.replace()` and _Update_ actions will call `.update()`.
+`.replace()` has the same code as `.update()` by default, while _Replace_ actions will call `.replace()` and _Update_ actions will call `.update()`.
+
+```ts
+class BooksService /* extends... */ {
+  @Inject()
+  authorsService: AuthorsService;
+
+  async create({
+    data,
+    user,
+  }: {
+    data: CreateBookDto | EntityData<Book>;
+    user: User;
+  }) {
+    const book = await super.create({ data: { ...data, owner: user } });
+    const author = await this.authorsService.create({ data: { user, book } });
+    return book;
+  }
+}
+```
 
 ## Applying Additional Decorators
 
-All the factories provide methods to apply decorators.
+All the factories provide a variety of utility methods, including applying different decorators.
 
 ```ts
-export class UsersController extends new MikroCrudControllerFactory({
-  // ...
-  queryDtoClass: new QuerDtoFactory({
+export class UsersController extends new MikroCrudControllerFactory<UsersService>(
+  {
     // ...
-  })
-    .applyPropertyDecorators("limit", Min(100))
-    .applyPropertyDecorators("offset", Min(100)).product,
-  // ...
-})
+    queryDtoClass: new QuerDtoFactory<User>({
+      // ...
+    })
+      .applyPropertyDecorators("limit", Min(100))
+      .applyPropertyDecorators("offset", Min(100)).product,
+    // ...
+  }
+)
   .applyMethodDecorators("list", UseGuards(JwtAuthGuard))
   .applyMethodDecorators("create", UseGuards(JwtAuthGuard)).product {}
 ```
 
 ## Overriding Routing Methods
 
-In Nest.js, decorators have different behavior when decorating different things.
+In Nest.js, decorators have different behaviors when decorating different things.
 
 | Decorating  | Metadata Stored To | Lookup Metadata From |
 | ----------- | ------------------ | -------------------- |
@@ -239,15 +279,14 @@ In Nest.js, decorators have different behavior when decorating different things.
 | a method    | the method         | the method           |
 | a parameter | the class          | the prototype chain  |
 
-So we see if a routing method is overridden, it will lose all its metadata and should be applied the decorators again.
-
-For example, to override the _Update_ action's routing method:
+So we see if a routing method is overridden, it will lose all its metadata.
 
 ```ts
 class UsersController /*extends ...*/ {
-  // The url parameter name is based on what you have specified in the controller factory options
-  @Patch(":userId") // decorators should be applied again
-  // params do not need decorators
+  // The url parameter name should be what you have specified
+  // in the `lookup.name` option.
+  @Patch(":userId") // method decorators should be applied again
+  // params do not need to apply decorators
   async update(lookup: number, data: UpdateUserDto, user: User) {
     // ...
   }

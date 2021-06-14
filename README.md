@@ -218,6 +218,11 @@ class BooksService /* extends... */ {
     });
     return book;
   }
+
+  async destroy({ entity: book, user }: { entity: Book; user: User }) {
+    if (user.username != "admin") throw new ForbiddenException();
+    return await super.destroy({ entity: book, user });
+  }
 }
 ```
 

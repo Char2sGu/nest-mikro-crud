@@ -64,9 +64,10 @@ export class MikroCrudServiceFactory<
 
         this.collectionFields = this.entityMeta.relations
           .filter(
-            ({ reference }) =>
-              reference == ReferenceType.ONE_TO_MANY ||
-              reference == ReferenceType.MANY_TO_MANY
+            ({ reference, hidden }) =>
+              !hidden &&
+              (reference == ReferenceType.ONE_TO_MANY ||
+                reference == ReferenceType.MANY_TO_MANY)
           )
           .map(({ name }) => name as NonFunctionPropertyNames<Entity>);
       }

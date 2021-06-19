@@ -185,7 +185,7 @@ class BooksService /* extends ... */ {
 
 ## Populating Relations
 
-By default, `Collection` fields of the entity will be populated mandatorily. The user can populate relations by passing the `expand` query param like `book.owner.profile`, and you could specify which fields is allowed to be expanded by specifying the `expand.in` option when creating the query DTO.
+By default, the unhidden `Collection` fields of the entity will be populated mandatorily. The user can populate relations by passing the `expand` query param like `book.owner.profile`, and you could specify which fields is allowed to be expanded by specifying the `expand.in` option when creating the query DTO.
 
 **You could populate any relations when handling the request and don't need to worry there will be extra relations expanded unexpectedly in the response. All the entities will be processed before responding to ensure only the relations mentioned in the `expand` query param are marked as _populated_ to shape the response, therefore, although `Collection` fields are populated mandatorily, they will be only an array of primary keys in the response if they are not mentioned in the `expand` query param.**
 

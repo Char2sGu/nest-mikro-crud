@@ -3,6 +3,7 @@ import {
   FilterQuery,
   FindOptions,
   IdentifiedReference,
+  NotFoundError,
   QueryOrderMap,
   Reference,
   ReferenceType,
@@ -142,6 +143,19 @@ export class MikroCrudServiceFactory<
       > {
         this.repository.remove(entity);
         return entity;
+      }
+
+      async exists({
+        conditions,
+        user,
+      }: Parameters<Interface["exists"]>[0]): ReturnType<Interface["exists"]> {
+        try {
+          await this.retrieve({ conditions, user });
+          return true;
+        } catch (error) {
+          if (error instanceof NotFoundError) return false;
+          else throw error;
+        }
       }
 
       async save(): ReturnType<Interface["save"]> {

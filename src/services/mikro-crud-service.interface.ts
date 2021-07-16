@@ -62,6 +62,11 @@ export interface MikroCrudService<
 
   destroy(args: { entity: Entity; user?: any }): Promise<Entity>;
 
+  exists(args: {
+    conditions: FilterQuery<Entity>;
+    user?: any;
+  }): Promise<boolean>;
+
   save(): Promise<void>;
 
   /**

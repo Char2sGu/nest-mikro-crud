@@ -20,8 +20,7 @@ export abstract class MikroCrudController<
 
   async list(
     { limit, offset, order, filter, expand }: QueryParams<Entity>,
-    user: any,
-    ...args: any[]
+    user: any
   ): Promise<unknown> {
     const { total, results } = await this.service.list({
       limit,
@@ -44,13 +43,12 @@ export abstract class MikroCrudController<
   async create(
     { expand }: QueryParams<Entity>,
     data: CreateDto,
-    user: any,
-    ...args: any[]
+    user: any
   ): Promise<unknown> {
     let entity = await this.service.create({ data, user });
     await this.service.save();
     entity = await this.service.retrieve({
-      conditions: this.getPkCondition(entity),
+      conditions: this.getPrimaryKey(entity),
       expand,
       refresh: true,
       user,
@@ -63,8 +61,7 @@ export abstract class MikroCrudController<
   async retrieve(
     lookup: Entity[LookupField],
     { expand }: QueryParams<Entity>,
-    user: any,
-    ...args: any[]
+    user: any
   ): Promise<unknown> {
     const conditions = { [this.lookupField]: lookup };
     const entity = await this.service
@@ -85,8 +82,7 @@ export abstract class MikroCrudController<
     lookup: Entity[LookupField],
     { expand }: QueryParams<Entity>,
     data: CreateDto,
-    user: any,
-    ...args: any[]
+    user: any
   ): Promise<unknown> {
     const conditions = { [this.lookupField]: lookup };
     let entity = await this.service
@@ -101,7 +97,7 @@ export abstract class MikroCrudController<
     await this.service.replace({ entity, data, user });
     await this.service.save();
     entity = await this.service.retrieve({
-      conditions: this.getPkCondition(entity),
+      conditions: this.getPrimaryKey(entity),
       expand,
       refresh: true,
       user,
@@ -115,8 +111,7 @@ export abstract class MikroCrudController<
     lookup: Entity[LookupField],
     { expand }: QueryParams<Entity>,
     data: UpdateDto,
-    user: any,
-    ...args: any[]
+    user: any
   ): Promise<unknown> {
     const conditions = { [this.lookupField]: lookup };
     let entity = await this.service
@@ -131,7 +126,7 @@ export abstract class MikroCrudController<
     await this.service.update({ entity, data, user });
     await this.service.save();
     entity = await this.service.retrieve({
-      conditions: this.getPkCondition(entity),
+      conditions: this.getPrimaryKey(entity),
       expand,
       refresh: true,
       user,
@@ -141,11 +136,7 @@ export abstract class MikroCrudController<
     return entity;
   }
 
-  async destroy(
-    lookup: Entity[LookupField],
-    user: any,
-    ...args: any[]
-  ): Promise<unknown> {
+  async destroy(lookup: Entity[LookupField], user: any): Promise<unknown> {
     const conditions = { [this.lookupField]: lookup };
     const entity = await this.service
       .retrieve({ conditions, user })

@@ -57,8 +57,8 @@ describe("Query Params", () => {
 
   @Injectable()
   class TestService extends new MikroCrudServiceFactory({
-    entityClass: Book,
-    dtoClasses: {
+    entity: Book,
+    dto: {
       create: CreateBookDto,
       update: UpdateBookDto,
     },
@@ -67,10 +67,10 @@ describe("Query Params", () => {
   describe("Limit & Offset", () => {
     @Controller()
     class TestController extends new MikroCrudControllerFactory<TestService>({
-      serviceClass: TestService,
+      service: TestService,
       actions: ["list"],
       lookup: { field: "id" },
-      queryParamsClass: new QueryParamsFactory<Book>({
+      params: new QueryParamsFactory<Book>({
         limit: { max: 3, default: 1 },
         offset: { max: 2, default: 1 },
       }).product,
@@ -124,10 +124,10 @@ describe("Query Params", () => {
   describe("Order", () => {
     @Controller()
     class TestController extends new MikroCrudControllerFactory<TestService>({
-      serviceClass: TestService,
+      service: TestService,
       actions: ["list"],
       lookup: { field: "id" },
-      queryParamsClass: new QueryParamsFactory<Book>({
+      params: new QueryParamsFactory<Book>({
         order: {
           in: ["id:desc", "name:desc", "summary.text"],
           default: ["id:desc"],
@@ -176,10 +176,10 @@ describe("Query Params", () => {
   describe("Filter", () => {
     @Controller()
     class TestController extends new MikroCrudControllerFactory<TestService>({
-      serviceClass: TestService,
+      service: TestService,
       actions: ["list"],
       lookup: { field: "id" },
-      queryParamsClass: new QueryParamsFactory<Book>({
+      params: new QueryParamsFactory<Book>({
         filter: {
           in: ["id", "name", "summary.text"],
           default: ["name|eq:parent3"],
@@ -237,10 +237,10 @@ describe("Query Params", () => {
   describe("Expand", () => {
     @Controller()
     class TestController extends new MikroCrudControllerFactory<TestService>({
-      serviceClass: TestService,
+      service: TestService,
       actions: ["retrieve"],
       lookup: { field: "id" },
-      queryParamsClass: new QueryParamsFactory<Book>({
+      params: new QueryParamsFactory<Book>({
         expand: {
           in: ["pages.lines.page"],
         },

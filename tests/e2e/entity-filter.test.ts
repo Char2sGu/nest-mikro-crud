@@ -28,8 +28,8 @@ describe("Entity Filter", () => {
 
   @Injectable()
   class TestService extends new MikroCrudServiceFactory({
-    entityClass: Filtered,
-    dtoClasses: {
+    entity: Filtered,
+    dto: {
       create: CreateBookDto,
       update: UpdateBookDto,
     },
@@ -37,7 +37,7 @@ describe("Entity Filter", () => {
 
   @Controller()
   class TestController extends new MikroCrudControllerFactory<TestService>({
-    serviceClass: TestService,
+    service: TestService,
     actions: ["list", "retrieve"],
     lookup: { field: "id" },
   }).product {}

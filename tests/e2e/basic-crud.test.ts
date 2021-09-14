@@ -31,8 +31,8 @@ describe("Basic CRUD", () => {
 
   @Injectable()
   class TestService extends new MikroCrudServiceFactory({
-    entityClass: Book,
-    dtoClasses: {
+    entity: Book,
+    dto: {
       create: CreateBookDto,
       update: UpdateBookDto,
     },
@@ -40,7 +40,7 @@ describe("Basic CRUD", () => {
 
   @Controller()
   class TestController extends new MikroCrudControllerFactory({
-    serviceClass: TestService,
+    service: TestService,
     actions: ["list", "retrieve", "create", "replace", "update", "destroy"],
     lookup: { field: "id" },
   }).product {}

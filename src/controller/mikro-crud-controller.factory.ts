@@ -67,7 +67,7 @@ export class MikroCrudControllerFactory<
 
     this.serviceFactory = Reflect.getMetadata(
       FACTORY,
-      options.serviceClass
+      options.service
     ) as MikroCrudServiceFactory<Entity, CreateDto, UpdateDto>;
 
     this.options = this.standardizeOptions(options);
@@ -87,7 +87,7 @@ export class MikroCrudControllerFactory<
     >
   ) {
     const {
-      queryParamsClass: queryParamsClass = new QueryParamsFactory({}).product,
+      params = new QueryParamsFactory({}).product,
       lookup,
       requestUser = { decorators: [ReqUser()] },
       validationPipeOptions = {},
@@ -95,14 +95,14 @@ export class MikroCrudControllerFactory<
 
     return {
       ...options,
-      queryParamsClass,
+      params,
       lookup: {
         ...lookup,
         type:
           lookup.type ??
           ((Reflect.getMetadata(
             TS_TYPE,
-            this.serviceFactory.options.entityClass.prototype,
+            this.serviceFactory.options.entity.prototype,
             lookup.field
           ) == Number
             ? "number"
@@ -128,7 +128,7 @@ export class MikroCrudControllerFactory<
     MikroCrudController<Entity, CreateDto, UpdateDto, LookupField, Service>
   > {
     const {
-      serviceClass,
+      service,
       lookup: { field: lookupField },
     } = this.options;
 
@@ -140,7 +140,7 @@ export class MikroCrudControllerFactory<
       LookupField,
       Service
     > {
-      @Inject(serviceClass)
+      @Inject(service)
       readonly service!: Service;
 
       readonly lookupField = lookupField;
@@ -155,11 +155,9 @@ export class MikroCrudControllerFactory<
     } = this.options;
     const lookupInternalType = lookupType == "number" ? Number : String;
 
+    const { dto } = this.serviceFactory.options;
     const {
-      dtoClasses: { create: createDto, update: updateDto },
-    } = this.serviceFactory.options;
-    const {
-      queryParamsClass,
+      params: queryParamsClass,
       requestUser: { type: reqUserType, decorators: reqUserDecorators },
     } = this.options;
 
@@ -181,7 +179,7 @@ export class MikroCrudControllerFactory<
       [MethodDecorator[], Type[], ParameterDecorator[][]]
     > = {
       list: [[Get()], [queryParamsClass], [[Queries]]],
-      create: [[Post()], [queryParamsClass, createDto], [[Queries], [Data]]],
+      create: [[Post()], [queryParamsClass, dto.create], [[Queries], [Data]]],
       retrieve: [
         [Get(path)],
         [lookupInternalType, queryParamsClass],
@@ -189,12 +187,12 @@ export class MikroCrudControllerFactory<
       ],
       replace: [
         [Put(path)],
-        [lookupInternalType, queryParamsClass, createDto],
+        [lookupInternalType, queryParamsClass, dto.create],
         [[Lookup], [Queries], [Data]],
       ],
       update: [
         [Patch(path)],
-        [lookupInternalType, queryParamsClass, updateDto],
+        [lookupInternalType, queryParamsClass, dto.update],
         [[Lookup], [Queries], [Data]],
       ],
       destroy: [

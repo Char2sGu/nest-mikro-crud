@@ -9,12 +9,12 @@ export interface MikroCrudServiceFactoryOptions<
   /**
    * The entity's constructor whose repository will be auto-injected.
    */
-  entityClass: Type<Entity>;
+  entity: Type<Entity>;
   /**
    * Be used to infer the generic types and apply validation in the
    * controller.
    */
-  dtoClasses: {
+  dto: {
     create: Type<CreateDto>;
     update: Type<UpdateDto>;
   };

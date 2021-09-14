@@ -35,7 +35,7 @@ export class MikroCrudServiceFactory<
   }
 
   protected create(): Type<MikroCrudService<Entity, CreateDto, UpdateDto>> {
-    const { entityClass } = this.options;
+    const { entity: entityClass } = this.options;
 
     class Service extends MikroCrudService<Entity, CreateDto, UpdateDto> {
       @InjectRepository(entityClass)

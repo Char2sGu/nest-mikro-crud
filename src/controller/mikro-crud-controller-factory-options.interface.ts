@@ -18,15 +18,15 @@ export interface MikroCrudControllerFactoryOptions<
   /**
    * The service will be auto-injected for db CRUD actions.
    */
-  serviceClass: Type<Service>;
+  service: Type<Service>;
   /**
    * Specify which actions should be enabled.
    */
   actions: ActionName[];
   /**
-   * Use specific DTO for more advanced settings of the query params.
+   * Be used to validate query params.
    */
-  queryParamsClass?: Type<QueryParams<Entity>>;
+  params?: Type<QueryParams<Entity>>;
   lookup: {
     /**
      * Choose the field used for entity lookup.

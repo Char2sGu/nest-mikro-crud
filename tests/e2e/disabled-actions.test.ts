@@ -12,8 +12,8 @@ describe("Disabled Actions", () => {
 
   @Injectable()
   class TestService extends new MikroCrudServiceFactory({
-    entityClass: Book,
-    dtoClasses: {
+    entity: Book,
+    dto: {
       create: CreateBookDto,
       update: UpdateBookDto,
     },
@@ -21,7 +21,7 @@ describe("Disabled Actions", () => {
 
   @Controller()
   class TestController extends new MikroCrudControllerFactory({
-    serviceClass: TestService,
+    service: TestService,
     actions: [],
     lookup: { field: "id" },
   }).product {}

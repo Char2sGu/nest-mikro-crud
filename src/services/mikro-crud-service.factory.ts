@@ -79,7 +79,6 @@ export class MikroCrudServiceFactory<
         offset,
         order = [],
         filter = [],
-
         expand = [],
         refresh,
         user,

@@ -1,6 +1,6 @@
 import { AnyEntity, EntityData } from "@mikro-orm/core";
 import { NotFoundException } from "@nestjs/common";
-import { QueryDto } from "../dto";
+import { QueryParams } from "../dto";
 import { MikroCrudService } from "../service";
 import { LookupableField } from "../types";
 
@@ -19,7 +19,7 @@ export abstract class MikroCrudController<
   readonly lookupField!: LookupField;
 
   async list(
-    { limit, offset, order, filter, expand }: QueryDto<Entity>,
+    { limit, offset, order, filter, expand }: QueryParams<Entity>,
     user: any,
     ...args: any[]
   ): Promise<unknown> {
@@ -42,7 +42,7 @@ export abstract class MikroCrudController<
   }
 
   async create(
-    { expand }: QueryDto<Entity>,
+    { expand }: QueryParams<Entity>,
     data: CreateDto,
     user: any,
     ...args: any[]
@@ -62,7 +62,7 @@ export abstract class MikroCrudController<
 
   async retrieve(
     lookup: Entity[LookupField],
-    { expand }: QueryDto<Entity>,
+    { expand }: QueryParams<Entity>,
     user: any,
     ...args: any[]
   ): Promise<unknown> {
@@ -83,7 +83,7 @@ export abstract class MikroCrudController<
 
   async replace(
     lookup: Entity[LookupField],
-    { expand }: QueryDto<Entity>,
+    { expand }: QueryParams<Entity>,
     data: CreateDto,
     user: any,
     ...args: any[]
@@ -113,7 +113,7 @@ export abstract class MikroCrudController<
 
   async update(
     lookup: Entity[LookupField],
-    { expand }: QueryDto<Entity>,
+    { expand }: QueryParams<Entity>,
     data: UpdateDto,
     user: any,
     ...args: any[]

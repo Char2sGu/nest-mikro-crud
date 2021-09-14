@@ -5,7 +5,7 @@ import {
   ScalarPath,
 } from "../types";
 
-export interface QueryDtoFactoryOptions<Entity> {
+export interface QueryParamsFactoryOptions<Entity> {
   limit?: {
     max?: number;
     default?: number;

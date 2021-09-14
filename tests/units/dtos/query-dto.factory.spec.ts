@@ -1,7 +1,7 @@
 import { BaseEntity } from "@mikro-orm/core";
 import { plainToClass } from "class-transformer";
 import { validateOrReject } from "class-validator";
-import { QueryDtoFactory } from "src";
+import { QueryParamsFactory } from "src";
 import { buildKeyChecker } from "tests/utils";
 
 const d = buildKeyChecker<typeof factory>();
@@ -10,13 +10,13 @@ interface Entity extends BaseEntity<Entity, "id"> {
   id: number;
 }
 
-let factory: QueryDtoFactory<Entity>;
+let factory: QueryParamsFactory<Entity>;
 let instance: typeof factory.product.prototype;
 
-describe(QueryDtoFactory.name, () => {
+describe(QueryParamsFactory.name, () => {
   describe("Default", () => {
     beforeEach(() => {
-      factory = new QueryDtoFactory<Entity>({
+      factory = new QueryParamsFactory<Entity>({
         limit: { default: 1 },
         offset: { default: 2 },
         order: { in: [], default: ["id:asc"] },
@@ -39,7 +39,7 @@ describe(QueryDtoFactory.name, () => {
 
   describe("Validation", () => {
     beforeEach(() => {
-      factory = new QueryDtoFactory<Entity>({
+      factory = new QueryParamsFactory<Entity>({
         limit: { max: 1 },
         offset: { max: 1 },
         order: { in: ["id", "id:asc"] },
@@ -89,7 +89,7 @@ describe(QueryDtoFactory.name, () => {
 
   describe("Exclusion", () => {
     beforeEach(() => {
-      factory = new QueryDtoFactory<any>({});
+      factory = new QueryParamsFactory<any>({});
     });
 
     describe(d(".product"), () => {

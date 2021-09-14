@@ -18,7 +18,7 @@ import {
 } from "@nestjs/common";
 import { AbstractFactory } from "../abstract.factory";
 import { ReqUser } from "../decorators";
-import { QueryDtoFactory } from "../dto";
+import { QueryParamsFactory } from "../dto";
 import { MikroCrudService, MikroCrudServiceFactory } from "../service";
 import { FACTORY, TS_TYPE } from "../symbols";
 import { ActionName, LookupableField, PkType } from "../types";
@@ -87,7 +87,7 @@ export class MikroCrudControllerFactory<
     >
   ) {
     const {
-      queryDtoClass = new QueryDtoFactory({}).product,
+      queryParamsClass: queryParamsClass = new QueryParamsFactory({}).product,
       lookup,
       requestUser = { decorators: [ReqUser()] },
       validationPipeOptions = {},
@@ -95,7 +95,7 @@ export class MikroCrudControllerFactory<
 
     return {
       ...options,
-      queryDtoClass,
+      queryParamsClass,
       lookup: {
         ...lookup,
         type:
@@ -159,7 +159,7 @@ export class MikroCrudControllerFactory<
       dtoClasses: { create: createDto, update: updateDto },
     } = this.serviceFactory.options;
     const {
-      queryDtoClass,
+      queryParamsClass,
       requestUser: { type: reqUserType, decorators: reqUserDecorators },
     } = this.options;
 
@@ -180,21 +180,21 @@ export class MikroCrudControllerFactory<
       ActionName,
       [MethodDecorator[], Type[], ParameterDecorator[][]]
     > = {
-      list: [[Get()], [queryDtoClass], [[Queries]]],
-      create: [[Post()], [queryDtoClass, createDto], [[Queries], [Data]]],
+      list: [[Get()], [queryParamsClass], [[Queries]]],
+      create: [[Post()], [queryParamsClass, createDto], [[Queries], [Data]]],
       retrieve: [
         [Get(path)],
-        [lookupInternalType, queryDtoClass],
+        [lookupInternalType, queryParamsClass],
         [[Lookup], [Queries]],
       ],
       replace: [
         [Put(path)],
-        [lookupInternalType, queryDtoClass, createDto],
+        [lookupInternalType, queryParamsClass, createDto],
         [[Lookup], [Queries], [Data]],
       ],
       update: [
         [Patch(path)],
-        [lookupInternalType, queryDtoClass, updateDto],
+        [lookupInternalType, queryParamsClass, updateDto],
         [[Lookup], [Queries], [Data]],
       ],
       destroy: [

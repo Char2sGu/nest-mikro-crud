@@ -13,18 +13,18 @@ import { FILTER_OPERATORS } from "..";
 import { AbstractFactory } from "../abstract.factory";
 import { FACTORY } from "../symbols";
 import { OrderQueryParam } from "../types";
-import { QueryDtoFactoryOptions } from "./query-dto-factory-options.interface";
-import { QueryDto } from "./query-dto.interface";
+import { QueryParamsFactoryOptions } from "./query-params-factory-options.interface";
+import { QueryParams } from "./query-params.interface";
 
 const deduplicate = (arr: unknown[]) => [...new Set(arr)];
 
-export class QueryDtoFactory<
+export class QueryParamsFactory<
   Entity extends AnyEntity<Entity> = any
-> extends AbstractFactory<QueryDto<Entity>> {
+> extends AbstractFactory<QueryParams<Entity>> {
   readonly options;
   readonly product;
 
-  constructor(options: QueryDtoFactoryOptions<Entity>) {
+  constructor(options: QueryParamsFactoryOptions<Entity>) {
     super();
     this.options = this.standardizeOptions(options);
     this.product = this.createRawClass();
@@ -33,7 +33,7 @@ export class QueryDtoFactory<
     Reflect.defineMetadata(FACTORY, this, this.product);
   }
 
-  protected standardizeOptions(options: QueryDtoFactoryOptions<Entity>) {
+  protected standardizeOptions(options: QueryParamsFactoryOptions<Entity>) {
     const { order } = options;
 
     return {
@@ -54,8 +54,8 @@ export class QueryDtoFactory<
   protected createRawClass() {
     const { limit, offset, order, filter, expand } = this.options;
 
-    type Interface = QueryDto<Entity>;
-    return class QueryDto implements Interface {
+    type Interface = QueryParams<Entity>;
+    return class QueryParams implements Interface {
       limit? = limit?.default;
       offset? = offset?.default;
       order? = order?.default;
@@ -120,7 +120,7 @@ export class QueryDtoFactory<
   }
 
   protected excludeDisabled() {
-    const names: (keyof QueryDtoFactoryOptions<Entity>)[] = [
+    const names: (keyof QueryParamsFactoryOptions<Entity>)[] = [
       "order",
       "filter",
       "expand",

@@ -1,6 +1,6 @@
 import { AnyEntity, EntityData } from "@mikro-orm/core";
 import { Type, ValidationPipeOptions } from "@nestjs/common";
-import { QueryDto } from "../dto";
+import { QueryParams } from "../dto";
 import { MikroCrudService } from "../service";
 import { ActionName, LookupableField, PkType } from "../types";
 
@@ -24,9 +24,9 @@ export interface MikroCrudControllerFactoryOptions<
    */
   actions: ActionName[];
   /**
-   * Use specific dto for more advanced settings of the query params.
+   * Use specific DTO for more advanced settings of the query params.
    */
-  queryDtoClass?: Type<QueryDto<Entity>>;
+  queryParamsClass?: Type<QueryParams<Entity>>;
   lookup: {
     /**
      * Choose the field used for entity lookup.

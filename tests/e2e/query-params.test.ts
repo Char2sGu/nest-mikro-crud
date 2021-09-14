@@ -5,7 +5,7 @@ import { TestingModule } from "@nestjs/testing";
 import {
   MikroCrudControllerFactory,
   MikroCrudServiceFactory,
-  QueryDtoFactory,
+  QueryParamsFactory,
 } from "src";
 import { MikroCrudModule } from "src/mikro-crud.module";
 import supertest, { Response } from "supertest";
@@ -70,7 +70,7 @@ describe("Query Params", () => {
       serviceClass: TestService,
       actions: ["list"],
       lookup: { field: "id" },
-      queryDtoClass: new QueryDtoFactory<Book>({
+      queryParamsClass: new QueryParamsFactory<Book>({
         limit: { max: 3, default: 1 },
         offset: { max: 2, default: 1 },
       }).product,
@@ -127,7 +127,7 @@ describe("Query Params", () => {
       serviceClass: TestService,
       actions: ["list"],
       lookup: { field: "id" },
-      queryDtoClass: new QueryDtoFactory<Book>({
+      queryParamsClass: new QueryParamsFactory<Book>({
         order: {
           in: ["id:desc", "name:desc", "summary.text"],
           default: ["id:desc"],
@@ -179,7 +179,7 @@ describe("Query Params", () => {
       serviceClass: TestService,
       actions: ["list"],
       lookup: { field: "id" },
-      queryDtoClass: new QueryDtoFactory<Book>({
+      queryParamsClass: new QueryParamsFactory<Book>({
         filter: {
           in: ["id", "name", "summary.text"],
           default: ["name|eq:parent3"],
@@ -240,7 +240,7 @@ describe("Query Params", () => {
       serviceClass: TestService,
       actions: ["retrieve"],
       lookup: { field: "id" },
-      queryDtoClass: new QueryDtoFactory<Book>({
+      queryParamsClass: new QueryParamsFactory<Book>({
         expand: {
           in: ["pages.lines.page"],
         },

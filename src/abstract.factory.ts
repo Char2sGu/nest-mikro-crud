@@ -1,5 +1,5 @@
 import { Type } from "@nestjs/common";
-import { TS_PARAM_TYPES_METADATA_KEY, TS_TYPE_METADATA_KEY } from "./symbols";
+import { TS_PARAM_TYPES, TS_TYPE } from "./symbols";
 import { ExtractKey } from "./utils";
 
 type AllNames<T> = string & keyof T;
@@ -10,27 +10,18 @@ export abstract class AbstractFactory<T> {
   abstract readonly product: Type<T>;
 
   defineType(target: AllNames<T>, type: any): this {
-    Reflect.defineMetadata(
-      TS_TYPE_METADATA_KEY,
-      type,
-      this.product.prototype,
-      target
-    );
+    Reflect.defineMetadata(TS_TYPE, type, this.product.prototype, target);
     return this;
   }
 
   defineParamTypes(target: MethodNames<T>, ...types: (Type | "keep")[]): this {
     const primitive: Type[] =
-      Reflect.getMetadata(
-        TS_PARAM_TYPES_METADATA_KEY,
-        this.product.prototype,
-        target
-      ) ?? [];
+      Reflect.getMetadata(TS_PARAM_TYPES, this.product.prototype, target) ?? [];
     const actualTypes = types.map((type, index) =>
       type == "keep" ? primitive[index] : type
     );
     Reflect.defineMetadata(
-      TS_PARAM_TYPES_METADATA_KEY,
+      TS_PARAM_TYPES,
       actualTypes,
       this.product.prototype,
       target

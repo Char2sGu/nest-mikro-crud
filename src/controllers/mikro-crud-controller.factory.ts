@@ -20,7 +20,7 @@ import { AbstractFactory } from "../abstract.factory";
 import { ReqUser } from "../decorators";
 import { QueryDtoFactory } from "../dtos";
 import { MikroCrudService, MikroCrudServiceFactory } from "../services";
-import { FACTORY_METADATA_KEY, TS_TYPE_METADATA_KEY } from "../symbols";
+import { FACTORY, TS_TYPE } from "../symbols";
 import { ActionName, LookupableField, PkType } from "../types";
 import { MikroCrudControllerFactoryOptions } from "./mikro-crud-controller-factory-options.interface";
 import { MikroCrudController } from "./mikro-crud-controller.class";
@@ -66,7 +66,7 @@ export class MikroCrudControllerFactory<
     super();
 
     this.serviceFactory = Reflect.getMetadata(
-      FACTORY_METADATA_KEY,
+      FACTORY,
       options.serviceClass
     ) as MikroCrudServiceFactory<Entity, CreateDto, UpdateDto>;
 
@@ -74,7 +74,7 @@ export class MikroCrudControllerFactory<
 
     this.product = this.create();
     this.buildActions();
-    Reflect.defineMetadata(FACTORY_METADATA_KEY, this, this.product);
+    Reflect.defineMetadata(FACTORY, this, this.product);
   }
 
   protected standardizeOptions(
@@ -101,7 +101,7 @@ export class MikroCrudControllerFactory<
         type:
           lookup.type ??
           ((Reflect.getMetadata(
-            TS_TYPE_METADATA_KEY,
+            TS_TYPE,
             this.serviceFactory.options.entityClass.prototype,
             lookup.field
           ) == Number

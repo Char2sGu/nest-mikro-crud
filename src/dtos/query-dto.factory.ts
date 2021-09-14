@@ -9,8 +9,9 @@ import {
   Max,
   Min,
 } from "class-validator";
+import { FILTER_OPERATORS } from "..";
 import { AbstractFactory } from "../abstract.factory";
-import { FACTORY_METADATA_KEY, FILTER_OPERATORS } from "../constants";
+import { FACTORY } from "../symbols";
 import { OrderQueryParam } from "../types";
 import { QueryDtoFactoryOptions } from "./query-dto-factory-options.interface";
 import { QueryDto } from "./query-dto.interface";
@@ -29,7 +30,7 @@ export class QueryDtoFactory<
     this.product = this.createRawClass();
     this.defineValidations();
     this.excludeDisabled();
-    Reflect.defineMetadata(FACTORY_METADATA_KEY, this, this.product);
+    Reflect.defineMetadata(FACTORY, this, this.product);
   }
 
   protected standardizeOptions(options: QueryDtoFactoryOptions<Entity>) {

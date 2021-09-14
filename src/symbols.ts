@@ -1,3 +1,3 @@
-export const TS_PARAM_TYPES_METADATA_KEY = "design:paramtypes";
-export const TS_TYPE_METADATA_KEY = "design:type";
-export const FACTORY_METADATA_KEY = Symbol("crud:factory");
+export const TS_PARAM_TYPES = "design:paramtypes";
+export const TS_TYPE = "design:type";
+export const FACTORY = Symbol("crud:factory");

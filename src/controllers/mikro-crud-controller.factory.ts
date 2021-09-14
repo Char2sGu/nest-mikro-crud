@@ -1,11 +1,10 @@
-import { AnyEntity } from "@mikro-orm/core";
+import { AnyEntity, EntityData } from "@mikro-orm/core";
 import {
   Body,
   Delete,
   Get,
   HttpCode,
   Inject,
-  NotFoundException,
   Param,
   ParseIntPipe,
   ParseUUIDPipe,
@@ -24,7 +23,7 @@ import { QueryDtoFactory } from "../dtos";
 import { MikroCrudService, MikroCrudServiceFactory } from "../services";
 import { ActionName, LookupableField, PkType } from "../types";
 import { MikroCrudControllerFactoryOptions } from "./mikro-crud-controller-factory-options.interface";
-import { MikroCrudController } from "./mikro-crud-controller.interface";
+import { MikroCrudController } from "./mikro-crud-controller.class";
 
 type ServiceGenerics<Service> = Service extends MikroCrudService<
   infer Entity,
@@ -38,16 +37,15 @@ type ServiceGenerics<Service> = Service extends MikroCrudService<
     }
   : never;
 
-// TODO: make the generic type `LookupField` literal
 export class MikroCrudControllerFactory<
   Service extends MikroCrudService<
     Entity,
     CreateDto,
     UpdateDto
-  > = MikroCrudService,
+  > = MikroCrudService<any, any, any>,
   Entity extends AnyEntity<Entity> = ServiceGenerics<Service>["Entity"],
-  CreateDto = ServiceGenerics<Service>["CreateDto"],
-  UpdateDto = ServiceGenerics<Service>["UpdateDto"],
+  CreateDto extends EntityData<Entity> = EntityData<Entity>,
+  UpdateDto extends EntityData<Entity> = EntityData<Entity>,
   LookupField extends LookupableField<Entity> = LookupableField<Entity>
 > extends AbstractFactory<
   MikroCrudController<Entity, CreateDto, UpdateDto, LookupField, Service>
@@ -74,13 +72,8 @@ export class MikroCrudControllerFactory<
 
     this.options = this.standardizeOptions(options);
 
-    this.product = this.createRawClass();
-    this.defineInjections();
+    this.product = this.create();
     this.buildActions();
-    this.applyClassDecorators(
-      UsePipes(new ValidationPipe(this.options.validationPipeOptions))
-    );
-
     Reflect.defineMetadata(FACTORY_METADATA_KEY, this, this.product);
   }
 
@@ -131,161 +124,29 @@ export class MikroCrudControllerFactory<
     };
   }
 
-  /**
-   * Create a no-metadata controller class
-   */
-  protected createRawClass() {
+  protected create(): Type<
+    MikroCrudController<Entity, CreateDto, UpdateDto, LookupField, Service>
+  > {
     const {
+      serviceClass,
       lookup: { field: lookupField },
     } = this.options;
 
-    const getPkCondition = (entity: AnyEntity) => {
-      const pkField = entity.__helper!.__meta.primaryKeys[0];
-      return { [pkField]: entity[pkField] };
-    };
-
-    type Interface = MikroCrudController<
+    @UsePipes(new ValidationPipe(this.options.validationPipeOptions))
+    class Controller extends MikroCrudController<
       Entity,
       CreateDto,
       UpdateDto,
       LookupField,
       Service
-    >;
-    return class MikroCrudController implements Interface {
-      readonly service!: Interface["service"];
+    > {
+      @Inject(serviceClass)
+      readonly service!: Service;
 
-      async list(
-        ...[{ limit, offset, order, filter, expand }, user]: Parameters<
-          Interface["list"]
-        >
-      ): Promise<unknown> {
-        const { total, results } = await this.service.list({
-          limit,
-          offset,
-          order,
-          filter,
-          expand,
-          user,
-        });
-        await Promise.all(
-          results.map(
-            async (entity) =>
-              await this.service.adjustPopulationStatus({ entity, expand })
-          )
-        );
-        await this.service.save();
-        return { total, results };
-      }
+      readonly lookupField = lookupField;
+    }
 
-      async create(
-        ...[{ expand }, data, user]: Parameters<Interface["create"]>
-      ): Promise<unknown> {
-        let entity = await this.service.create({ data, user });
-        await this.service.save();
-        entity = await this.service.retrieve({
-          conditions: getPkCondition(entity),
-          expand,
-          refresh: true,
-          user,
-        });
-        await this.service.adjustPopulationStatus({ entity, expand });
-        await this.service.save();
-        return entity;
-      }
-
-      async retrieve(
-        ...[lookup, { expand }, user]: Parameters<Interface["retrieve"]>
-      ): Promise<unknown> {
-        const conditions = { [lookupField]: lookup };
-        const entity = await this.service
-          .retrieve({
-            conditions,
-            expand,
-            user,
-          })
-          .catch(() => {
-            throw new NotFoundException();
-          });
-        await this.service.adjustPopulationStatus({ entity, expand });
-        await this.service.save();
-        return entity;
-      }
-
-      async replace(
-        ...[lookup, { expand }, data, user]: Parameters<Interface["replace"]>
-      ): Promise<unknown> {
-        const conditions = { [lookupField]: lookup };
-        let entity = await this.service
-          .retrieve({
-            conditions,
-            expand,
-            user,
-          })
-          .catch(() => {
-            throw new NotFoundException();
-          });
-        await this.service.replace({ entity, data, user });
-        await this.service.save();
-        entity = await this.service.retrieve({
-          conditions: getPkCondition(entity),
-          expand,
-          refresh: true,
-          user,
-        });
-        await this.service.adjustPopulationStatus({ entity, expand });
-        await this.service.save();
-        return entity;
-      }
-
-      async update(
-        ...[lookup, { expand }, data, user]: Parameters<Interface["update"]>
-      ): Promise<unknown> {
-        const conditions = { [lookupField]: lookup };
-        let entity = await this.service
-          .retrieve({
-            conditions,
-            expand,
-            user,
-          })
-          .catch(() => {
-            throw new NotFoundException();
-          });
-        await this.service.update({ entity, data, user });
-        await this.service.save();
-        entity = await this.service.retrieve({
-          conditions: getPkCondition(entity),
-          expand,
-          refresh: true,
-          user,
-        });
-        await this.service.adjustPopulationStatus({ entity, expand });
-        await this.service.save();
-        return entity;
-      }
-
-      async destroy(
-        ...[lookup, user]: Parameters<Interface["destroy"]>
-      ): Promise<unknown> {
-        const conditions = { [lookupField]: lookup };
-        const entity = await this.service
-          .retrieve({ conditions, user })
-          .catch(() => {
-            throw new NotFoundException();
-          });
-        await this.service.destroy({ entity, user });
-        await this.service.save();
-        return;
-      }
-    };
-  }
-
-  protected defineInjections() {
-    const { serviceClass } = this.options;
-
-    this.defineType("service", serviceClass).applyPropertyDecorators(
-      "service" as any, // service is generic so the type cannot be inferred correctly
-      Inject(serviceClass)
-    );
+    return Controller;
   }
 
   protected buildActions() {

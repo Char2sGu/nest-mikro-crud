@@ -157,7 +157,7 @@ export abstract class MikroCrudController<
     return;
   }
 
-  private getPkCondition(entity: AnyEntity) {
+  private getPrimaryKey(entity: AnyEntity) {
     const pkField = entity.__helper!.__meta.primaryKeys[0];
     return { [pkField]: entity[pkField] };
   }

@@ -1,4 +1,4 @@
-import { AnyEntity } from "@mikro-orm/core";
+import { AnyEntity, EntityData } from "@mikro-orm/core";
 import { Type, ValidationPipeOptions } from "@nestjs/common";
 import { QueryDto } from "../dtos";
 import { MikroCrudService } from "../services";
@@ -6,8 +6,8 @@ import { ActionName, LookupableField, PkType } from "../types";
 
 export interface MikroCrudControllerFactoryOptions<
   Entity extends AnyEntity<Entity> = any,
-  CreateDto = Entity,
-  UpdateDto = CreateDto,
+  CreateDto extends EntityData<Entity> = EntityData<Entity>,
+  UpdateDto extends EntityData<Entity> = EntityData<Entity>,
   LookupField extends LookupableField<Entity> = LookupableField<Entity>,
   Service extends MikroCrudService<
     Entity,

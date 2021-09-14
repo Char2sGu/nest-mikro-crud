@@ -1,5 +1,9 @@
 import { EntityRepository, ReferenceType } from "@mikro-orm/core";
-import { AnyEntity, NonFunctionPropertyNames } from "@mikro-orm/core/typings";
+import {
+  AnyEntity,
+  EntityData,
+  NonFunctionPropertyNames,
+} from "@mikro-orm/core/typings";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { Type } from "@nestjs/common";
 import { AbstractFactory } from "../abstract.factory";
@@ -9,8 +13,8 @@ import { MikroCrudService } from "./mikro-crud-service.class";
 
 export class MikroCrudServiceFactory<
   Entity extends AnyEntity<Entity> = any,
-  CreateDto = Entity,
-  UpdateDto = CreateDto
+  CreateDto extends EntityData<Entity> = EntityData<Entity>,
+  UpdateDto extends EntityData<Entity> = EntityData<Entity>
 > extends AbstractFactory<MikroCrudService<Entity, CreateDto, UpdateDto>> {
   readonly options;
   readonly product;

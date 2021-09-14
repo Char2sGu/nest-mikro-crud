@@ -6,23 +6,13 @@ import {
   FindOptions,
   IdentifiedReference,
   NotFoundError,
-  QueryOrderMap,
   Reference,
   wrap,
 } from "@mikro-orm/core";
-import {
-  EntityData,
-  NonFunctionPropertyNames,
-  OperatorMap,
-} from "@mikro-orm/core/typings";
-import {
-  FilterOperator,
-  FilterQueryParam,
-  OrderQueryParam,
-  RelationPath,
-  ScalarPath,
-  walkPath,
-} from "..";
+import { EntityData, NonFunctionPropertyNames } from "@mikro-orm/core/typings";
+import { Inject } from "@nestjs/common";
+import { FilterQueryParam, OrderQueryParam, RelationPath } from "..";
+import { QueryParser } from "./query-parser.service";
 
 export abstract class MikroCrudService<
   Entity extends AnyEntity = AnyEntity,
@@ -31,6 +21,9 @@ export abstract class MikroCrudService<
 > {
   readonly repository!: EntityRepository<Entity>;
   readonly collectionFields!: NonFunctionPropertyNames<Entity>[];
+
+  @Inject()
+  protected readonly parser!: QueryParser<Entity>;
 
   async list({
     conditions = {},
@@ -51,13 +44,13 @@ export abstract class MikroCrudService<
     refresh?: boolean;
     user?: any;
   }) {
-    const filterConditions = await this.parseFilterQueryParams({ filter });
+    const filterConditions = await this.parser.parseFilter({ filter });
     const [results, total] = await this.repository.findAndCount(
       { $and: [conditions, filterConditions] } as FilterQuery<Entity>,
       {
         limit,
         offset,
-        orderBy: await this.parseOrderQueryParams({ order }),
+        orderBy: await this.parser.parseOrder({ order }),
         filters: await this.decideEntityFilters({ user }),
         populate: [...this.collectionFields, ...expand] as string[],
         refresh,
@@ -206,72 +199,5 @@ export abstract class MikroCrudService<
     user?: any;
   }): Promise<FindOptions<Entity>["filters"]> {
     return { crud: { user } };
-  }
-
-  /**
-   * Parse the "order" query param into actual options.
-   * @param args
-   */
-  async parseOrderQueryParams({
-    order,
-  }: {
-    order: OrderQueryParam<Entity>[];
-  }): Promise<FindOptions<Entity>["orderBy"]> {
-    const orderOptions: FindOptions<Entity>["orderBy"] = {};
-    order.forEach((raw) => {
-      const [path, order] = raw.split(":") as [
-        ScalarPath<Entity>,
-        "asc" | "desc"
-      ];
-      walkPath(
-        orderOptions,
-        path,
-        (obj: QueryOrderMap, key: string) => (obj[key] = order)
-      );
-    });
-    return orderOptions;
-  }
-
-  /**
-   * Parse the "filter" query param into actual conditions.
-   * @param args
-   */
-  async parseFilterQueryParams({
-    filter: rawFilters,
-  }: {
-    filter: FilterQueryParam<Entity>[];
-  }): Promise<FilterQuery<Entity>> {
-    const conditions: Partial<
-      Record<NonFunctionPropertyNames<Entity>, OperatorMap<unknown>>
-    > = {};
-
-    rawFilters.forEach(async (raw) => {
-      const [, path, rawOp, value] = /^(.*)\|(.+):(.*)$/.exec(raw)! as [
-        string,
-        ScalarPath<Entity>,
-        FilterOperator,
-        string
-      ] &
-        RegExpExecArray;
-
-      const parseMultiValues = () =>
-        value.split(/(?<!\\),/).map((v) => v.replace("\\,", ","));
-
-      const fieldConditions = walkPath(
-        conditions,
-        path,
-        (obj, key) => (obj[key] = obj[key] ?? {})
-      ) as OperatorMap<unknown>;
-
-      if (rawOp == "isnull") fieldConditions.$eq = null;
-      else if (rawOp == "notnull") fieldConditions.$ne = null;
-      else {
-        if (rawOp == "in" || rawOp == "nin")
-          fieldConditions[`$${rawOp}` as const] = parseMultiValues();
-        else fieldConditions[`$${rawOp}` as const] = value;
-      }
-    });
-
-    return conditions;
   }
 }

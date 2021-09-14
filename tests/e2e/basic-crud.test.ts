@@ -3,6 +3,7 @@ import { getRepositoryToken } from "@mikro-orm/nestjs";
 import { Controller, Injectable } from "@nestjs/common";
 import { TestingModule } from "@nestjs/testing";
 import { MikroCrudControllerFactory, MikroCrudServiceFactory } from "src";
+import { MikroCrudModule } from "src/mikro-crud.module";
 import supertest, { Response } from "supertest";
 import { prepareE2E } from "../utils";
 import { CreateBookDto, UpdateBookDto } from "./dtos";
@@ -46,6 +47,7 @@ describe("Basic CRUD", () => {
 
   beforeEach(async () => {
     ({ module, requester } = await prepareE2E({
+      imports: [MikroCrudModule],
       controllers: [TestController],
       providers: [TestService],
     }));

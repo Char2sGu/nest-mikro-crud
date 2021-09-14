@@ -7,6 +7,7 @@ import {
   MikroCrudServiceFactory,
   QueryDtoFactory,
 } from "src";
+import { MikroCrudModule } from "src/mikro-crud.module";
 import supertest, { Response } from "supertest";
 import { prepareE2E } from "tests/utils";
 import { CreateBookDto, UpdateBookDto } from "./dtos";
@@ -20,6 +21,7 @@ describe("Query Params", () => {
 
   async function prepare(controllerClass: Type) {
     ({ module, requester } = await prepareE2E({
+      imports: [MikroCrudModule],
       controllers: [controllerClass],
       providers: [TestService],
     }));

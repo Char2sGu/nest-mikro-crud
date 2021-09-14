@@ -3,7 +3,6 @@ import {
   Collection,
   EntityRepository,
   FilterQuery,
-  FindOptions,
   IdentifiedReference,
   NotFoundError,
   Reference,
@@ -12,6 +11,8 @@ import {
 import { EntityData, NonFunctionPropertyNames } from "@mikro-orm/core/typings";
 import { Inject } from "@nestjs/common";
 import { FilterQueryParam, OrderQueryParam, RelationPath } from "..";
+import { EntityFilters } from "./entity-filters.interface";
+import { ENTITY_FILTERS } from "./entity-filters.token";
 import { QueryParser } from "./query-parser.service";
 
 export abstract class MikroCrudService<
@@ -24,6 +25,9 @@ export abstract class MikroCrudService<
 
   @Inject()
   protected readonly parser!: QueryParser<Entity>;
+
+  @Inject(ENTITY_FILTERS)
+  protected readonly filters!: EntityFilters;
 
   async list({
     conditions = {},
@@ -51,7 +55,7 @@ export abstract class MikroCrudService<
         limit,
         offset,
         orderBy: await this.parser.parseOrder({ order }),
-        filters: await this.decideEntityFilters({ user }),
+        filters: this.filters(user),
         populate: [...this.collectionFields, ...expand] as string[],
         refresh,
       }
@@ -77,7 +81,7 @@ export abstract class MikroCrudService<
     user?: any;
   }): Promise<Entity> {
     return await this.repository.findOneOrFail(conditions, {
-      filters: await this.decideEntityFilters({ user }),
+      filters: this.filters(user),
       populate: [...this.collectionFields, ...expand] as string[],
       refresh,
     });
@@ -187,17 +191,5 @@ export abstract class MikroCrudService<
     }
 
     return digIn(rootEntity) as typeof rootEntity;
-  }
-
-  /**
-   * Decide which MikroORM filters to enable and what arguments to pass to the filters.
-   * @param args
-   */
-  async decideEntityFilters({
-    user,
-  }: {
-    user?: any;
-  }): Promise<FindOptions<Entity>["filters"]> {
-    return { crud: { user } };
   }
 }

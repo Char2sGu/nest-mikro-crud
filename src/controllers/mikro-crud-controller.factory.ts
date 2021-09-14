@@ -17,10 +17,10 @@ import {
   ValidationPipe,
 } from "@nestjs/common";
 import { AbstractFactory } from "../abstract.factory";
-import { FACTORY_METADATA_KEY, TS_TYPE_METADATA_KEY } from "../constants";
 import { ReqUser } from "../decorators";
 import { QueryDtoFactory } from "../dtos";
 import { MikroCrudService, MikroCrudServiceFactory } from "../services";
+import { FACTORY_METADATA_KEY, TS_TYPE_METADATA_KEY } from "../symbols";
 import { ActionName, LookupableField, PkType } from "../types";
 import { MikroCrudControllerFactoryOptions } from "./mikro-crud-controller-factory-options.interface";
 import { MikroCrudController } from "./mikro-crud-controller.class";

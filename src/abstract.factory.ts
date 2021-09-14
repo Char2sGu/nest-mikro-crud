@@ -1,5 +1,5 @@
 import { Type } from "@nestjs/common";
-import { TS_PARAM_TYPES_METADATA_KEY, TS_TYPE_METADATA_KEY } from "./constants";
+import { TS_PARAM_TYPES_METADATA_KEY, TS_TYPE_METADATA_KEY } from "./symbols";
 import { ExtractKey } from "./utils";
 
 type AllNames<T> = string & keyof T;

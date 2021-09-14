@@ -7,7 +7,7 @@ import {
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { Type } from "@nestjs/common";
 import { AbstractFactory } from "../abstract.factory";
-import { FACTORY_METADATA_KEY } from "../constants";
+import { FACTORY_METADATA_KEY } from "../symbols";
 import { MikroCrudServiceFactoryOptions } from "./mikro-crud-service-factory-options.interface";
 import { MikroCrudService } from "./mikro-crud-service.class";
 

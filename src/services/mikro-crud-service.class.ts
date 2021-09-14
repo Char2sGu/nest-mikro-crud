@@ -1,29 +1,27 @@
 import {
   AnyEntity,
-  ReferenceType,
-  FilterQuery,
-  wrap,
-  NotFoundError,
   Collection,
-  Reference,
-  IdentifiedReference,
-  FindOptions,
-  QueryOrderMap,
   EntityRepository,
+  FilterQuery,
+  FindOptions,
+  IdentifiedReference,
+  NotFoundError,
+  QueryOrderMap,
+  Reference,
+  wrap,
 } from "@mikro-orm/core";
 import {
   EntityData,
-  EntityMetadata,
   NonFunctionPropertyNames,
   OperatorMap,
 } from "@mikro-orm/core/typings";
 import {
+  FilterOperator,
+  FilterQueryParam,
+  OrderQueryParam,
   RelationPath,
   ScalarPath,
   walkPath,
-  FilterOperator,
-  OrderQueryParam,
-  FilterQueryParam,
 } from "..";
 
 export class MikroCrudService<
@@ -32,7 +30,6 @@ export class MikroCrudService<
   UpdateDto extends EntityData<Entity> = EntityData<Entity>
 > {
   readonly repository!: EntityRepository<Entity>;
-  readonly entityMeta!: EntityMetadata;
   readonly collectionFields!: NonFunctionPropertyNames<Entity>[];
 
   async list({

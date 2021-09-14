@@ -36,12 +36,8 @@ export class MikroCrudServiceFactory<
     class Service extends MikroCrudService<Entity, CreateDto, UpdateDto> {
       @InjectRepository(entityClass)
       readonly repository!: EntityRepository<Entity>;
-
-      readonly entityMeta = (new entityClass() as AnyEntity<unknown>).__helper!
-        .__meta;
-
-      readonly collectionFields = this.entityMeta.relations
-        .filter(
+      readonly collectionFields = new entityClass()
+        .__helper!.__meta.relations.filter(
           ({ reference, hidden }) =>
             !hidden &&
             (reference == ReferenceType.ONE_TO_MANY ||

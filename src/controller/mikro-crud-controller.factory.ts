@@ -18,8 +18,8 @@ import {
 } from "@nestjs/common";
 import { AbstractFactory } from "../abstract.factory";
 import { ReqUser } from "../decorators";
-import { QueryDtoFactory } from "../dtos";
-import { MikroCrudService, MikroCrudServiceFactory } from "../services";
+import { QueryDtoFactory } from "../dto";
+import { MikroCrudService, MikroCrudServiceFactory } from "../service";
 import { FACTORY, TS_TYPE } from "../symbols";
 import { ActionName, LookupableField, PkType } from "../types";
 import { MikroCrudControllerFactoryOptions } from "./mikro-crud-controller-factory-options.interface";

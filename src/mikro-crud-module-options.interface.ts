@@ -1,4 +1,4 @@
-import { EntityFilters } from "./services/entity-filters.interface";
+import { EntityFilters } from "./providers/entity-filters.interface";
 
 export interface MikroCrudModuleOptions {
   filters: EntityFilters;

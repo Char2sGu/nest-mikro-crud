@@ -1,7 +1,7 @@
 import { AnyEntity, EntityData } from "@mikro-orm/core";
 import { NotFoundException } from "@nestjs/common";
-import { QueryDto } from "../dtos";
-import { MikroCrudService } from "../services";
+import { QueryDto } from "../dto";
+import { MikroCrudService } from "../service";
 import { LookupableField } from "../types";
 
 export abstract class MikroCrudController<

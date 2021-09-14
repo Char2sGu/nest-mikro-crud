@@ -1,7 +1,7 @@
 import { DynamicModule, Module } from "@nestjs/common";
 import { MikroCrudModuleOptions } from "./mikro-crud-module-options.interface";
-import { ENTITY_FILTERS } from "./services/entity-filters.token";
-import { QueryParser } from "./services/query-parser.service";
+import { ENTITY_FILTERS } from "./providers/entity-filters.token";
+import { QueryParser } from "./providers/query-parser.service";
 
 @Module({
   providers: [

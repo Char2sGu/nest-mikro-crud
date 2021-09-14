@@ -1,9 +1,10 @@
 import "reflect-metadata";
 export * from "./abstract.factory";
 export * from "./constants";
-export * from "./controllers";
-export * from "./dtos";
-export * from "./services";
+export * from "./controller";
+export * from "./decorators";
+export * from "./dto";
+export * from "./providers";
+export * from "./service";
 export * from "./types";
 export * from "./utils";
-export * from "./decorators";

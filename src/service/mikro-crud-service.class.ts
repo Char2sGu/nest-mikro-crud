@@ -11,9 +11,9 @@ import {
 import { EntityData, NonFunctionPropertyNames } from "@mikro-orm/core/typings";
 import { Inject } from "@nestjs/common";
 import { FilterQueryParam, OrderQueryParam, RelationPath } from "..";
-import { EntityFilters } from "./entity-filters.interface";
-import { ENTITY_FILTERS } from "./entity-filters.token";
-import { QueryParser } from "./query-parser.service";
+import { EntityFilters } from "../providers/entity-filters.interface";
+import { ENTITY_FILTERS } from "../providers/entity-filters.token";
+import { QueryParser } from "../providers/query-parser.service";
 
 export abstract class MikroCrudService<
   Entity extends AnyEntity = AnyEntity,

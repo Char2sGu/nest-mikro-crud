@@ -1,7 +1,7 @@
 import { AnyEntity, EntityData } from "@mikro-orm/core";
 import { Type, ValidationPipeOptions } from "@nestjs/common";
-import { QueryDto } from "../dtos";
-import { MikroCrudService } from "../services";
+import { QueryDto } from "../dto";
+import { MikroCrudService } from "../service";
 import { ActionName, LookupableField, PkType } from "../types";
 
 export interface MikroCrudControllerFactoryOptions<

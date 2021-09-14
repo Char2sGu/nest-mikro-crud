@@ -24,7 +24,7 @@ import {
   walkPath,
 } from "..";
 
-export class MikroCrudService<
+export abstract class MikroCrudService<
   Entity extends AnyEntity = AnyEntity,
   CreateDto extends EntityData<Entity> = EntityData<Entity>,
   UpdateDto extends EntityData<Entity> = EntityData<Entity>

@@ -4,7 +4,7 @@ import { QueryDto } from "../dtos";
 import { MikroCrudService } from "../services";
 import { LookupableField } from "../types";
 
-export class MikroCrudController<
+export abstract class MikroCrudController<
   Entity extends AnyEntity<Entity> = any,
   CreateDto extends EntityData<Entity> = EntityData<Entity>,
   UpdateDto extends EntityData<Entity> = EntityData<Entity>,

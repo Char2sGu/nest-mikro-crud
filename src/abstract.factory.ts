@@ -59,7 +59,7 @@ export abstract class AbstractFactory<T> {
       d(
         this.product.prototype,
         target,
-        Object.getOwnPropertyDescriptor(this.product.prototype, target)!
+        this.getDescriptor(this.product.prototype, target)!
       )
     );
     return this;
@@ -82,5 +82,15 @@ export abstract class AbstractFactory<T> {
       this.applyParamDecorators(target, index, ...decorators)
     );
     return this;
+  }
+
+  getDescriptor(
+    prototype: { __proto__: typeof prototype | null },
+    target: PropertyKey
+  ): PropertyDescriptor | undefined {
+    const descriptor = Object.getOwnPropertyDescriptor(prototype, target);
+    if (descriptor) return descriptor;
+    if (prototype.__proto__ == null) return;
+    return this.getDescriptor(prototype.__proto__, target);
   }
 }

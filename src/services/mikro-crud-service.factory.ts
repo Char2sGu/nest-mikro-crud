@@ -1,26 +1,11 @@
-import {
-  Collection,
-  FilterQuery,
-  FindOptions,
-  IdentifiedReference,
-  NotFoundError,
-  QueryOrderMap,
-  Reference,
-  ReferenceType,
-  wrap,
-} from "@mikro-orm/core";
-import {
-  AnyEntity,
-  NonFunctionPropertyNames,
-  OperatorMap,
-} from "@mikro-orm/core/typings";
+import { EntityRepository, ReferenceType } from "@mikro-orm/core";
+import { AnyEntity, NonFunctionPropertyNames } from "@mikro-orm/core/typings";
 import { InjectRepository } from "@mikro-orm/nestjs";
+import { Type } from "@nestjs/common";
 import { AbstractFactory } from "../abstract.factory";
 import { FACTORY_METADATA_KEY } from "../constants";
-import { FilterOperator, RelationPath, ScalarPath } from "../types";
-import { walkPath } from "../utils";
 import { MikroCrudServiceFactoryOptions } from "./mikro-crud-service-factory-options.interface";
-import { MikroCrudService } from "./mikro-crud-service.interface";
+import { MikroCrudService } from "./mikro-crud-service.class";
 
 export class MikroCrudServiceFactory<
   Entity extends AnyEntity<Entity> = any,
@@ -34,12 +19,8 @@ export class MikroCrudServiceFactory<
     options: MikroCrudServiceFactoryOptions<Entity, CreateDto, UpdateDto>
   ) {
     super();
-
     this.options = this.standardizeOptions(options);
-
-    this.product = this.createRawClass();
-    this.defineInjections();
-
+    this.product = this.create();
     Reflect.defineMetadata(FACTORY_METADATA_KEY, this, this.product);
   }
 
@@ -49,247 +30,26 @@ export class MikroCrudServiceFactory<
     return options;
   }
 
-  protected createRawClass() {
+  protected create(): Type<MikroCrudService<Entity, CreateDto, UpdateDto>> {
     const { entityClass } = this.options;
 
-    type Interface = MikroCrudService<Entity, CreateDto, UpdateDto>;
-    return class MikroCrudService implements Interface {
-      readonly repository!: Interface["repository"];
-      readonly entityMeta: Interface["entityMeta"];
-      readonly collectionFields: Interface["collectionFields"];
+    class Service extends MikroCrudService<Entity, CreateDto, UpdateDto> {
+      @InjectRepository(entityClass)
+      readonly repository!: EntityRepository<Entity>;
 
-      constructor() {
-        this.entityMeta = (
-          new entityClass() as AnyEntity<unknown>
-        ).__helper!.__meta;
+      readonly entityMeta = (new entityClass() as AnyEntity<unknown>).__helper!
+        .__meta;
 
-        this.collectionFields = this.entityMeta.relations
-          .filter(
-            ({ reference, hidden }) =>
-              !hidden &&
-              (reference == ReferenceType.ONE_TO_MANY ||
-                reference == ReferenceType.MANY_TO_MANY)
-          )
-          .map(({ name }) => name as NonFunctionPropertyNames<Entity>);
-      }
+      readonly collectionFields = this.entityMeta.relations
+        .filter(
+          ({ reference, hidden }) =>
+            !hidden &&
+            (reference == ReferenceType.ONE_TO_MANY ||
+              reference == ReferenceType.MANY_TO_MANY)
+        )
+        .map(({ name }) => name as NonFunctionPropertyNames<Entity>);
+    }
 
-      async list({
-        conditions = {},
-        limit,
-        offset,
-        order = [],
-        filter = [],
-        expand = [],
-        refresh,
-        user,
-      }: Parameters<Interface["list"]>[0]) {
-        const filterConditions = await this.parseFilterQueryParams({ filter });
-        const [results, total] = await this.repository.findAndCount(
-          { $and: [conditions, filterConditions] } as FilterQuery<Entity>,
-          {
-            limit,
-            offset,
-            orderBy: await this.parseOrderQueryParams({ order }),
-            filters: await this.decideEntityFilters({ user }),
-            populate: [...this.collectionFields, ...expand] as string[],
-            refresh,
-          }
-        );
-        return { total, results };
-      }
-
-      async create({
-        data,
-      }: Parameters<Interface["create"]>[0]): ReturnType<Interface["create"]> {
-        const entity = this.repository.create(data);
-        this.repository.persist(entity);
-        return entity;
-      }
-
-      async retrieve({
-        conditions = {},
-        expand = [],
-        refresh,
-        user,
-      }: Parameters<Interface["retrieve"]>[0]) {
-        return await this.repository.findOneOrFail(conditions, {
-          filters: await this.decideEntityFilters({ user }),
-          populate: [...this.collectionFields, ...expand] as string[],
-          refresh,
-        });
-      }
-
-      async replace({
-        entity,
-        data,
-      }: Parameters<Interface["replace"]>[0]): ReturnType<
-        Interface["replace"]
-      > {
-        return wrap(entity).assign(data, { merge: true });
-      }
-
-      async update({
-        entity,
-        data,
-      }: Parameters<Interface["update"]>[0]): ReturnType<Interface["update"]> {
-        return wrap(entity).assign(data, { merge: true });
-      }
-
-      async destroy({
-        entity,
-      }: Parameters<Interface["destroy"]>[0]): ReturnType<
-        Interface["destroy"]
-      > {
-        this.repository.remove(entity);
-        return entity;
-      }
-
-      async exists({
-        conditions,
-        user,
-      }: Parameters<Interface["exists"]>[0]): ReturnType<Interface["exists"]> {
-        try {
-          await this.retrieve({ conditions, user });
-          return true;
-        } catch (error) {
-          if (error instanceof NotFoundError) return false;
-          else throw error;
-        }
-      }
-
-      async save(): ReturnType<Interface["save"]> {
-        await this.repository.flush();
-      }
-
-      async adjustPopulationStatus({
-        entity: rootEntity,
-        expand = [],
-      }: Parameters<Interface["adjustPopulationStatus"]>[0]): ReturnType<
-        Interface["adjustPopulationStatus"]
-      > {
-        function digIn(entity: AnyEntity, relationNode?: RelationPath<Entity>) {
-          const entityMeta = entity.__helper!.__meta;
-          entityMeta.relations.forEach(({ name }) => {
-            const value = entity[name];
-            const relationPath = (
-              relationNode ? `${relationNode}.${name}` : name
-            ) as RelationPath<Entity>;
-            const shouldPopulate = expand.some((path) =>
-              path.startsWith(relationPath)
-            );
-
-            // It is possible for a collection/reference/entity which need to be marked as populated to appear
-            // multiple times in different places in part of which they need to be marked as unpopulated, so it
-            // is neccesary to call `.populated(true)` to ensure they are not be marked as unpopulated in deeper
-            // places unexpectedly.
-            if (value instanceof Collection) {
-              const collection: Collection<AnyEntity> = value;
-              if (!shouldPopulate) {
-                collection.populated(false);
-              } else {
-                for (const entity of collection) digIn(entity, relationPath);
-                collection.populated(true);
-              }
-            } else if (value instanceof Reference) {
-              const reference: IdentifiedReference<AnyEntity> = value;
-              if (!shouldPopulate) {
-                reference.populated(false);
-              } else {
-                digIn(reference.getEntity(), relationPath);
-                reference.populated(true);
-              }
-            } else {
-              const entity: AnyEntity<unknown> = value;
-              const wrappedEntity = wrap(entity);
-              if (!shouldPopulate) {
-                wrappedEntity.populated(false);
-              } else {
-                digIn(entity, relationPath);
-                wrappedEntity.populated(true);
-              }
-            }
-          });
-          return entity;
-        }
-
-        return digIn(rootEntity) as typeof rootEntity;
-      }
-
-      async decideEntityFilters({
-        user,
-      }: Parameters<Interface["decideEntityFilters"]>[0]): ReturnType<
-        Interface["decideEntityFilters"]
-      > {
-        return { crud: { user } };
-      }
-
-      async parseOrderQueryParams({
-        order,
-      }: Parameters<Interface["parseOrderQueryParams"]>[0]): ReturnType<
-        Interface["parseOrderQueryParams"]
-      > {
-        const orderOptions: FindOptions<Entity>["orderBy"] = {};
-        order.forEach((raw) => {
-          const [path, order] = raw.split(":") as [
-            ScalarPath<Entity>,
-            "asc" | "desc"
-          ];
-          walkPath(
-            orderOptions,
-            path,
-            (obj: QueryOrderMap, key: string) => (obj[key] = order)
-          );
-        });
-        return orderOptions;
-      }
-
-      async parseFilterQueryParams({
-        filter: rawFilters,
-      }: Parameters<Interface["parseFilterQueryParams"]>[0]): ReturnType<
-        Interface["parseFilterQueryParams"]
-      > {
-        const conditions: Partial<
-          Record<NonFunctionPropertyNames<Entity>, OperatorMap<unknown>>
-        > = {};
-
-        rawFilters.forEach(async (raw) => {
-          const [, path, rawOp, value] = /^(.*)\|(.+):(.*)$/.exec(raw)! as [
-            string,
-            ScalarPath<Entity>,
-            FilterOperator,
-            string
-          ] &
-            RegExpExecArray;
-
-          const parseMultiValues = () =>
-            value.split(/(?<!\\),/).map((v) => v.replace("\\,", ","));
-
-          const fieldConditions = walkPath(
-            conditions,
-            path,
-            (obj, key) => (obj[key] = obj[key] ?? {})
-          ) as OperatorMap<unknown>;
-
-          if (rawOp == "isnull") fieldConditions.$eq = null;
-          else if (rawOp == "notnull") fieldConditions.$ne = null;
-          else {
-            if (rawOp == "in" || rawOp == "nin")
-              fieldConditions[`$${rawOp}` as const] = parseMultiValues();
-            else fieldConditions[`$${rawOp}` as const] = value;
-          }
-        });
-
-        return conditions;
-      }
-    };
-  }
-
-  protected defineInjections() {
-    const { entityClass } = this.options;
-
-    this.defineType("repository", entityClass).applyPropertyDecorators(
-      "repository",
-      InjectRepository(entityClass)
-    );
+    return Service;
   }
 }
